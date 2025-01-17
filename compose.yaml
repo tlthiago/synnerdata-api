@@ -1,0 +1,45 @@
+services:
+  app-dev:
+    container_name: api-app-dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      - .env.development
+    ports:
+      - 3000:3000
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - db
+    profiles:
+      - dev
+
+  db:
+    image: postgres:17-alpine
+    container_name: db-dev
+    environment:
+      - POSTGRES_HOST=localhost
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=local_user
+      - POSTGRES_PASSWORD=local_password
+      - POSTGRES_DB=local_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: api-pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - '5050:80'
+    depends_on:
+      - db
+
+volumes:
+  db-data:

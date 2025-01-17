@@ -1,0 +1,13 @@
+ARG NODE_VERSION=22
+
+FROM node:${NODE_VERSION}-alpine as development
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+CMD ["npm", "run", "start:dev"]
