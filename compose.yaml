@@ -19,8 +19,9 @@ services:
   db:
     image: postgres:17-alpine
     container_name: db-dev
+    restart: always
     environment:
-      - POSTGRES_HOST=localhost
+      - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - POSTGRES_USER=local_user
       - POSTGRES_PASSWORD=local_password
