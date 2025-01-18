@@ -6,36 +6,39 @@ jobs:
   jest:
     name: Jest Ubuntu
     runs-on: ubuntu-latest
+
     services:
-      db:
-        image: postgres:17
+      postgres:
+        image: postgres:14
         ports:
           - 5432:5432
         env:
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: test_database
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
         options: >-
-          --health-cmd="pg_isready -U user"
+          --health-cmd="pg_isready -U test"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      # Configurar variáveis de ambiente
-      - run: |
-          echo "DB_HOST=db" >> .env.test
-          echo "DB_PORT=5432" >> .env.test
-          echo "DB_USER=user" >> .env.test
-          echo "DB_PASSWORD=password" >> .env.test
-          echo "DB_NAME=test_database" >> .env.test
-
-      - run: npm test
+      - name: Run tests
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USERNAME: test
+          DATABASE_PASSWORD: test
+          DATABASE_NAME: test_db
+        run: npm test
