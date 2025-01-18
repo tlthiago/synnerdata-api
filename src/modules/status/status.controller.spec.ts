@@ -1,20 +1,36 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { StatusController } from './status.controller';
-import { StatusService } from './status.service';
+import * as request from 'supertest';
+import { INestApplication } from '@nestjs/common';
+import { DatabaseModule } from '../../config/database/database.module';
+import { ConfigModule } from '@nestjs/config';
+import { StatusModule } from './status.module';
 
 describe('StatusController', () => {
-  let controller: StatusController;
+  let app: INestApplication;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [StatusController],
-      providers: [StatusService],
+      imports: [
+        ConfigModule.forRoot({
+          envFilePath: '.env.development.local',
+          isGlobal: true,
+        }),
+        DatabaseModule,
+        StatusModule,
+      ],
     }).compile();
 
-    controller = module.get<StatusController>(StatusController);
+    app = module.createNestApplication();
+    await app.init();
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
+  it('should return API status', async () => {
+    const response = await request(app.getHttpServer()).get('/status');
+
+    expect(response.status).toBe(200);
+  });
+
+  afterAll(async () => {
+    await app.close();
   });
 });
