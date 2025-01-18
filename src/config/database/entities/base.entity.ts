@@ -1,20 +1,18 @@
-import {
-  CreateDateColumn,
-  DeleteDateColumn,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+// import { User } from 'src/modules/user/entities/user.entity';
+// import {
+//   CreateDateColumn,
+//   ManyToOne,
+//   PrimaryGeneratedColumn,
+//   UpdateDateColumn,
+// } from 'typeorm';
 
-export class BaseEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+// export class BaseEntity {
+//   @ManyToOne(() => User)
+//   createdBy?: User;
 
-  @CreateDateColumn({ type: 'timestamptz' })
-  readonly createdAt!: Date;
+//   @CreateDateColumn({ type: 'timestamptz' })
+//   readonly createdAt!: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz' })
-  readonly updatedAt!: Date;
-
-  @DeleteDateColumn({ type: 'timestamptz' })
-  deletedAt!: Date;
-}
+//   @UpdateDateColumn({ type: 'timestamptz' })
+//   readonly updatedAt?: Date;
+// }

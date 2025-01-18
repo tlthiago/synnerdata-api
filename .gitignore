@@ -54,3 +54,9 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+#JWT Keys
+private_key.pem
+private_key_base64.txt
+public_key.pem
+public_key_base64.txt
