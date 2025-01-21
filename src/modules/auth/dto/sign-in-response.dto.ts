@@ -1,26 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class TokenDataDto {
+class TokensDataDto {
   @ApiProperty({ description: 'The access token issued to the user' })
   access_token: string;
 
-  @ApiProperty({ description: 'The type of the token (e.g., Bearer)' })
-  token_type: string;
-
   @ApiProperty({ description: 'The expiration date of the token' })
   expiration_date: string;
+
+  @ApiProperty({ description: 'The type of the tokens (e.g., Bearer)' })
+  token_type: string;
 }
 
-export class LoginResponseDto {
+export class SignInResponseDto {
   @ApiProperty({ description: 'Indicates whether the login was successful' })
   succeeded: boolean;
 
   @ApiProperty({
-    description: 'The data of the user or null if login failed',
-    type: TokenDataDto,
+    description: 'The data of the token or null if login failed',
+    type: TokensDataDto,
     nullable: true,
   })
-  data: TokenDataDto | null;
+  data: TokensDataDto | null;
 
   @ApiProperty({ description: 'A message describing the result of the login' })
   message: string;

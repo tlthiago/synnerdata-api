@@ -3,30 +3,41 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { LoginResponseDto } from './dto/login-response.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from '../user/entities/user.entity';
-import { Repository } from 'typeorm';
+import { SignInResponseDto } from './dto/sign-in-response.dto';
 import { compare } from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { UsersService } from '../users/users.service';
+import { CreateUserDto } from '../users/dto/create-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly usersService: UsersService,
   ) {}
 
-  async validateUser(
-    email: string,
-    password: string,
-  ): Promise<LoginResponseDto> {
-    const user = await this.userRepository.findOne({
-      where: { email },
-    });
+  async signUp(createUserDto: CreateUserDto) {
+    const { email, password } = createUserDto;
 
-    if (!user) throw new NotFoundException('Usuário ou senha inválidos.');
+    const userExists = await this.usersService.findOneByEmail(email);
+
+    if (userExists) {
+      throw new ConflictException('Já existe um usuário com o mesmo e-mail.');
+    }
+
+    const passwordHash = await bcrypt.hash(password, 6);
+
+    const userData = { ...createUserDto, password: passwordHash };
+    await this.usersService.create(userData);
+  }
+
+  async signIn(email: string, password: string): Promise<SignInResponseDto> {
+    const user = await this.usersService.findOneByEmail(email);
+
+    if (!user) {
+      throw new NotFoundException('Usuário ou senha inválidos.');
+    }
 
     const passwordIsValid = await compare(password, user.password);
 
@@ -36,16 +47,16 @@ export class AuthService {
     const accessToken = this.jwtService.sign({
       sub: user.id,
     });
-    const tokenType = 'Bearer';
     const expirationDate = new Date();
     expirationDate.setHours(expirationDate.getHours() + 8);
+    const tokenType = 'Bearer';
 
     return {
       succeeded: true,
       data: {
         access_token: accessToken,
-        token_type: tokenType,
         expiration_date: expirationDate.toISOString(),
+        token_type: tokenType,
       },
       message: 'Login realizado com sucesso.',
     };
