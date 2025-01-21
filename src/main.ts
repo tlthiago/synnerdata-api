@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -11,7 +12,8 @@ async function bootstrap() {
   app.enableVersioning({
     type: VersioningType.URI,
   });
-
+  app.use(helmet());
+  app.enableCors();
   app.useGlobalFilters(new HttpExceptionFilter());
 
   const config = new DocumentBuilder()
