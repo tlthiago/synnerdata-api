@@ -7,8 +7,8 @@ export class AuthDto {
   @IsNotEmpty()
   email: string;
 
-  @ApiProperty({ description: 'Senha para autenticação.' })
+  @ApiProperty({ description: 'Senha do usuário para autenticação.' })
   @IsString()
   @IsNotEmpty()
-  password: string;
+  senha: string;
 }

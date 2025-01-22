@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { AuthDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -18,31 +19,34 @@ export class AuthService {
   ) {}
 
   async signUp(createUserDto: CreateUserDto) {
-    const { email, password } = createUserDto;
+    const { email, senha } = createUserDto;
 
-    const userExists = await this.usersService.findOneByEmail(email);
+    const user = await this.usersService.findOneByEmail(email);
 
-    if (userExists) {
+    if (user) {
       throw new ConflictException('Já existe um usuário com o mesmo e-mail.');
     }
 
-    const passwordHash = await bcrypt.hash(password, 6);
+    const passwordHash = await bcrypt.hash(senha, 6);
 
-    const userData = { ...createUserDto, password: passwordHash };
-    await this.usersService.create(userData);
+    const userData = { ...createUserDto, senha: passwordHash };
+    return await this.usersService.create(userData);
   }
 
-  async signIn(email: string, password: string): Promise<SignInResponseDto> {
+  async signIn(authDto: AuthDto): Promise<SignInResponseDto> {
+    const { email, senha } = authDto;
+
     const user = await this.usersService.findOneByEmail(email);
 
     if (!user) {
       throw new NotFoundException('Usuário ou senha inválidos.');
     }
 
-    const passwordIsValid = await compare(password, user.password);
+    const passwordIsValid = await compare(senha, user.senha);
 
-    if (!passwordIsValid)
+    if (!passwordIsValid) {
       throw new ConflictException('Usuário ou senha inválidos.');
+    }
 
     const accessToken = this.jwtService.sign({
       sub: user.id,
