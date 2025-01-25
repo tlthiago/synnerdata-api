@@ -2,13 +2,10 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
-  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { IsEmail } from 'class-validator';
-import { Company } from '../../companies/entities/company.entity';
 
 @Entity('usuarios')
 export class User {
@@ -27,10 +24,6 @@ export class User {
 
   @Column({ type: 'varchar' })
   funcao: string;
-
-  // @ManyToOne(() => Company, (company) => company.usuarios)
-  // @JoinColumn({ name: 'empresa_id' })
-  // empresaId: Company;
 
   @Column({ name: 'criado_por', type: 'integer', nullable: true })
   criadoPor?: number;
