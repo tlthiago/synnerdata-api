@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -36,12 +35,6 @@ export class CompaniesService {
   }
 
   async findOne(id: number) {
-    const companyId = +id;
-
-    if (isNaN(companyId)) {
-      throw new BadRequestException('ID de empresa inválido.');
-    }
-
     const company = await this.companiesRepository.findOne({
       where: {
         id,
@@ -64,15 +57,9 @@ export class CompaniesService {
   }
 
   async update(id: number, updateCompanyDto: UpdateCompanyDto) {
-    const companyId = +id;
-
-    if (isNaN(companyId)) {
-      throw new BadRequestException('ID de empresa inválido.');
-    }
-
     const company = await this.companiesRepository.findOne({
       where: {
-        id: companyId,
+        id: id,
       },
     });
 
@@ -80,12 +67,24 @@ export class CompaniesService {
       throw new NotFoundException('Empresa não encontrada.');
     }
 
-    const result = await this.companiesRepository.update(companyId, {
+    const result = await this.companiesRepository.update(id, {
       ...updateCompanyDto,
     });
 
     if (result.affected === 0) {
       throw new NotFoundException('Empresa não encontrada.');
     }
+  }
+
+  async remove(id: number) {
+    const result = await this.companiesRepository.update(id, {
+      status: 'E',
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+
+    return `A empresa #${id} foi excluída.`;
   }
 }

@@ -62,7 +62,7 @@ export class BranchesController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('empresaId', ParseIntPipe) empresaId: string,
+    @Param('empresaId', ParseIntPipe) empresaId: number,
     @Body() createBranchDto: CreateBranchDto,
   ) {
     const id = await this.branchesService.create(+empresaId, createBranchDto);
@@ -93,7 +93,7 @@ export class BranchesController {
     type: [BranchResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('empresaId', ParseIntPipe) empresaId: string) {
+  findAll(@Param('empresaId', ParseIntPipe) empresaId: number) {
     return this.branchesService.findAll(+empresaId);
   }
 
@@ -115,7 +115,7 @@ export class BranchesController {
     type: BranchResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: string) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.branchesService.findOne(+id);
   }
 
@@ -153,7 +153,7 @@ export class BranchesController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateBranchDto: UpdateBranchDto,
   ) {
     await this.branchesService.update(+id, updateBranchDto);
@@ -194,7 +194,7 @@ export class BranchesController {
     },
   })
   @UseGuards(JwtAuthGuard)
-  async remove(@Param('id', ParseIntPipe) id: string) {
+  async remove(@Param('id', ParseIntPipe) id: number) {
     await this.branchesService.remove(+id);
 
     return {

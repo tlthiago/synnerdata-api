@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -29,12 +25,6 @@ export class UsersService {
   }
 
   async findOne(id: number): Promise<UsersResponseDto> {
-    const userId = +id;
-
-    if (isNaN(userId)) {
-      throw new BadRequestException('ID de usuário inválido.');
-    }
-
     const user = await this.usersRepository.findOne({
       where: {
         id,
@@ -58,18 +48,24 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    const userId = +id;
-
-    if (isNaN(userId)) {
-      throw new BadRequestException('ID de usuário inválido.');
-    }
-
-    const result = await this.usersRepository.update(userId, {
+    const result = await this.usersRepository.update(id, {
       ...updateUserDto,
     });
 
     if (result.affected === 0) {
       throw new NotFoundException('Usuário não encontrado.');
     }
+  }
+
+  async remove(id: number) {
+    const result = await this.usersRepository.update(id, {
+      status: 'E',
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    return `O usuário #${id} foi excluído.`;
   }
 }

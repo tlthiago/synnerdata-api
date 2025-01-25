@@ -6,6 +6,8 @@ import {
   Patch,
   Param,
   UseGuards,
+  ParseIntPipe,
+  Delete,
 } from '@nestjs/common';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
@@ -98,7 +100,7 @@ export class CompaniesController {
     type: CompanyResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.companiesService.findOne(+id);
   }
 
@@ -136,7 +138,7 @@ export class CompaniesController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateCompanyDto: UpdateCompanyDto,
   ) {
     await this.companiesService.update(+id, updateCompanyDto);
@@ -145,6 +147,45 @@ export class CompaniesController {
       succeeded: true,
       data: null,
       message: 'Empresa atualizada com sucesso.',
+    };
+  }
+
+  @Delete(':id')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Excluir uma empresa',
+    description: 'Endpoint responsável por excluir uma empresa.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID da empresa.',
+    type: 'number',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Retorna uma mensagem de sucesso caso a exclusão seja bem sucedida.',
+    schema: {
+      type: 'object',
+      properties: {
+        succeeded: { type: 'boolean' },
+        data: { type: 'string', nullable: true },
+        message: {
+          type: 'string',
+          description: 'Empresa excluída com sucesso.',
+        },
+      },
+    },
+  })
+  @UseGuards(JwtAuthGuard)
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    await this.companiesService.remove(+id);
+
+    return {
+      succeeded: true,
+      data: null,
+      message: `Empresa id: #${id} excluída com sucesso.`,
     };
   }
 }
