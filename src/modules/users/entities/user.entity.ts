@@ -25,6 +25,14 @@ export class User {
   @Column({ type: 'varchar' })
   funcao: string;
 
+  @Column({
+    name: 'status',
+    type: 'enum',
+    enum: ['A', 'I', 'E'],
+    default: 'A',
+  })
+  status: string;
+
   @Column({ name: 'criado_por', type: 'integer', nullable: true })
   criadoPor?: number;
 

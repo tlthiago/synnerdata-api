@@ -15,24 +15,34 @@ services:
       - db
     profiles:
       - dev
-    networks:
-      - app-network
 
   db:
     image: postgres:17-alpine
-    container_name: db
+    container_name: postgres
     restart: always
     environment:
-      - POSTGRES_USER=local_user
-      - POSTGRES_PASSWORD=local_password
-      - POSTGRES_DB=local_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
     ports:
       - '5432:5432'
     volumes:
       - db-data:/var/lib/postgresql/data
 
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - '5050:80'
+    depends_on:
+      - db
+
 volumes:
   db-data:
+  db-test-data:
 
 networks:
   app-network:

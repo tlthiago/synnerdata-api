@@ -9,11 +9,11 @@ const configService = new ConfigService();
 
 const dataSourceOptions = new DataSource({
   type: 'postgres',
-  host: configService.get<string>('DB_HOST') || 'localhost',
-  port: +configService.get<number>('DB_PORT') || 5432,
-  username: configService.get<string>('DB_USERNAME') || 'test',
-  password: configService.get<string>('DB_PASSWORD') || 'test',
-  database: configService.get<string>('DB_NAME') || 'test_db',
+  host: configService.get<string>('DB_HOST'),
+  port: +configService.get<number>('DB_PORT'),
+  username: configService.get<string>('DB_USERNAME'),
+  password: configService.get<string>('DB_PASSWORD'),
+  database: configService.get<string>('DB_NAME'),
   synchronize: false,
   entities: [
     path.join(
@@ -27,7 +27,7 @@ const dataSourceOptions = new DataSource({
     ),
   ],
   migrations: [path.join(__dirname, 'migrations', '*.ts')],
-  // migrationsRun: false,
+  migrationsRun: true,
   logging: false,
 });
 
