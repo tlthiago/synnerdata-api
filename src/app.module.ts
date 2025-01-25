@@ -6,6 +6,7 @@ import { StatusModule } from './modules/status/status.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CompaniesModule } from './modules/companies/companies.module';
+import { BranchesModule } from './modules/branches/branches.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CompaniesModule } from './modules/companies/companies.module';
     UsersModule,
     AuthModule,
     CompaniesModule,
+    BranchesModule,
   ],
   controllers: [],
   providers: [],

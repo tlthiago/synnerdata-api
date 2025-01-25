@@ -4,20 +4,17 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
+  ManyToOne,
 } from 'typeorm';
-import { Branch } from '../../../modules/branches/entities/branch.entity';
+import { Company } from '../../../modules/companies/entities/company.entity';
 
-@Entity('empresas')
-export class Company {
+@Entity('filiais')
+export class Branch {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'nome_fantasia', type: 'varchar', length: 255 })
-  nomeFantasia: string;
-
-  @Column({ name: 'razao_social', type: 'varchar', length: 255 })
-  razaoSocial: string;
+  @Column({ name: 'nome', type: 'varchar', length: 255 })
+  nome: string;
 
   @Column({ name: 'cnpj', type: 'varchar', length: 14, unique: true })
   cnpj: string;
@@ -43,32 +40,11 @@ export class Company {
   @Column({ name: 'cep', type: 'varchar', length: 10 })
   cep: string;
 
-  @Column({ name: 'data_fundacao', type: 'date' })
+  @Column({ name: 'data_fundacao', type: 'date', nullable: true })
   dataFundacao: Date;
 
-  @Column({ name: 'telefone', type: 'varchar', length: 20 })
+  @Column({ name: 'telefone', type: 'varchar', length: 20, nullable: true })
   telefone: string;
-
-  @Column({ name: 'faturamento', type: 'numeric', precision: 15, scale: 2 })
-  faturamento: number;
-
-  @Column({ name: 'regime_tributario', type: 'varchar', length: 50 })
-  regimeTributario: string;
-
-  @Column({ name: 'inscricao_estadual', type: 'varchar', length: 50 })
-  inscricaoEstadual: string;
-
-  @Column({ name: 'cnae_principal', type: 'varchar', length: 50 })
-  cnaePrincipal: string;
-
-  @Column({ name: 'segmento', type: 'varchar', length: 100 })
-  segmento: string;
-
-  @Column({ name: 'ramo_atuacao', type: 'varchar', length: 100 })
-  ramoAtuacao: string;
-
-  @Column({ name: 'logo_url', type: 'varchar', length: 500, nullable: true })
-  logoUrl?: string;
 
   @Column({
     name: 'status',
@@ -96,6 +72,6 @@ export class Company {
   })
   readonly atualizadoEm?: Date;
 
-  @OneToMany(() => Branch, (branch) => branch.empresa)
-  filiais: Branch[];
+  @ManyToOne(() => Company, (company) => company.filiais)
+  empresa: Company;
 }
