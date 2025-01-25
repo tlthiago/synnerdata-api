@@ -1,4 +1,13 @@
-import { Controller, Get, Body, Patch, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Body,
+  Patch,
+  Param,
+  UseGuards,
+  ParseIntPipe,
+  Delete,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
@@ -52,7 +61,9 @@ export class UsersController {
     type: UsersResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  async findOne(@Param('id') id: string): Promise<UsersResponseDto> {
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<UsersResponseDto> {
     return await this.userService.findOne(+id);
   }
 
@@ -89,13 +100,55 @@ export class UsersController {
     },
   })
   @UseGuards(JwtAuthGuard)
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     await this.userService.update(+id, updateUserDto);
 
     return {
       succeeded: true,
       data: null,
       message: 'Usuário atualizado com sucesso.',
+    };
+  }
+
+  @Delete(':id')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Excluir um usuário',
+    description: 'Endpoint responsável por excluir um usuário.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID da filial.',
+    type: 'number',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Retorna uma mensagem de sucesso caso a exclusão seja bem sucedida.',
+    schema: {
+      type: 'object',
+      properties: {
+        succeeded: { type: 'boolean' },
+        data: { type: 'string', nullable: true },
+        message: {
+          type: 'string',
+          description: 'Usuário excluído com sucesso.',
+        },
+      },
+    },
+  })
+  @UseGuards(JwtAuthGuard)
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    await this.userService.remove(+id);
+
+    return {
+      succeeded: true,
+      data: null,
+      message: `Usuário id: #${id} excluído com sucesso.`,
     };
   }
 }
