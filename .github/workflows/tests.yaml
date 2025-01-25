@@ -9,7 +9,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:14
+        image: postgres:17
         ports:
           - 5432:5432
         env:
@@ -33,6 +33,13 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -p 5432 -U test; do
+            echo "Waiting for database to be ready..."
+            sleep 2
+          done
 
       - name: Run tests
         env:

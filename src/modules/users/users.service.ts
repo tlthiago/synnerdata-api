@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Users } from './entities/users.entity';
+import { User } from './entities/user.entity';
 import { UsersResponseDto } from './dto/user-response.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -13,36 +13,44 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(Users)
-    private readonly userRepository: Repository<Users>,
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    const user = this.userRepository.create(createUserDto);
-    await this.userRepository.save(user);
+    const user = this.usersRepository.create(createUserDto);
+    return await this.usersRepository.save(user);
   }
 
   async findAll(): Promise<UsersResponseDto[]> {
-    return await this.userRepository.find({
-      select: ['id', 'name', 'email', 'role'],
+    return await this.usersRepository.find({
+      select: ['id', 'nome', 'email', 'funcao'],
     });
   }
 
   async findOne(id: number): Promise<UsersResponseDto> {
-    const user = await this.userRepository.findOne({
+    const userId = +id;
+
+    if (isNaN(userId)) {
+      throw new BadRequestException('ID de usuário inválido.');
+    }
+
+    const user = await this.usersRepository.findOne({
       where: {
         id,
       },
-      select: ['id', 'name', 'email', 'role'],
+      select: ['id', 'nome', 'email', 'funcao'],
     });
 
-    if (!user) throw new NotFoundException('Usuário não encontrado.');
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
 
     return user;
   }
 
   async findOneByEmail(email: string) {
-    const user = await this.userRepository.findOne({
+    const user = await this.usersRepository.findOne({
       where: { email },
     });
 
@@ -56,7 +64,9 @@ export class UsersService {
       throw new BadRequestException('ID de usuário inválido.');
     }
 
-    const result = await this.userRepository.update(userId, updateUserDto);
+    const result = await this.usersRepository.update(userId, {
+      ...updateUserDto,
+    });
 
     if (result.affected === 0) {
       throw new NotFoundException('Usuário não encontrado.');

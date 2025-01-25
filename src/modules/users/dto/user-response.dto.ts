@@ -5,11 +5,11 @@ export class UsersResponseDto {
   id: number;
 
   @ApiProperty({ description: 'Nome do usuário.' })
-  name: string;
+  nome: string;
 
   @ApiProperty({ description: 'Email do usuário.' })
   email: string;
 
   @ApiProperty({ description: 'Função do usuário.' })
-  role: string;
+  funcao: string;
 }

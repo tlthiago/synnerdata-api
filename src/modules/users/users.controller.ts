@@ -14,20 +14,22 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiOperation,
+  ApiParam,
   ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 import { UsersResponseDto } from './dto/user-response.dto';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @Controller('v1/users')
+@ApiTags('Usuários')
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
   @Get()
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Buscar usuários',
+    summary: 'Buscar todos os usuários',
     description:
       'Endpoint responsável por retornar os dados dos usuários cadastrados no sistema.',
   })
@@ -36,35 +38,47 @@ export class UsersController {
     description: 'Retorna todos os usuários cadastrados no sistema.',
     type: [UsersResponseDto],
   })
+  @UseGuards(JwtAuthGuard)
   async findAll(): Promise<UsersResponseDto[]> {
-    return this.userService.findAll();
+    return await this.userService.findAll();
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Buscar usuário',
     description: 'Endpoint responsável por retornar os dados de um usuário.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do usuário.',
+    type: 'number',
+    required: true,
   })
   @ApiResponse({
     status: 200,
     description: 'Retorna um usuário conforme ID informado.',
     type: UsersResponseDto,
   })
+  @UseGuards(JwtAuthGuard)
   async findOne(@Param('id') id: string): Promise<UsersResponseDto> {
-    return this.userService.findOne(+id);
+    return await this.userService.findOne(+id);
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Atualizar dados de um usuário',
     description: 'Endpoint responsável por atualizar os dados de um usuário.',
   })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do usuário.',
+    type: 'number',
+    required: true,
+  })
   @ApiBody({
-    description: 'Dados necessários para atualizar os dados do usuário',
+    description: 'Dados disponíveis para atualização do usuário',
     type: UpdateUserDto,
   })
   @ApiResponse({
@@ -78,12 +92,13 @@ export class UsersController {
         data: { type: 'string', nullable: true },
         message: {
           type: 'string',
-          description: 'Usuário atualizado com sucesso',
+          description: 'Usuário atualizado com sucesso.',
         },
       },
     },
   })
-  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(new ValidationPipe({ forbidNonWhitelisted: true }))
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     await this.userService.update(+id, updateUserDto);
 
