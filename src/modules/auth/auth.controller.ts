@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  HttpCode,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
+import { Controller, Post, Body, HttpCode } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthDto } from './dto/auth.dto';
@@ -43,7 +36,6 @@ export class AuthController {
       },
     },
   })
-  @UsePipes(new ValidationPipe({ forbidNonWhitelisted: true }))
   async signUp(@Body() createUserDto: CreateUserDto) {
     await this.authService.signUp(createUserDto);
 

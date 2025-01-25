@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Body,
-  Patch,
-  Param,
-  UsePipes,
-  ValidationPipe,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Body, Patch, Param, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
@@ -21,7 +12,7 @@ import {
 import { UsersResponseDto } from './dto/user-response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
-@Controller('v1/users')
+@Controller('v1/usuarios')
 @ApiTags('Usuários')
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
@@ -98,7 +89,6 @@ export class UsersController {
     },
   })
   @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe({ forbidNonWhitelisted: true }))
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     await this.userService.update(+id, updateUserDto);
 
