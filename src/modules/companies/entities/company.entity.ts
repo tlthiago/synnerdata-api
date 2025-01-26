@@ -10,6 +10,7 @@ import { Branch } from '../../../modules/branches/entities/branch.entity';
 import { Department } from '../../../modules/departments/entities/department.entity';
 import { CostCenter } from '../../../modules/cost-centers/entities/cost-center.entity';
 import { Cbo } from '../../../modules/cbos/entities/cbo.entity';
+import { Epi } from '../../../modules/epis/entities/epi.entity';
 
 @Entity('empresas')
 export class Company {
@@ -110,4 +111,7 @@ export class Company {
 
   @OneToMany(() => Cbo, (cbo) => cbo.empresa)
   cbos: Cbo[];
+
+  @OneToMany(() => Epi, (epi) => epi.empresa)
+  epis: Epi[];
 }
