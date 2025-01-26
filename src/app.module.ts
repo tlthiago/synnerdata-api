@@ -10,6 +10,7 @@ import { BranchesModule } from './modules/branches/branches.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { CostCentersModule } from './modules/cost-centers/cost-centers.module';
 import { CbosModule } from './modules/cbos/cbos.module';
+import { EpisModule } from './modules/epis/epis.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { CbosModule } from './modules/cbos/cbos.module';
     DepartmentsModule,
     CostCentersModule,
     CbosModule,
+    EpisModule,
   ],
   controllers: [],
   providers: [],
