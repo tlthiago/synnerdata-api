@@ -9,6 +9,7 @@ import { CompaniesModule } from './modules/companies/companies.module';
 import { BranchesModule } from './modules/branches/branches.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { CostCentersModule } from './modules/cost-centers/cost-centers.module';
+import { CbosModule } from './modules/cbos/cbos.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { CostCentersModule } from './modules/cost-centers/cost-centers.module';
     BranchesModule,
     DepartmentsModule,
     CostCentersModule,
+    CbosModule,
   ],
   controllers: [],
   providers: [],

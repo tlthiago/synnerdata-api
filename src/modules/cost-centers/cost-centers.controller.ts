@@ -151,7 +151,7 @@ export class CostCentersController {
         data: { type: 'string', nullable: true },
         message: {
           type: 'string',
-          description: 'Centros de custo atualizado com sucesso.',
+          description: 'Centro de custo atualizado com sucesso.',
         },
       },
     },

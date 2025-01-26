@@ -9,6 +9,7 @@ import {
 import { Branch } from '../../../modules/branches/entities/branch.entity';
 import { Department } from '../../../modules/departments/entities/department.entity';
 import { CostCenter } from '../../../modules/cost-centers/entities/cost-center.entity';
+import { Cbo } from '../../../modules/cbos/entities/cbo.entity';
 
 @Entity('empresas')
 export class Company {
@@ -106,4 +107,7 @@ export class Company {
 
   @OneToMany(() => CostCenter, (costCenter) => costCenter.empresa)
   centrosDeCusto: CostCenter[];
+
+  @OneToMany(() => Cbo, (cbo) => cbo.empresa)
+  cbos: Cbo[];
 }
