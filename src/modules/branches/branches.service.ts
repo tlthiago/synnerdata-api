@@ -18,7 +18,7 @@ export class BranchesService {
     private readonly companiesService: CompaniesService,
   ) {}
 
-  async create(empresaId: number, createBranchDto: CreateBranchDto) {
+  async create(companyId: number, createBranchDto: CreateBranchDto) {
     const companyExists = await this.companiesService.findCompanyByCnpj(
       createBranchDto.cnpj,
     );
@@ -28,7 +28,7 @@ export class BranchesService {
       throw new ConflictException('Já existe uma empresa com o mesmo CNPJ.');
     }
 
-    const company = await this.companiesService.findOne(empresaId);
+    const company = await this.companiesService.findOne(companyId);
 
     const branch = this.branchesRepository.create({
       ...createBranchDto,
@@ -40,12 +40,12 @@ export class BranchesService {
     return branch.id;
   }
 
-  async findAll(empresaId: number) {
-    await this.companiesService.findOne(empresaId);
+  async findAll(companyId: number) {
+    await this.companiesService.findOne(companyId);
 
     return this.branchesRepository.find({
       where: {
-        empresa: { id: empresaId },
+        empresa: { id: companyId },
         status: 'A',
       },
     });
