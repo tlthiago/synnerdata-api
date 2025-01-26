@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { BranchesModule } from './modules/branches/branches.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
+import { CostCentersModule } from './modules/cost-centers/cost-centers.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { DepartmentsModule } from './modules/departments/departments.module';
     CompaniesModule,
     BranchesModule,
     DepartmentsModule,
+    CostCentersModule,
   ],
   controllers: [],
   providers: [],

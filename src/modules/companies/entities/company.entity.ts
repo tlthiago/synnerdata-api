@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { Branch } from '../../../modules/branches/entities/branch.entity';
 import { Department } from '../../../modules/departments/entities/department.entity';
+import { CostCenter } from '../../../modules/cost-centers/entities/cost-center.entity';
 
 @Entity('empresas')
 export class Company {
@@ -102,4 +103,7 @@ export class Company {
 
   @OneToMany(() => Department, (department) => department.empresa)
   setores: Department[];
+
+  @OneToMany(() => CostCenter, (costCenter) => costCenter.empresa)
+  centrosDeCusto: CostCenter[];
 }

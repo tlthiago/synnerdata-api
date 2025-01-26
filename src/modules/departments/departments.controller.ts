@@ -104,17 +104,17 @@ export class DepartmentsController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Buscar setor',
-    description: 'Endpoint responsável por listar dados de uma filial.',
+    description: 'Endpoint responsável por listar dados de um departamento.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID da filial.',
+    description: 'ID do setor.',
     type: 'number',
     required: true,
   })
   @ApiResponse({
     status: 200,
-    description: 'Retorna os dados da filial em casos de sucesso.',
+    description: 'Retorna os dados do setor em casos de sucesso.',
     type: DepartmentResponseDto,
   })
   @UseGuards(JwtAuthGuard)
@@ -130,7 +130,7 @@ export class DepartmentsController {
   })
   @ApiParam({
     name: 'id',
-    description: 'ID da filial.',
+    description: 'ID do setor.',
     type: 'number',
     required: true,
   })
@@ -176,7 +176,7 @@ export class DepartmentsController {
   })
   @ApiParam({
     name: 'id',
-    description: 'ID da filial.',
+    description: 'ID do setor.',
     type: 'number',
     required: true,
   })
