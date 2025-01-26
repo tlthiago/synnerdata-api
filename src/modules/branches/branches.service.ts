@@ -51,7 +51,7 @@ export class BranchesService {
     });
   }
 
-  async findOne(id: number) {
+  findOne(id: number) {
     return this.branchesRepository.findOne({
       where: {
         id,
