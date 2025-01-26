@@ -64,8 +64,14 @@ export class CompanyResponseDto {
   @ApiProperty({ description: 'Status.' })
   status: string;
 
+  @ApiProperty({ description: 'Criado por.' })
+  criadoPor: string;
+
   @ApiProperty({ description: 'Criado em.' })
   criadoEm: string;
+
+  @ApiProperty({ description: 'Atualizado por.' })
+  atualizadoPor: string;
 
   @ApiProperty({ description: 'Atualizado em.' })
   atualizadoEm: string;
