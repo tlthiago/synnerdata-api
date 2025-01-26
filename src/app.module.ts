@@ -7,6 +7,7 @@ import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { BranchesModule } from './modules/branches/branches.module';
+import { DepartmentsModule } from './modules/departments/departments.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { BranchesModule } from './modules/branches/branches.module';
     AuthModule,
     CompaniesModule,
     BranchesModule,
+    DepartmentsModule,
   ],
   controllers: [],
   providers: [],

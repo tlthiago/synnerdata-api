@@ -7,6 +7,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Branch } from '../../../modules/branches/entities/branch.entity';
+import { Department } from '../../../modules/departments/entities/department.entity';
 
 @Entity('empresas')
 export class Company {
@@ -98,4 +99,7 @@ export class Company {
 
   @OneToMany(() => Branch, (branch) => branch.empresa)
   filiais: Branch[];
+
+  @OneToMany(() => Department, (department) => department.empresa)
+  setores: Department[];
 }
