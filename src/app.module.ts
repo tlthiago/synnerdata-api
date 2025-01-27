@@ -11,6 +11,7 @@ import { DepartmentsModule } from './modules/departments/departments.module';
 import { CostCentersModule } from './modules/cost-centers/cost-centers.module';
 import { CbosModule } from './modules/cbos/cbos.module';
 import { EpisModule } from './modules/epis/epis.module';
+import { EmployeesModule } from './modules/employees/employees.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { EpisModule } from './modules/epis/epis.module';
     CostCentersModule,
     CbosModule,
     EpisModule,
+    EmployeesModule,
   ],
   controllers: [],
   providers: [],
