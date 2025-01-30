@@ -11,6 +11,7 @@ import { Department } from '../../../modules/departments/entities/department.ent
 import { CostCenter } from '../../../modules/cost-centers/entities/cost-center.entity';
 import { Cbo } from '../../../modules/cbos/entities/cbo.entity';
 import { Epi } from '../../../modules/epis/entities/epi.entity';
+import { Project } from '../../../modules/projects/entities/project.entity';
 
 @Entity('empresas')
 export class Company {
@@ -114,4 +115,7 @@ export class Company {
 
   @OneToMany(() => Epi, (epi) => epi.empresa)
   epis: Epi[];
+
+  @OneToMany(() => Project, (project) => project.empresa)
+  projetos: Project[];
 }
