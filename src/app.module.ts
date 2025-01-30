@@ -36,7 +36,7 @@ import { ProjectsModule } from './modules/projects/projects.module'
     CostCentersModule,
     CbosModule,
     EpisModule,
-    EmployeesModule
+    EmployeesModule,
     ProjectsModule,
   ],
   controllers: [],
