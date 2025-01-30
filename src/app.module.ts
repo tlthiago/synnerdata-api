@@ -12,7 +12,7 @@ import { CostCentersModule } from './modules/cost-centers/cost-centers.module';
 import { CbosModule } from './modules/cbos/cbos.module';
 import { EpisModule } from './modules/epis/epis.module';
 import { EmployeesModule } from './modules/employees/employees.module';
-import { ProjectsModule } from './modules/projects/projects.module'
+import { ProjectsModule } from './modules/projects/projects.module';
 
 @Module({
   imports: [
