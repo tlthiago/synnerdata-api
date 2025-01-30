@@ -27,7 +27,7 @@ export class Employee {
   @Column({ type: 'int' })
   salario: number;
 
-  @Column({ type: 'varchar', length: 15, nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: true })
   telefone?: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -53,4 +53,18 @@ export class Employee {
 
   @Column({ type: 'varchar', length: 10 })
   cep: string;
+
+  @Column({ name: 'criado_por', type: 'integer' })
+  criadoPor?: number;
+
+  @Column({ name: 'atualizado_por', type: 'integer', nullable: true })
+  atualizadoPor?: number;
+
+  @Column({
+    name: 'status',
+    type: 'enum',
+    enum: ['A', 'D', 'F', 'AF', 'FP'],
+    default: 'A',
+  })
+  status: string;
 }

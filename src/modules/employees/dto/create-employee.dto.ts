@@ -1,13 +1,14 @@
 import {
   IsString,
   IsInt,
-  IsDate,
+  //IsDate,
   IsEnum,
   IsOptional,
   IsPhoneNumber,
   IsNotEmpty,
   Matches,
   Length,
+  IsNumber,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -27,7 +28,7 @@ export class CreateEmployeeDto {
   cpf: string;
 
   @ApiProperty({ description: 'Data de nascimento do empregado' })
-  @IsDate()
+  //@IsDate()
   @IsNotEmpty()
   dataNascimento: Date;
 
@@ -114,4 +115,11 @@ export class CreateEmployeeDto {
     message: 'CEP deve estar no formato 00000-000 ou 00000000',
   })
   cep: string;
+
+  @ApiProperty({
+    description: 'Usuário responsável pela criação da Funncionário.',
+  })
+  @IsNotEmpty()
+  @IsNumber()
+  criadoPor: number;
 }
