@@ -12,6 +12,8 @@ import { CostCentersModule } from './modules/cost-centers/cost-centers.module';
 import { CbosModule } from './modules/cbos/cbos.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { EpisModule } from './modules/epis/epis.module';
+import { EmployeesModule } from './modules/employees/employees.module';
+import { ProjectsModule } from './modules/projects/projects.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { EpisModule } from './modules/epis/epis.module';
     CbosModule,
     RolesModule,
     EpisModule,
+    EmployeesModule,
+    ProjectsModule,
   ],
   controllers: [],
   providers: [],

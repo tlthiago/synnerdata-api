@@ -12,6 +12,7 @@ import { CostCenter } from '../../../modules/cost-centers/entities/cost-center.e
 import { Cbo } from '../../../modules/cbos/entities/cbo.entity';
 import { Epi } from '../../../modules/epis/entities/epi.entity';
 import { Role } from '../../../modules/roles/entities/role.entity';
+import { Project } from '../../../modules/projects/entities/project.entity';
 
 @Entity('empresas')
 export class Company {
@@ -118,4 +119,7 @@ export class Company {
 
   @OneToMany(() => Role, (role) => role.empresa)
   funcoes: Role[];
+
+  @OneToMany(() => Project, (project) => project.empresa)
+  projetos: Project[];
 }
