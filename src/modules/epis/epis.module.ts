@@ -9,5 +9,6 @@ import { CompaniesModule } from '../companies/companies.module';
   imports: [TypeOrmModule.forFeature([Epi]), CompaniesModule],
   controllers: [EpisController],
   providers: [EpisService],
+  exports: [EpisService],
 })
 export class EpisModule {}

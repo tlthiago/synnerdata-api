@@ -10,6 +10,7 @@ import { BranchesModule } from './modules/branches/branches.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { CostCentersModule } from './modules/cost-centers/cost-centers.module';
 import { CbosModule } from './modules/cbos/cbos.module';
+import { RolesModule } from './modules/roles/roles.module';
 import { EpisModule } from './modules/epis/epis.module';
 
 @Module({
@@ -33,6 +34,7 @@ import { EpisModule } from './modules/epis/epis.module';
     DepartmentsModule,
     CostCentersModule,
     CbosModule,
+    RolesModule,
     EpisModule,
   ],
   controllers: [],
