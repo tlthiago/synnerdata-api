@@ -5,9 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Role } from './entities/role.entity';
 import { CompaniesModule } from '../companies/companies.module';
 import { EpisModule } from '../epis/epis.module';
+import { RoleEpiLogs } from './entities/role-epi-logs.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Role]), CompaniesModule, EpisModule],
+  imports: [
+    TypeOrmModule.forFeature([Role, RoleEpiLogs]),
+    CompaniesModule,
+    EpisModule,
+  ],
   controllers: [RolesController],
   providers: [RolesService],
 })

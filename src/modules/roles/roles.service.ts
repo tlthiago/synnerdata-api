@@ -3,12 +3,13 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from './entities/role.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CompaniesService } from '../companies/companies.service';
 import { plainToInstance } from 'class-transformer';
 import { RoleResponseDto } from './dto/role-response.dto';
 import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
 import { EpisService } from '../epis/epis.service';
+import { RoleEpiAction, RoleEpiLogs } from './entities/role-epi-logs.entity';
 
 @Injectable()
 export class RolesService {
@@ -17,6 +18,7 @@ export class RolesService {
     private readonly roleRepository: Repository<Role>,
     private readonly companiesService: CompaniesService,
     private readonly episService: EpisService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(companyId: number, createRoleDto: CreateRoleDto) {
@@ -66,16 +68,51 @@ export class RolesService {
   }
 
   async update(id: number, updateRoleDto: UpdateRoleDto) {
-    const epis = await this.episService.findByIds(updateRoleDto.epis);
-
-    const result = await this.roleRepository.update(id, {
-      ...updateRoleDto,
-      epis,
+    const role = await this.roleRepository.findOne({
+      where: { id, status: 'A' },
+      relations: ['epis'],
     });
 
-    if (result.affected === 0) {
+    if (!role) {
       throw new NotFoundException('Função não encontrada.');
     }
+
+    let newEpis = role.epis;
+    if (updateRoleDto.epis) {
+      newEpis = await this.episService.findByIds(updateRoleDto.epis);
+    }
+
+    const removedEpis = role.epis.filter(
+      (epi) => !newEpis.some((newEpi) => newEpi.id === epi.id),
+    );
+
+    if (role.nome === updateRoleDto.nome && removedEpis.length === 0) {
+      return `Nenhuma alteração foi feita na função #${id}.`;
+    }
+
+    await this.dataSource.transaction(async (manager) => {
+      if (updateRoleDto.nome) {
+        role.nome = updateRoleDto.nome;
+      }
+
+      if (updateRoleDto.epis) {
+        role.epis = newEpis;
+      }
+
+      role.atualizadoPor = updateRoleDto.atualizadoPor;
+      await manager.save(role);
+
+      if (removedEpis.length > 0) {
+        const logs = removedEpis.map((epi) => ({
+          funcao: role,
+          epi: epi,
+          acao: RoleEpiAction.REMOVEU,
+          descricao: `O usuário ${updateRoleDto.atualizadoPor} removeu o EPI ${epi.id} da função ${role.id}.`,
+          criadoPor: updateRoleDto.atualizadoPor,
+        }));
+        await manager.insert(RoleEpiLogs, logs);
+      }
+    });
 
     return `A função #${id} foi atualizada.`;
   }

@@ -7,7 +7,7 @@ config({ path: '.env.development.local' });
 
 const configService = new ConfigService();
 
-const dataSourceOptions = new DataSource({
+const DataSourceOptions = new DataSource({
   type: 'postgres',
   host: configService.get<string>('DB_HOST'),
   port: +configService.get<number>('DB_PORT'),
@@ -26,9 +26,9 @@ const dataSourceOptions = new DataSource({
       '*.entity.{ts,js}',
     ),
   ],
-  migrations: [path.join(__dirname, 'migrations', '*.ts')],
+  migrations: [path.join(__dirname, 'migrations', '*.{ts,js}')],
   migrationsRun: true,
   logging: false,
 });
 
-export default dataSourceOptions;
+export default DataSourceOptions;
