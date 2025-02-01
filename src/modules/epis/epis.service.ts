@@ -3,7 +3,7 @@ import { CreateEpiDto } from './dto/create-epi.dto';
 import { UpdateEpiDto } from './dto/update-epi.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Epi } from './entities/epi.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CompaniesService } from '../companies/companies.service';
 import { plainToInstance } from 'class-transformer';
 import { EpiResponseDto } from './dto/epi-response.dto';
@@ -52,6 +52,12 @@ export class EpisService {
     });
 
     return plainToInstance(EpiResponseDto, epi);
+  }
+
+  async findByIds(ids: number[]) {
+    return await this.epiRepository.findBy({
+      id: In(ids),
+    });
   }
 
   async update(id: number, updateEpiDto: UpdateEpiDto) {

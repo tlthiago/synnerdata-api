@@ -10,6 +10,7 @@ import { BranchesModule } from './modules/branches/branches.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { CostCentersModule } from './modules/cost-centers/cost-centers.module';
 import { CbosModule } from './modules/cbos/cbos.module';
+import { RolesModule } from './modules/roles/roles.module';
 import { EpisModule } from './modules/epis/epis.module';
 import { EmployeesModule } from './modules/employees/employees.module';
 import { ProjectsModule } from './modules/projects/projects.module';
@@ -35,6 +36,7 @@ import { ProjectsModule } from './modules/projects/projects.module';
     DepartmentsModule,
     CostCentersModule,
     CbosModule,
+    RolesModule,
     EpisModule,
     EmployeesModule,
     ProjectsModule,
