@@ -1,5 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { ContractType } from '../dto/create-employee.dto';
+import { Absence } from '../../../modules/absence/entities/absence.entity';
+import { MedicalCertificate } from 'src/modules/medical-certificate/entities/medical-certificate.entity';
 
 @Entity('funcionario')
 export class Employee {
@@ -67,4 +69,13 @@ export class Employee {
     default: 'A',
   })
   status: string;
+
+  @OneToMany(() => Absence, (absence) => absence.funcionario)
+  faltas: Absence[];
+
+  @OneToMany(
+    () => MedicalCertificate,
+    (medicalCertificate) => medicalCertificate.funcionario,
+  )
+  atestados: MedicalCertificate[];
 }

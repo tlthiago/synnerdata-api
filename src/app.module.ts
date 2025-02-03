@@ -14,6 +14,8 @@ import { RolesModule } from './modules/roles/roles.module';
 import { EpisModule } from './modules/epis/epis.module';
 import { EmployeesModule } from './modules/employees/employees.module';
 import { ProjectsModule } from './modules/projects/projects.module';
+import { AbsenceModule } from './modules/absence/absence.module';
+import { MedicalCertificateModule } from './modules/medical-certificate/medical-certificate.module';
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { ProjectsModule } from './modules/projects/projects.module';
     EpisModule,
     EmployeesModule,
     ProjectsModule,
+    AbsenceModule,
+    MedicalCertificateModule,
   ],
   controllers: [],
   providers: [],
