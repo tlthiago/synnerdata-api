@@ -19,7 +19,7 @@ export class CreatePromotionDto {
   data: string;
 
   @ApiProperty({
-    description: 'Usuário responsável pelo cadastro do atestado.',
+    description: 'Usuário responsável pelo cadastro da promoção.',
   })
   @IsNotEmpty()
   @IsNumber()

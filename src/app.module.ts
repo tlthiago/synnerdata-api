@@ -18,6 +18,7 @@ import { AbsenceModule } from './modules/absence/absence.module';
 import { MedicalCertificateModule } from './modules/medical-certificate/medical-certificate.module';
 import { PromotionModule } from './modules/promotion/promotion.module';
 import { TerminationsModule } from './modules/terminations/terminations.module';
+import { CpfAnalysisModule } from './modules/cpf-analysis/cpf-analysis.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { TerminationsModule } from './modules/terminations/terminations.module';
     MedicalCertificateModule,
     PromotionModule,
     TerminationsModule,
+    CpfAnalysisModule,
   ],
   controllers: [],
   providers: [],

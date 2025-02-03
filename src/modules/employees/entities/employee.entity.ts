@@ -4,6 +4,7 @@ import { Absence } from '../../../modules/absence/entities/absence.entity';
 import { MedicalCertificate } from '../../../modules/medical-certificate/entities/medical-certificate.entity';
 import { Promotion } from '../../../modules/promotion/entities/promotion.entity';
 import { Termination } from '../../../modules/terminations/entities/termination.entity';
+import { CpfAnalysis } from '../../../modules/cpf-analysis/entities/cpf-analysis.entity';
 
 @Entity('funcionario')
 export class Employee {
@@ -85,5 +86,8 @@ export class Employee {
   promocoes: Promotion[];
 
   @OneToMany(() => Termination, (termination) => termination.funcionario)
-  demissoes: Termination;
+  demissoes: Termination[];
+
+  @OneToMany(() => CpfAnalysis, (CpfAnalysis) => CpfAnalysis.funcionario)
+  analisesDeCpf: CpfAnalysis[];
 }
