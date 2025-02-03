@@ -196,9 +196,9 @@ export class MedicalCertificateController {
   @UseGuards(JwtAuthGuard)
   async remove(
     @Param('id', ParseIntPipe) id: number,
-    @Body() deleteEpiDto: BaseDeleteDto,
+    @Body() deleteMedicalCertificateDto: BaseDeleteDto,
   ) {
-    await this.medicalCertificateService.remove(id, deleteEpiDto);
+    await this.medicalCertificateService.remove(id, deleteMedicalCertificateDto);
 
     return {
       succeeded: true,

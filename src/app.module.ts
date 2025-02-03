@@ -16,6 +16,7 @@ import { EmployeesModule } from './modules/employees/employees.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { AbsenceModule } from './modules/absence/absence.module';
 import { MedicalCertificateModule } from './modules/medical-certificate/medical-certificate.module';
+import { PromotionModule } from './modules/promotion/promotion.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { MedicalCertificateModule } from './modules/medical-certificate/medical-
     ProjectsModule,
     AbsenceModule,
     MedicalCertificateModule,
+    PromotionModule,
   ],
   controllers: [],
   providers: [],

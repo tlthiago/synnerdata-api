@@ -2,6 +2,7 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { ContractType } from '../dto/create-employee.dto';
 import { Absence } from '../../../modules/absence/entities/absence.entity';
 import { MedicalCertificate } from 'src/modules/medical-certificate/entities/medical-certificate.entity';
+import { Promotion } from 'src/modules/promotion/entities/promotion.entity';
 
 @Entity('funcionario')
 export class Employee {
@@ -78,4 +79,7 @@ export class Employee {
     (medicalCertificate) => medicalCertificate.funcionario,
   )
   atestados: MedicalCertificate[];
+
+  @OneToMany(() => Promotion, (promotion) => promotion.funcionario)
+  promocoes: Promotion[];
 }

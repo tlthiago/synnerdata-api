@@ -201,9 +201,9 @@ export class AbsenceController {
   @UseGuards(JwtAuthGuard)
   async remove(
     @Param('id', ParseIntPipe) id: number,
-    @Body() deleteEpiDto: BaseDeleteDto,
+    @Body() deleteAbsenceDto: BaseDeleteDto,
   ) {
-    await this.absenceService.remove(id, deleteEpiDto);
+    await this.absenceService.remove(id, deleteAbsenceDto);
 
     return {
       succeeded: true,
