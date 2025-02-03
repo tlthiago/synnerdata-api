@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne } from 'typeorm';
 import { BaseEntity } from '../../../config/database/entities/base.entity';
-import { Company } from 'src/modules/companies/entities/company.entity';
+import { Company } from '../../../modules/companies/entities/company.entity';
 
 @Entity('projetos')
 export class Project extends BaseEntity {
