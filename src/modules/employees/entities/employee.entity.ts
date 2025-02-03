@@ -1,8 +1,9 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { ContractType } from '../dto/create-employee.dto';
 import { Absence } from '../../../modules/absence/entities/absence.entity';
-import { MedicalCertificate } from 'src/modules/medical-certificate/entities/medical-certificate.entity';
-import { Promotion } from 'src/modules/promotion/entities/promotion.entity';
+import { MedicalCertificate } from '../../../modules/medical-certificate/entities/medical-certificate.entity';
+import { Promotion } from '../../../modules/promotion/entities/promotion.entity';
+import { Termination } from '../../../modules/terminations/entities/termination.entity';
 
 @Entity('funcionario')
 export class Employee {
@@ -82,4 +83,7 @@ export class Employee {
 
   @OneToMany(() => Promotion, (promotion) => promotion.funcionario)
   promocoes: Promotion[];
+
+  @OneToMany(() => Termination, (termination) => termination.funcionario)
+  demissoes: Termination;
 }

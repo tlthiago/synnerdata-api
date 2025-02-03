@@ -75,4 +75,27 @@ export class EmployeesService {
   remove(id: number) {
     return `This action removes a #${id} employee`;
   }
+
+  async updateEmployeeStatus(id: number, status: string, updatedBy: number) {
+    const employee = await this.employeesResitory.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!employee) {
+      throw new NotFoundException('Funcionário não encontrado.');
+    }
+
+    const result = await this.employeesResitory.update(id, {
+      status,
+      atualizadoPor: updatedBy,
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Funcionário não encontrado');
+    }
+
+    return `Status do funcionário #${id} atualizado para ${status}.`;
+  }
 }

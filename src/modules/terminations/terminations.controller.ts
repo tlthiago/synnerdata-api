@@ -9,9 +9,9 @@ import {
   UseGuards,
   ParseIntPipe,
 } from '@nestjs/common';
-import { MedicalCertificateService } from './medical-certificate.service';
-import { CreateMedicalCertificateDto } from './dto/create-medical-certificate.dto';
-import { UpdateMedicalCertificateDto } from './dto/update-medical-certificate.dto';
+import { TerminationsService } from './terminations.service';
+import { CreateTerminationDto } from './dto/create-termination.dto';
+import { UpdateTerminationDto } from './dto/update-termination.dto';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -21,21 +21,19 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { MedicalCertificateResponseDto } from './dto/medical-certificate-response.dto';
+import { TerminationResponseDto } from './dto/termination-response.dto';
 import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
 
 @Controller('v1/funcionarios')
-@ApiTags('Atestados')
-export class MedicalCertificateController {
-  constructor(
-    private readonly medicalCertificateService: MedicalCertificateService,
-  ) {}
+@ApiTags('Demissões')
+export class TerminationsController {
+  constructor(private readonly terminationsService: TerminationsService) {}
 
-  @Post(':funcionarioId/atestados')
+  @Post(':funcionarioId/demissoes')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Cadastrar um atestado',
-    description: 'Endpoint responsável por cadastrar um atestado.',
+    summary: 'Cadastrar uma demissão',
+    description: 'Endpoint responsável por cadastrar uma demissão.',
   })
   @ApiParam({
     name: 'funcionarioId',
@@ -44,8 +42,8 @@ export class MedicalCertificateController {
     required: true,
   })
   @ApiBody({
-    description: 'Dados necessários para cadastrar o atestado.',
-    type: CreateMedicalCertificateDto,
+    description: 'Dados necessários para cadastrar a demissão.',
+    type: CreateTerminationDto,
   })
   @ApiResponse({
     status: 200,
@@ -58,7 +56,7 @@ export class MedicalCertificateController {
         data: { type: 'string', nullable: true },
         message: {
           type: 'string',
-          description: 'Atestado cadastrado com sucesso.',
+          description: 'Demissão cadastrada com sucesso.',
         },
       },
     },
@@ -66,26 +64,26 @@ export class MedicalCertificateController {
   @UseGuards(JwtAuthGuard)
   async create(
     @Param('funcionarioId', ParseIntPipe) employeeId: number,
-    @Body() createMedicalCertificateDto: CreateMedicalCertificateDto,
+    @Body() createTerminationDto: CreateTerminationDto,
   ) {
-    const id = await this.medicalCertificateService.create(
+    const id = await this.terminationsService.create(
       employeeId,
-      createMedicalCertificateDto,
+      createTerminationDto,
     );
 
     return {
       succeeded: true,
       data: null,
-      message: `Atestado cadastrado com sucesso, id: #${id}.`,
+      message: `Demissão cadastrada com sucesso, id: #${id}.`,
     };
   }
 
-  @Get(':funcionarioId/atestados')
+  @Get(':funcionarioId/demissoes')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Buscar todos as atestados',
+    summary: 'Buscar todas as demissões',
     description:
-      'Endpoint responsável por listar todos as atestados cadastrados de um funcionário.',
+      'Endpoint responsável por listar todos as demissões cadastradas de um funcionário.',
   })
   @ApiParam({
     name: 'funcionarioId',
@@ -95,51 +93,51 @@ export class MedicalCertificateController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Retorna um lista de atestados em casos de sucesso.',
-    type: [MedicalCertificateResponseDto],
+    description: 'Retorna um lista de demissões em casos de sucesso.',
+    type: [TerminationResponseDto],
   })
   @UseGuards(JwtAuthGuard)
   findAll(@Param('funcionarioId', ParseIntPipe) employeeId: number) {
-    return this.medicalCertificateService.findAll(employeeId);
+    return this.terminationsService.findAll(employeeId);
   }
 
-  @Get('atestados/:id')
+  @Get('demissoes/:id')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Buscar atestado',
-    description: 'Endpoint responsável por listar dados de um atestado.',
+    summary: 'Buscar demissão',
+    description: 'Endpoint responsável por listar dados de um demissão.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID da atestado.',
+    description: 'ID da demissão.',
     type: 'number',
     required: true,
   })
   @ApiResponse({
     status: 200,
-    description: 'Retorna os dados da atestado em casos de sucesso.',
-    type: MedicalCertificateResponseDto,
+    description: 'Retorna os dados da demissão em casos de sucesso.',
+    type: TerminationResponseDto,
   })
   @UseGuards(JwtAuthGuard)
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.medicalCertificateService.findOne(id);
+    return this.terminationsService.findOne(id);
   }
 
-  @Patch('atestados/:id')
+  @Patch('demissoes/:id')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Atualizar dados de um atestado',
-    description: 'Endpoint responsável por atualizar os dados de um atestado.',
+    summary: 'Atualizar dados de um demissão',
+    description: 'Endpoint responsável por atualizar os dados de um demissão.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID da atestado.',
+    description: 'ID da demissão.',
     type: 'number',
     required: true,
   })
   @ApiBody({
-    description: 'Dados necessários para atualizar os dados da atestado',
-    type: UpdateMedicalCertificateDto,
+    description: 'Dados necessários para atualizar os dados da demissão',
+    type: UpdateTerminationDto,
   })
   @ApiResponse({
     status: 200,
@@ -152,7 +150,7 @@ export class MedicalCertificateController {
         data: { type: 'string', nullable: true },
         message: {
           type: 'string',
-          description: 'Atestado atualizada com sucesso.',
+          description: 'Demissão atualizada com sucesso.',
         },
       },
     },
@@ -160,34 +158,31 @@ export class MedicalCertificateController {
   @UseGuards(JwtAuthGuard)
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateMedicalCertificateDto: UpdateMedicalCertificateDto,
+    @Body() updateTerminationDto: UpdateTerminationDto,
   ) {
-    await this.medicalCertificateService.update(
-      id,
-      updateMedicalCertificateDto,
-    );
+    await this.terminationsService.update(id, updateTerminationDto);
 
     return {
       succeeded: true,
       data: null,
-      message: `Atestado id: #${id} atualizada com sucesso.`,
+      message: `Demissão id: #${id} atualizada com sucesso.`,
     };
   }
 
-  @Delete('atestados/:id')
+  @Delete('demissoes/:id')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Excluir um atestado',
-    description: 'Endpoint responsável por excluir um atestado.',
+    summary: 'Excluir um demissão',
+    description: 'Endpoint responsável por excluir um demissão.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID da atestado.',
+    description: 'ID da demissão.',
     type: 'number',
     required: true,
   })
   @ApiBody({
-    description: 'Dados necessários para atualizar os dados da atestado',
+    description: 'Dados necessários para atualizar os dados da demissão',
     type: BaseDeleteDto,
   })
   @ApiResponse({
@@ -201,7 +196,7 @@ export class MedicalCertificateController {
         data: { type: 'string', nullable: true },
         message: {
           type: 'string',
-          description: 'Atestado excluído com sucesso.',
+          description: 'Demissão excluída com sucesso.',
         },
       },
     },
@@ -209,17 +204,14 @@ export class MedicalCertificateController {
   @UseGuards(JwtAuthGuard)
   async remove(
     @Param('id', ParseIntPipe) id: number,
-    @Body() deleteMedicalCertificateDto: BaseDeleteDto,
+    @Body() deleteTerminationDto: BaseDeleteDto,
   ) {
-    await this.medicalCertificateService.remove(
-      id,
-      deleteMedicalCertificateDto,
-    );
+    await this.terminationsService.remove(id, deleteTerminationDto);
 
     return {
       succeeded: true,
       data: null,
-      message: `Atestado id: #${id} excluído com sucesso.`,
+      message: `Demissão id: #${id} excluída com sucesso.`,
     };
   }
 }
