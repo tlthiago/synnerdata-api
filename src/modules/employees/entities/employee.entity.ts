@@ -7,6 +7,7 @@ import { Termination } from '../../../modules/terminations/entities/termination.
 import { CpfAnalysis } from '../../../modules/cpf-analysis/entities/cpf-analysis.entity';
 import { Accident } from '../../../modules/accidents/entities/accident.entity';
 import { Warning } from '../../../modules/warnings/entities/warning.entity';
+import { LaborAction } from '../../../modules/labor-actions/entities/labor-action.entity';
 
 @Entity('funcionario')
 export class Employee {
@@ -98,4 +99,7 @@ export class Employee {
 
   @OneToMany(() => Warning, (warning) => warning.funcionario)
   advertencias: Warning[];
+
+  @OneToMany(() => LaborAction, (laborAction) => laborAction.funcionario)
+  acoesTrabalhistas: LaborAction[];
 }

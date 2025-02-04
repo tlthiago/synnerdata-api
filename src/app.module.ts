@@ -21,6 +21,7 @@ import { TerminationsModule } from './modules/terminations/terminations.module';
 import { CpfAnalysisModule } from './modules/cpf-analysis/cpf-analysis.module';
 import { AccidentsModule } from './modules/accidents/accidents.module';
 import { WarningsModule } from './modules/warnings/warnings.module';
+import { LaborActionsModule } from './modules/labor-actions/labor-actions.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { WarningsModule } from './modules/warnings/warnings.module';
     CpfAnalysisModule,
     AccidentsModule,
     WarningsModule,
+    LaborActionsModule,
   ],
   controllers: [],
   providers: [],
