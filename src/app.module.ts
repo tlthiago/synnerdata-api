@@ -19,6 +19,7 @@ import { MedicalCertificateModule } from './modules/medical-certificate/medical-
 import { PromotionModule } from './modules/promotion/promotion.module';
 import { TerminationsModule } from './modules/terminations/terminations.module';
 import { CpfAnalysisModule } from './modules/cpf-analysis/cpf-analysis.module';
+import { AccidentsModule } from './modules/accidents/accidents.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { CpfAnalysisModule } from './modules/cpf-analysis/cpf-analysis.module';
     PromotionModule,
     TerminationsModule,
     CpfAnalysisModule,
+    AccidentsModule,
   ],
   controllers: [],
   providers: [],

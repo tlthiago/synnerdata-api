@@ -5,6 +5,7 @@ import { MedicalCertificate } from '../../../modules/medical-certificate/entitie
 import { Promotion } from '../../../modules/promotion/entities/promotion.entity';
 import { Termination } from '../../../modules/terminations/entities/termination.entity';
 import { CpfAnalysis } from '../../../modules/cpf-analysis/entities/cpf-analysis.entity';
+import { Accident } from '../../../modules/accidents/entities/accident.entity';
 
 @Entity('funcionario')
 export class Employee {
@@ -90,4 +91,7 @@ export class Employee {
 
   @OneToMany(() => CpfAnalysis, (CpfAnalysis) => CpfAnalysis.funcionario)
   analisesDeCpf: CpfAnalysis[];
+
+  @OneToMany(() => Accident, (accident) => accident.funcionario)
+  acidentes: Accident[];
 }
