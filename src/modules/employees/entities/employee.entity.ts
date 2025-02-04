@@ -6,6 +6,7 @@ import { Promotion } from '../../../modules/promotion/entities/promotion.entity'
 import { Termination } from '../../../modules/terminations/entities/termination.entity';
 import { CpfAnalysis } from '../../../modules/cpf-analysis/entities/cpf-analysis.entity';
 import { Accident } from '../../../modules/accidents/entities/accident.entity';
+import { Warning } from '../../../modules/warnings/entities/warning.entity';
 
 @Entity('funcionario')
 export class Employee {
@@ -94,4 +95,7 @@ export class Employee {
 
   @OneToMany(() => Accident, (accident) => accident.funcionario)
   acidentes: Accident[];
+
+  @OneToMany(() => Warning, (warning) => warning.funcionario)
+  advertencias: Warning[];
 }

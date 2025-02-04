@@ -20,6 +20,7 @@ import { PromotionModule } from './modules/promotion/promotion.module';
 import { TerminationsModule } from './modules/terminations/terminations.module';
 import { CpfAnalysisModule } from './modules/cpf-analysis/cpf-analysis.module';
 import { AccidentsModule } from './modules/accidents/accidents.module';
+import { WarningsModule } from './modules/warnings/warnings.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { AccidentsModule } from './modules/accidents/accidents.module';
     TerminationsModule,
     CpfAnalysisModule,
     AccidentsModule,
+    WarningsModule,
   ],
   controllers: [],
   providers: [],
