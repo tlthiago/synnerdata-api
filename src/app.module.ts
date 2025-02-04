@@ -22,6 +22,7 @@ import { CpfAnalysisModule } from './modules/cpf-analysis/cpf-analysis.module';
 import { AccidentsModule } from './modules/accidents/accidents.module';
 import { WarningsModule } from './modules/warnings/warnings.module';
 import { LaborActionsModule } from './modules/labor-actions/labor-actions.module';
+import { EpiDeliveryModule } from './modules/epi-delivery/epi-delivery.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { LaborActionsModule } from './modules/labor-actions/labor-actions.module
     AccidentsModule,
     WarningsModule,
     LaborActionsModule,
+    EpiDeliveryModule,
   ],
   controllers: [],
   providers: [],

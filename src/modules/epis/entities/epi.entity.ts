@@ -2,6 +2,7 @@ import { Entity, Column, ManyToOne, ManyToMany } from 'typeorm';
 import { BaseEntity } from '../../../config/database/entities/base.entity';
 import { Company } from '../../../modules/companies/entities/company.entity';
 import { Role } from '../../../modules/roles/entities/role.entity';
+import { EpiDelivery } from '../../../modules/epi-delivery/entities/epi-delivery.entity';
 
 @Entity('epis')
 export class Epi extends BaseEntity {
@@ -19,4 +20,7 @@ export class Epi extends BaseEntity {
 
   @ManyToMany(() => Role, (role) => role.epis)
   funcoes: Role[];
+
+  @ManyToMany(() => EpiDelivery, (epiDelivery) => epiDelivery.epis)
+  entregasDeEpis: EpiDelivery[];
 }

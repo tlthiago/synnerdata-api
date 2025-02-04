@@ -8,6 +8,7 @@ import { CpfAnalysis } from '../../../modules/cpf-analysis/entities/cpf-analysis
 import { Accident } from '../../../modules/accidents/entities/accident.entity';
 import { Warning } from '../../../modules/warnings/entities/warning.entity';
 import { LaborAction } from '../../../modules/labor-actions/entities/labor-action.entity';
+import { EpiDelivery } from '../../../modules/epi-delivery/entities/epi-delivery.entity';
 
 @Entity('funcionario')
 export class Employee {
@@ -102,4 +103,7 @@ export class Employee {
 
   @OneToMany(() => LaborAction, (laborAction) => laborAction.funcionario)
   acoesTrabalhistas: LaborAction[];
+
+  @OneToMany(() => EpiDelivery, (epiDelivery) => epiDelivery.funcionario)
+  entregasDeEpis: EpiDelivery[];
 }
