@@ -23,6 +23,7 @@ import { AccidentsModule } from './modules/accidents/accidents.module';
 import { WarningsModule } from './modules/warnings/warnings.module';
 import { LaborActionsModule } from './modules/labor-actions/labor-actions.module';
 import { EpiDeliveryModule } from './modules/epi-delivery/epi-delivery.module';
+import { VacationsModule } from './modules/vacations/vacations.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { EpiDeliveryModule } from './modules/epi-delivery/epi-delivery.module';
     WarningsModule,
     LaborActionsModule,
     EpiDeliveryModule,
+    VacationsModule,
   ],
   controllers: [],
   providers: [],

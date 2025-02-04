@@ -9,6 +9,7 @@ import { Accident } from '../../../modules/accidents/entities/accident.entity';
 import { Warning } from '../../../modules/warnings/entities/warning.entity';
 import { LaborAction } from '../../../modules/labor-actions/entities/labor-action.entity';
 import { EpiDelivery } from '../../../modules/epi-delivery/entities/epi-delivery.entity';
+import { Vacation } from '../../../modules/vacations/entities/vacation.entity';
 
 @Entity('funcionario')
 export class Employee {
@@ -106,4 +107,7 @@ export class Employee {
 
   @OneToMany(() => EpiDelivery, (epiDelivery) => epiDelivery.funcionario)
   entregasDeEpis: EpiDelivery[];
+
+  @OneToMany(() => Vacation, (vacation) => vacation.funcionario)
+  ferias: Vacation[];
 }
