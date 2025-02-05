@@ -1,4 +1,10 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { ContractType } from '../dto/create-employee.dto';
 import { Absence } from '../../../modules/absence/entities/absence.entity';
 import { MedicalCertificate } from '../../../modules/medical-certificate/entities/medical-certificate.entity';
@@ -10,6 +16,7 @@ import { Warning } from '../../../modules/warnings/entities/warning.entity';
 import { LaborAction } from '../../../modules/labor-actions/entities/labor-action.entity';
 import { EpiDelivery } from '../../../modules/epi-delivery/entities/epi-delivery.entity';
 import { Vacation } from '../../../modules/vacations/entities/vacation.entity';
+import { Project } from '../../../modules/projects/entities/project.entity';
 
 @Entity('funcionario')
 export class Employee {
@@ -110,4 +117,7 @@ export class Employee {
 
   @OneToMany(() => Vacation, (vacation) => vacation.funcionario)
   ferias: Vacation[];
+
+  @ManyToMany(() => Project, (project) => project.funcionarios)
+  projetos: Project[];
 }

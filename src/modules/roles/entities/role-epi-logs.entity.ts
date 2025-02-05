@@ -13,7 +13,7 @@ export enum RoleEpiAction {
   ADICIONOU = 'ADICIONOU',
 }
 
-@Entity('role_epi_logs')
+@Entity('funcao_epi_logs')
 export class RoleEpiLogs {
   @PrimaryGeneratedColumn()
   id: number;

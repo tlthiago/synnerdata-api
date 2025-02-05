@@ -7,7 +7,7 @@ import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Employee } from './entities/employee.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 @Injectable()
 export class EmployeesService {
@@ -52,6 +52,12 @@ export class EmployeesService {
     if (!employee) throw new NotFoundException('Funcionário não encontrado');
 
     return employee;
+  }
+
+  async findByIds(ids: number[]) {
+    return await this.employeesResitory.findBy({
+      id: In(ids),
+    });
   }
 
   async update(id: number, updateEmployeeDto: UpdateEmployeeDto) {

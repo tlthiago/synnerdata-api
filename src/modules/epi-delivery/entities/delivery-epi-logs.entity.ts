@@ -13,7 +13,7 @@ export enum EpiDeliveryAction {
   ADICIONOU = 'ADICIONOU',
 }
 
-@Entity('epi_delivery_logs')
+@Entity('entregas_epis_logs')
 export class EpiDeliveryLogs {
   @PrimaryGeneratedColumn()
   id: number;
