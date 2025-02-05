@@ -13,6 +13,7 @@ import { Cbo } from '../../../modules/cbos/entities/cbo.entity';
 import { Epi } from '../../../modules/epis/entities/epi.entity';
 import { Role } from '../../../modules/roles/entities/role.entity';
 import { Project } from '../../../modules/projects/entities/project.entity';
+import { Employee } from '../../../modules/employees/entities/employee.entity';
 
 @Entity('empresas')
 export class Company {
@@ -122,4 +123,7 @@ export class Company {
 
   @OneToMany(() => Project, (project) => project.empresa)
   projetos: Project[];
+
+  @OneToMany(() => Employee, (employee) => employee.empresa)
+  funcionarios: Employee[];
 }
