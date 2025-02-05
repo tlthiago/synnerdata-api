@@ -1,5 +1,4 @@
 import {
-  
   Column,
   Entity,
   ManyToMany,
@@ -9,7 +8,6 @@ import {
   UpdateDateColumn,
   ManyToOne,
 } from 'typeorm';
-import { ContractType } from '../dto/create-employee.dto';
 import { Absence } from '../../../modules/absence/entities/absence.entity';
 import { MedicalCertificate } from '../../../modules/medical-certificate/entities/medical-certificate.entity';
 import { Promotion } from '../../../modules/promotion/entities/promotion.entity';
@@ -22,18 +20,15 @@ import { EpiDelivery } from '../../../modules/epi-delivery/entities/epi-delivery
 import { Vacation } from '../../../modules/vacations/entities/vacation.entity';
 import { Project } from '../../../modules/projects/entities/project.entity';
 import { Company } from '../../../modules/companies/entities/company.entity';
+import { GrauInstrucao, RegimeContratacao } from '../dto/create-employee.dto';
 
 @Entity('funcionario')
-
 export class Employee {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
   nome: string;
-
-  @Column({ type: 'enum', enum: Status, nullable: false })
-  status: Status;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
   funcao: string;
@@ -183,5 +178,4 @@ export class Employee {
 
   @ManyToOne(() => Company, (company) => company.funcionarios)
   empresa: Company;
-
 }

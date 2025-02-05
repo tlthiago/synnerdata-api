@@ -1,5 +1,4 @@
-
-import { Entity, Column, ManyToOne, ManyToMany, JoinTable, OneToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, ManyToMany, JoinTable } from 'typeorm';
 
 import { BaseEntity } from '../../../config/database/entities/base.entity';
 import { Company } from '../../../modules/companies/entities/company.entity';
@@ -21,7 +20,7 @@ export class Project extends BaseEntity {
 
   @ManyToOne(() => Company, (company) => company.projetos)
   empresa: Company;
-  
+
   @ManyToMany(() => Employee, (employee) => employee.projetos, {
     cascade: true,
   })
@@ -36,6 +35,5 @@ export class Project extends BaseEntity {
       referencedColumnName: 'id',
     },
   })
-  
   funcionarios: Employee[];
 }
