@@ -1,4 +1,5 @@
 import { Entity, Column, ManyToOne, ManyToMany, JoinTable } from 'typeorm';
+
 import { BaseEntity } from '../../../config/database/entities/base.entity';
 import { Company } from '../../../modules/companies/entities/company.entity';
 import { Employee } from '../../../modules/employees/entities/employee.entity';
