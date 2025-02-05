@@ -8,8 +8,8 @@ import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CompaniesService } from '../companies/companies.service';
 import { Employee } from './entities/employee.entity';
-import { Repository } from 'typeorm';
 import { plainToInstance } from 'class-transformer';
+import { In, Repository } from 'typeorm';
 
 @Injectable()
 export class EmployeesService {
@@ -65,6 +65,12 @@ export class EmployeesService {
     return employee;
   }
 
+  async findByIds(ids: number[]) {
+    return await this.employeesResitory.findBy({
+      id: In(ids),
+    });
+  }
+
   async update(id: number, updateEmployeeDto: UpdateEmployeeDto) {
     const result = await this.employeesResitory.update(id, {
       ...updateEmployeeDto,
@@ -77,5 +83,28 @@ export class EmployeesService {
 
   remove(id: number) {
     return `This action removes a #${id} employee`;
+  }
+
+  async updateEmployeeStatus(id: number, status: string, updatedBy: number) {
+    const employee = await this.employeesResitory.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!employee) {
+      throw new NotFoundException('Funcionário não encontrado.');
+    }
+
+    const result = await this.employeesResitory.update(id, {
+      status,
+      atualizadoPor: updatedBy,
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Funcionário não encontrado');
+    }
+
+    return `Status do funcionário #${id} atualizado para ${status}.`;
   }
 }

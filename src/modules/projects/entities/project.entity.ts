@@ -1,4 +1,6 @@
-import { Entity, Column, ManyToOne, OneToMany } from 'typeorm';
+
+import { Entity, Column, ManyToOne, ManyToMany, JoinTable, OneToMany } from 'typeorm';
+
 import { BaseEntity } from '../../../config/database/entities/base.entity';
 import { Company } from '../../../modules/companies/entities/company.entity';
 import { Employee } from '../../../modules/employees/entities/employee.entity';
@@ -19,7 +21,21 @@ export class Project extends BaseEntity {
 
   @ManyToOne(() => Company, (company) => company.projetos)
   empresa: Company;
-
-  @OneToMany(() => Employee, (employee) => employee.projetos)
+  
+  @ManyToMany(() => Employee, (employee) => employee.projetos, {
+    cascade: true,
+  })
+  @JoinTable({
+    name: 'projetos',
+    joinColumn: {
+      name: 'projetoId',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'funcionarioId',
+      referencedColumnName: 'id',
+    },
+  })
+  
   funcionarios: Employee[];
 }

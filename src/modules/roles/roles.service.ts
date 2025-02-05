@@ -67,6 +67,21 @@ export class RolesService {
     return plainToInstance(RoleResponseDto, role);
   }
 
+  async findRoleById(id: number) {
+    const role = await this.roleRepository.findOne({
+      where: {
+        id,
+        status: 'A',
+      },
+    });
+
+    if (!role) {
+      throw new NotFoundException('Função não encontrada.');
+    }
+
+    return role;
+  }
+
   async update(id: number, updateRoleDto: UpdateRoleDto) {
     const role = await this.roleRepository.findOne({
       where: { id, status: 'A' },

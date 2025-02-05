@@ -5,27 +5,27 @@ import {
   ManyToOne,
   CreateDateColumn,
 } from 'typeorm';
-import { Role } from '../../roles/entities/role.entity';
 import { Epi } from '../../epis/entities/epi.entity';
+import { EpiDelivery } from './epi-delivery.entity';
 
-export enum RoleEpiAction {
+export enum EpiDeliveryAction {
   REMOVEU = 'REMOVEU',
   ADICIONOU = 'ADICIONOU',
 }
 
-@Entity('funcao_epi_logs')
-export class RoleEpiLogs {
+@Entity('entregas_epis_logs')
+export class EpiDeliveryLogs {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Role)
-  funcao: Role;
+  @ManyToOne(() => EpiDelivery)
+  entregaDeEpi: EpiDelivery;
 
   @ManyToOne(() => Epi)
   epi: Epi;
 
-  @Column({ type: 'enum', enum: RoleEpiAction })
-  acao: RoleEpiAction;
+  @Column({ type: 'enum', enum: EpiDeliveryAction })
+  acao: EpiDeliveryAction;
 
   @Column({ name: 'descricao', type: 'varchar' })
   descricao: string;
