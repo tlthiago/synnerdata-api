@@ -14,6 +14,17 @@ import { RolesModule } from './modules/roles/roles.module';
 import { EpisModule } from './modules/epis/epis.module';
 import { EmployeesModule } from './modules/employees/employees.module';
 import { ProjectsModule } from './modules/projects/projects.module';
+import { AbsenceModule } from './modules/absence/absence.module';
+import { MedicalCertificateModule } from './modules/medical-certificate/medical-certificate.module';
+import { PromotionModule } from './modules/promotion/promotion.module';
+import { TerminationsModule } from './modules/terminations/terminations.module';
+import { CpfAnalysisModule } from './modules/cpf-analysis/cpf-analysis.module';
+import { AccidentsModule } from './modules/accidents/accidents.module';
+import { WarningsModule } from './modules/warnings/warnings.module';
+import { LaborActionsModule } from './modules/labor-actions/labor-actions.module';
+import { EpiDeliveryModule } from './modules/epi-delivery/epi-delivery.module';
+import { VacationsModule } from './modules/vacations/vacations.module';
+import { EmployeesProjectsModule } from './modules/employees-projects/employees-projects.module';
 
 @Module({
   imports: [
@@ -40,6 +51,17 @@ import { ProjectsModule } from './modules/projects/projects.module';
     EpisModule,
     EmployeesModule,
     ProjectsModule,
+    AbsenceModule,
+    MedicalCertificateModule,
+    PromotionModule,
+    TerminationsModule,
+    CpfAnalysisModule,
+    AccidentsModule,
+    WarningsModule,
+    LaborActionsModule,
+    EpiDeliveryModule,
+    VacationsModule,
+    EmployeesProjectsModule,
   ],
   controllers: [],
   providers: [],

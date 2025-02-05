@@ -15,5 +15,6 @@ import { RoleEpiLogs } from './entities/role-epi-logs.entity';
   ],
   controllers: [RolesController],
   providers: [RolesService],
+  exports: [RolesService],
 })
 export class RolesModule {}
