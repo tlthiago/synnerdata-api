@@ -10,7 +10,7 @@ export class EpiDelivery extends BaseEntity {
 
   @ManyToMany(() => Epi, (epi) => epi.entregasDeEpis, { cascade: true })
   @JoinTable({
-    name: 'entregas_de_epis',
+    name: 'entregas_epis',
     joinColumn: {
       name: 'entregaId',
       referencedColumnName: 'id',
