@@ -25,7 +25,7 @@ export class Project extends BaseEntity {
     cascade: true,
   })
   @JoinTable({
-    name: 'projetos',
+    name: 'projetos_funcionarios',
     joinColumn: {
       name: 'projetoId',
       referencedColumnName: 'id',
