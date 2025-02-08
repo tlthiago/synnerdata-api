@@ -1,10 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UsersResponseDto } from './dto/user-response.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Injectable()
 export class UsersService {
@@ -48,6 +53,20 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
+    if (!updateUserDto.atualizadoPor) {
+      throw new BadRequestException(
+        'O usuário responsável pela atualização deve ser informado.',
+      );
+    }
+
+    const user = await this.usersRepository.findOne({
+      where: { id: updateUserDto.atualizadoPor },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
     const result = await this.usersRepository.update(id, {
       ...updateUserDto,
     });
@@ -57,9 +76,24 @@ export class UsersService {
     }
   }
 
-  async remove(id: number) {
+  async remove(id: number, deleteUserDto: BaseDeleteDto) {
+    if (!deleteUserDto.excluidoPor) {
+      throw new BadRequestException(
+        'O usuário responsável pela exclusão deve ser informado.',
+      );
+    }
+
+    const user = await this.usersRepository.findOne({
+      where: { id: deleteUserDto.excluidoPor },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
     const result = await this.usersRepository.update(id, {
       status: 'E',
+      atualizadoPor: deleteUserDto.excluidoPor,
     });
 
     if (result.affected === 0) {

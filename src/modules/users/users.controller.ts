@@ -20,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { UsersResponseDto } from './dto/user-response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Controller('v1/usuarios')
 @ApiTags('Usuários')
@@ -142,8 +143,11 @@ export class UsersController {
     },
   })
   @UseGuards(JwtAuthGuard)
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    await this.userService.remove(+id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() deleteUserDto: BaseDeleteDto,
+  ) {
+    await this.userService.remove(+id, deleteUserDto);
 
     return {
       succeeded: true,

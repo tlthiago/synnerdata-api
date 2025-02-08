@@ -27,7 +27,7 @@
     "migration:show": "docker exec -it app npm run typeorm -- migration:show -d ./src/config/database/typeorm.config.ts",
     "db:reset": "docker exec -it app npm run migration:revert && npm run migration:run",
     "prepare": "husky",
-    "commit": "cz"
+    "commit": "npm run lint && npm run prettier:check && cz"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -57,6 +57,7 @@
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
+    "@testcontainers/postgresql": "^10.18.0",
     "@types/bcrypt": "^5.0.2",
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.2",
