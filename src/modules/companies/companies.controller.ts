@@ -12,7 +12,7 @@ import {
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -22,6 +22,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CompanyResponseDto } from './dto/company-response.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Empresas')
@@ -56,12 +57,12 @@ export class CompaniesController {
   })
   @UseGuards(JwtAuthGuard)
   async create(@Body() createCompanyDto: CreateCompanyDto) {
-    await this.companiesService.create(createCompanyDto);
+    const companyId = await this.companiesService.create(createCompanyDto);
 
     return {
       succeeded: true,
       data: null,
-      message: 'Empresa cadastrada com sucesso.',
+      message: `Empresa cadastrada com sucesso, ID: ${companyId}.`,
     };
   }
 
@@ -141,11 +142,11 @@ export class CompaniesController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCompanyDto: UpdateCompanyDto,
   ) {
-    await this.companiesService.update(+id, updateCompanyDto);
+    const company = await this.companiesService.update(+id, updateCompanyDto);
 
     return {
       succeeded: true,
-      data: null,
+      data: company,
       message: 'Empresa atualizada com sucesso.',
     };
   }
@@ -179,8 +180,11 @@ export class CompaniesController {
     },
   })
   @UseGuards(JwtAuthGuard)
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    await this.companiesService.remove(+id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() deleteCompanyDto: BaseDeleteDto,
+  ) {
+    await this.companiesService.remove(+id, deleteCompanyDto);
 
     return {
       succeeded: true,

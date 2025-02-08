@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToOne,
 } from 'typeorm';
 import { Branch } from '../../../modules/branches/entities/branch.entity';
 import { Department } from '../../../modules/departments/entities/department.entity';
@@ -14,6 +15,7 @@ import { Epi } from '../../../modules/epis/entities/epi.entity';
 import { Role } from '../../../modules/roles/entities/role.entity';
 import { Project } from '../../../modules/projects/entities/project.entity';
 import { Employee } from '../../../modules/employees/entities/employee.entity';
+import { User } from '../../../modules/users/entities/user.entity';
 
 @Entity('empresas')
 export class Company {
@@ -85,8 +87,8 @@ export class Company {
   })
   status: string;
 
-  @Column({ name: 'criado_por', type: 'integer' })
-  criadoPor?: number;
+  @ManyToOne(() => User, { nullable: false, eager: true })
+  criadoPor: User;
 
   @CreateDateColumn({
     name: 'criado_em',
@@ -94,8 +96,8 @@ export class Company {
   })
   readonly criadoEm: Date;
 
-  @Column({ name: 'atualizado_por', type: 'integer', nullable: true })
-  atualizadoPor?: number;
+  @ManyToOne(() => User, { nullable: true, eager: true })
+  atualizadoPor: User;
 
   @UpdateDateColumn({
     name: 'atualizado_em',

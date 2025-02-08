@@ -5,7 +5,14 @@ export class BaseDeleteDto {
   @ApiProperty({
     description: 'Usuário responsável pela exclusão.',
   })
-  @IsNotEmpty()
-  @IsNumber()
+  @IsNotEmpty({
+    message: 'O usuário responsável pela exclusão deve ser informado.',
+  })
+  @IsNumber(
+    {},
+    {
+      message: 'O identificador do usuário deve ser um número.',
+    },
+  )
   excluidoPor: number;
 }
