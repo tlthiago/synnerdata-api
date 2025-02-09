@@ -207,6 +207,38 @@ describe('CompaniesController (E2E)', () => {
     );
   });
 
+  it('/v1/empresas (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/v1/empresas')
+      .send({
+        nomeFantasia: 'Empresa Teste',
+        razaoSocial: 'Empresa Teste LTDA',
+        cnpj: '12345678000199',
+        rua: 'Rua Teste',
+        numero: '123',
+        bairro: 'Centro',
+        cidade: 'São Paulo',
+        estado: 'SP',
+        cep: '01000-000',
+        dataFundacao: '2020-01-01',
+        telefone: '(11) 99999-9999',
+        faturamento: 1200000.5,
+        regimeTributario: 'Simples Nacional',
+        inscricaoEstadual: '123456789',
+        cnaePrincipal: '6201500',
+        segmento: 'Tecnologia',
+        ramoAtuacao: 'Desenvolvimento de Software',
+        criadoPor: 999,
+      })
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Usuário não encontrado.',
+      error: 'Not Found',
+    });
+  });
+
   it('/v1/empresas (POST) - Deve retornar erro ao criar uma empresa com CNPJ já cadastrado', async () => {
     const userRepository = dataSource.getRepository(User);
     const companyRepository = dataSource.getRepository(Company);
@@ -571,13 +603,69 @@ describe('CompaniesController (E2E)', () => {
     );
   });
 
+  it('/v1/empresas/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
+    const userRepository = dataSource.getRepository(User);
+    const companyRepository = dataSource.getRepository(Company);
+
+    const createdUser = userRepository.create({
+      nome: 'Usuário Teste',
+      email: 'teste9@example.com',
+      senha: 'senha123',
+      funcao: 'teste',
+    });
+    await userRepository.save(createdUser);
+
+    const createdCompany = companyRepository.create({
+      nomeFantasia: 'Tech Solutions',
+      razaoSocial: 'Tech Solutions LTDA',
+      cnpj: '12345678004175',
+      rua: 'Rua da Tecnologia',
+      numero: '123',
+      complemento: 'Sala 45',
+      bairro: 'Centro',
+      cidade: 'São Paulo',
+      estado: 'SP',
+      cep: '01000-000',
+      dataFundacao: '2010-05-15',
+      telefone: '(11) 99999-9999',
+      faturamento: 1200000.5,
+      regimeTributario: 'Simples Nacional',
+      inscricaoEstadual: '1234567890',
+      cnaePrincipal: '6201500',
+      segmento: 'Tecnologia',
+      ramoAtuacao: 'Desenvolvimento de Software',
+      logoUrl: 'https://example.com/logo.png',
+      status: 'A',
+      criadoPor: createdUser,
+    });
+
+    await companyRepository.save(createdCompany);
+
+    const updateCompanyDto = {
+      nomeFantasia: 'Tech Solutions Updated',
+      telefone: '(11) 98888-7777',
+      atualizadoPor: 999,
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/usuarios/${createdCompany.id}`)
+      .send(updateCompanyDto)
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Usuário não encontrado.',
+      error: 'Not Found',
+    });
+  });
+
   it('/v1/empresas/:id (PATCH) - Deve retornar erro ao atualizar uma empresa com um CNPJ já cadastrado', async () => {
     const userRepository = dataSource.getRepository(User);
     const companyRepository = dataSource.getRepository(Company);
 
     const createdUser = userRepository.create({
       nome: 'Usuário Teste',
-      email: 'teste6@example.com',
+      email: 'teste10@example.com',
       senha: 'senha123',
       funcao: 'teste',
     });
@@ -684,7 +772,7 @@ describe('CompaniesController (E2E)', () => {
 
     const createdUser = userRepository.create({
       nome: 'Usuário Teste',
-      email: 'teste9@example.com',
+      email: 'teste11@example.com',
       senha: 'senha123',
       funcao: 'teste',
     });
@@ -744,7 +832,7 @@ describe('CompaniesController (E2E)', () => {
 
     const createdUser = userRepository.create({
       nome: 'Usuário Teste',
-      email: 'teste10@example.com',
+      email: 'teste12@example.com',
       senha: 'senha123',
       funcao: 'teste',
     });
@@ -793,7 +881,7 @@ describe('CompaniesController (E2E)', () => {
 
     const createdUser = userRepository.create({
       nome: 'Usuário Teste',
-      email: 'teste11@example.com',
+      email: 'teste13@example.com',
       senha: 'senha123',
       funcao: 'teste',
     });
@@ -841,6 +929,60 @@ describe('CompaniesController (E2E)', () => {
     );
   });
 
+  it('/v1/empresas/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
+    const userRepository = dataSource.getRepository(User);
+    const companyRepository = dataSource.getRepository(Company);
+
+    const createdUser = userRepository.create({
+      nome: 'Usuário Teste',
+      email: 'teste14@example.com',
+      senha: 'senha123',
+      funcao: 'teste',
+    });
+    await userRepository.save(createdUser);
+
+    const createdCompany = companyRepository.create({
+      nomeFantasia: 'Tech Solutions',
+      razaoSocial: 'Tech Solutions LTDA',
+      cnpj: '12345678004175',
+      rua: 'Rua da Tecnologia',
+      numero: '123',
+      complemento: 'Sala 45',
+      bairro: 'Centro',
+      cidade: 'São Paulo',
+      estado: 'SP',
+      cep: '01000-000',
+      dataFundacao: '2010-05-15',
+      telefone: '(11) 99999-9999',
+      faturamento: 1200000.5,
+      regimeTributario: 'Simples Nacional',
+      inscricaoEstadual: '1234567890',
+      cnaePrincipal: '6201500',
+      segmento: 'Tecnologia',
+      ramoAtuacao: 'Desenvolvimento de Software',
+      logoUrl: 'https://example.com/logo.png',
+      status: 'A',
+      criadoPor: createdUser,
+    });
+
+    await companyRepository.save(createdCompany);
+
+    const deleleCompanyDto = {
+      excluidoPor: 999,
+    };
+
+    const response = await request(app.getHttpServer())
+      .delete(`/v1/empresas/${createdCompany.id}`)
+      .send(deleleCompanyDto)
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Usuário não encontrado.',
+      error: 'Not Found',
+    });
+  });
+
   it('/v1/empresas/:id (DELETE) - Deve retornar erro ao excluir um empresa com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
       .delete('/v1/empresas/abc')
@@ -861,7 +1003,7 @@ describe('CompaniesController (E2E)', () => {
 
     const createdUser = userRepository.create({
       nome: 'Usuário Teste',
-      email: 'teste12@example.com',
+      email: 'teste15@example.com',
       senha: 'senha123',
       funcao: 'teste',
     });

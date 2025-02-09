@@ -22,13 +22,13 @@ export class CompaniesService {
   ) {}
 
   async create(createCompanyDto: CreateCompanyDto) {
+    const user = await this.usersService.findOne(createCompanyDto.criadoPor);
+
     const companyExists = await this.findCompanyByCnpj(createCompanyDto.cnpj);
 
     if (companyExists) {
       throw new ConflictException('Já existe uma empresa com o mesmo CNPJ.');
     }
-
-    const user = await this.usersService.findOne(createCompanyDto.criadoPor);
 
     const company = this.companiesRepository.create({
       ...createCompanyDto,
