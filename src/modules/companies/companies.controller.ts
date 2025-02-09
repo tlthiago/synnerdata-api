@@ -62,7 +62,7 @@ export class CompaniesController {
     return {
       succeeded: true,
       data: null,
-      message: `Empresa cadastrada com sucesso, ID: ${companyId}.`,
+      message: `Empresa cadastrada com sucesso, id: #${companyId}.`,
     };
   }
 
@@ -102,7 +102,7 @@ export class CompaniesController {
   })
   @UseGuards(JwtAuthGuard)
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.companiesService.findOne(+id);
+    return this.companiesService.findOne(id);
   }
 
   @Patch(':id')
@@ -142,12 +142,12 @@ export class CompaniesController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCompanyDto: UpdateCompanyDto,
   ) {
-    const company = await this.companiesService.update(+id, updateCompanyDto);
+    const company = await this.companiesService.update(id, updateCompanyDto);
 
     return {
       succeeded: true,
       data: company,
-      message: 'Empresa atualizada com sucesso.',
+      message: `Empresa id: #${company.id} atualizada com sucesso.`,
     };
   }
 
@@ -184,7 +184,7 @@ export class CompaniesController {
     @Param('id', ParseIntPipe) id: number,
     @Body() deleteCompanyDto: BaseDeleteDto,
   ) {
-    await this.companiesService.remove(+id, deleteCompanyDto);
+    await this.companiesService.remove(id, deleteCompanyDto);
 
     return {
       succeeded: true,

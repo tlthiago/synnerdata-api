@@ -8,6 +8,7 @@ import { Cbo } from './entities/cbo.entity';
 import { CboResponseDto } from './dto/cbo-response.dto';
 import { plainToInstance } from 'class-transformer';
 import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class CbosService {
@@ -15,14 +16,18 @@ export class CbosService {
     @InjectRepository(Cbo)
     private readonly cboRepository: Repository<Cbo>,
     private readonly companiesService: CompaniesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(companyId: number, createCboDto: CreateCboDto) {
     const company = await this.companiesService.findOne(companyId);
 
+    const user = await this.usersService.findOne(createCboDto.criadoPor);
+
     const costCenter = this.cboRepository.create({
       ...createCboDto,
       empresa: company,
+      criadoPor: user,
     });
 
     await this.cboRepository.save(costCenter);
@@ -55,8 +60,11 @@ export class CbosService {
   }
 
   async update(id: number, updateCboDto: UpdateCboDto) {
+    const user = await this.usersService.findOne(updateCboDto.atualizadoPor);
+
     const result = await this.cboRepository.update(id, {
       ...updateCboDto,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
@@ -67,9 +75,11 @@ export class CbosService {
   }
 
   async remove(id: number, deleteCboDto: BaseDeleteDto) {
+    const user = await this.usersService.findOne(deleteCboDto.excluidoPor);
+
     const result = await this.cboRepository.update(id, {
       status: 'E',
-      atualizadoPor: deleteCboDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {

@@ -25,7 +25,7 @@
     "migration:run": "docker exec -it app npm run typeorm migration:run -- -d ./src/config/database/typeorm.config.ts",
     "migration:revert": "docker exec -it app npm run typeorm migration:revert -- -d ./src/config/database/typeorm.config.ts",
     "migration:show": "docker exec -it app npm run typeorm -- migration:show -d ./src/config/database/typeorm.config.ts",
-    "db:reset": "docker exec -it app npm run migration:revert && npm run migration:run",
+    "db:reset": "npm run migration:revert && npm run migration:run",
     "prepare": "husky",
     "commit": "npm run lint && npm run prettier:check && cz"
   },

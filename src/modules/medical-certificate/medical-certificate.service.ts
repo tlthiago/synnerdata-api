@@ -8,6 +8,7 @@ import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { MedicalCertificateResponseDto } from './dto/medical-certificate-response.dto';
 import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class MedicalCertificateService {
@@ -15,6 +16,7 @@ export class MedicalCertificateService {
     @InjectRepository(MedicalCertificate)
     private readonly medicalCertificateRepository: Repository<MedicalCertificate>,
     private readonly employeesService: EmployeesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(
@@ -23,9 +25,14 @@ export class MedicalCertificateService {
   ) {
     const employee = await this.employeesService.findOne(employeeId);
 
+    const user = await this.usersService.findOne(
+      createMedicalCertificateDto.criadoPor,
+    );
+
     const medicalcertificate = this.medicalCertificateRepository.create({
       ...createMedicalCertificateDto,
       funcionario: employee,
+      criadoPor: user,
     });
 
     await this.medicalCertificateRepository.save(medicalcertificate);
@@ -61,8 +68,13 @@ export class MedicalCertificateService {
     id: number,
     updateMedicalCertificateDto: UpdateMedicalCertificateDto,
   ) {
+    const user = await this.usersService.findOne(
+      updateMedicalCertificateDto.atualizadoPor,
+    );
+
     const result = await this.medicalCertificateRepository.update(id, {
       ...updateMedicalCertificateDto,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
@@ -73,9 +85,13 @@ export class MedicalCertificateService {
   }
 
   async remove(id: number, deleteMedicalCertificateDto: BaseDeleteDto) {
+    const user = await this.usersService.findOne(
+      deleteMedicalCertificateDto.excluidoPor,
+    );
+
     const result = await this.medicalCertificateRepository.update(id, {
       status: 'E',
-      atualizadoPor: deleteMedicalCertificateDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {

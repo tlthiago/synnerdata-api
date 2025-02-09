@@ -8,6 +8,7 @@ import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { AccidentResponseDto } from './dto/accidents-response.dto';
 import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AccidentsService {
@@ -15,14 +16,18 @@ export class AccidentsService {
     @InjectRepository(Accident)
     private readonly accidentRepository: Repository<Accident>,
     private readonly employeesService: EmployeesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(employeeId: number, createAccidentDto: CreateAccidentDto) {
     const employee = await this.employeesService.findOne(employeeId);
 
+    const user = await this.usersService.findOne(createAccidentDto.criadoPor);
+
     const accident = this.accidentRepository.create({
       ...createAccidentDto,
       funcionario: employee,
+      criadoPor: user,
     });
 
     await this.accidentRepository.save(accident);
@@ -55,8 +60,13 @@ export class AccidentsService {
   }
 
   async update(id: number, updateAccidentDto: UpdateAccidentDto) {
+    const user = await this.usersService.findOne(
+      updateAccidentDto.atualizadoPor,
+    );
+
     const result = await this.accidentRepository.update(id, {
       ...updateAccidentDto,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
@@ -67,9 +77,11 @@ export class AccidentsService {
   }
 
   async remove(id: number, deleteAccidentDto: BaseDeleteDto) {
+    const user = await this.usersService.findOne(deleteAccidentDto.excluidoPor);
+
     const result = await this.accidentRepository.update(id, {
       status: 'E',
-      atualizadoPor: deleteAccidentDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {

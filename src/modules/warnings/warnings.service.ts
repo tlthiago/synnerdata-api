@@ -8,6 +8,7 @@ import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { WarningResponseDto } from './dto/warning-response.dto';
 import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class WarningsService {
@@ -15,14 +16,18 @@ export class WarningsService {
     @InjectRepository(Warning)
     private readonly warningRepository: Repository<Warning>,
     private readonly employeesService: EmployeesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(employeeId: number, createWarningDto: CreateWarningDto) {
     const employee = await this.employeesService.findOne(employeeId);
 
+    const user = await this.usersService.findOne(createWarningDto.criadoPor);
+
     const warning = this.warningRepository.create({
       ...createWarningDto,
       funcionario: employee,
+      criadoPor: user,
     });
 
     await this.warningRepository.save(warning);
@@ -55,8 +60,13 @@ export class WarningsService {
   }
 
   async update(id: number, updateWarningDto: UpdateWarningDto) {
+    const user = await this.usersService.findOne(
+      updateWarningDto.atualizadoPor,
+    );
+
     const result = await this.warningRepository.update(id, {
       ...updateWarningDto,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
@@ -67,9 +77,11 @@ export class WarningsService {
   }
 
   async remove(id: number, deleteWarningDto: BaseDeleteDto) {
+    const user = await this.usersService.findOne(deleteWarningDto.excluidoPor);
+
     const result = await this.warningRepository.update(id, {
       status: 'E',
-      atualizadoPor: deleteWarningDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {

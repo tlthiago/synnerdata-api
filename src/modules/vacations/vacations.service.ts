@@ -8,6 +8,7 @@ import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { VacationResponseDto } from './dto/vacation-response.dto';
 import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class VacationsService {
@@ -15,14 +16,18 @@ export class VacationsService {
     @InjectRepository(Vacation)
     private readonly vacationRepository: Repository<Vacation>,
     private readonly employeesService: EmployeesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(employeeId: number, createVacationDto: CreateVacationDto) {
     const employee = await this.employeesService.findOne(employeeId);
 
+    const user = await this.usersService.findOne(createVacationDto.criadoPor);
+
     const vacation = this.vacationRepository.create({
       ...createVacationDto,
       funcionario: employee,
+      criadoPor: user,
     });
 
     await this.vacationRepository.save(vacation);
@@ -55,8 +60,13 @@ export class VacationsService {
   }
 
   async update(id: number, updateVacationDto: UpdateVacationDto) {
+    const user = await this.usersService.findOne(
+      updateVacationDto.atualizadoPor,
+    );
+
     const result = await this.vacationRepository.update(id, {
       ...updateVacationDto,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
@@ -67,9 +77,11 @@ export class VacationsService {
   }
 
   async remove(id: number, deleteVacationDto: BaseDeleteDto) {
+    const user = await this.usersService.findOne(deleteVacationDto.excluidoPor);
+
     const result = await this.vacationRepository.update(id, {
       status: 'E',
-      atualizadoPor: deleteVacationDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {

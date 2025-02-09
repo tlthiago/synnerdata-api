@@ -8,6 +8,7 @@ import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { CpfAnalysisResponseDto } from './dto/cpf-analysis-response.dto';
 import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class CpfAnalysisService {
@@ -15,14 +16,20 @@ export class CpfAnalysisService {
     @InjectRepository(CpfAnalysis)
     private readonly cpfAnalysisRepository: Repository<CpfAnalysis>,
     private readonly employeesService: EmployeesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(employeeId: number, createCpfAnalysisDto: CreateCpfAnalysisDto) {
     const employee = await this.employeesService.findOne(employeeId);
 
+    const user = await this.usersService.findOne(
+      createCpfAnalysisDto.criadoPor,
+    );
+
     const cpfAnalysis = this.cpfAnalysisRepository.create({
       ...createCpfAnalysisDto,
       funcionario: employee,
+      criadoPor: user,
     });
 
     await this.cpfAnalysisRepository.save(cpfAnalysis);
@@ -55,8 +62,13 @@ export class CpfAnalysisService {
   }
 
   async update(id: number, updateCpfAnalysisDto: UpdateCpfAnalysisDto) {
+    const user = await this.usersService.findOne(
+      updateCpfAnalysisDto.atualizadoPor,
+    );
+
     const result = await this.cpfAnalysisRepository.update(id, {
       ...updateCpfAnalysisDto,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
@@ -67,9 +79,13 @@ export class CpfAnalysisService {
   }
 
   async remove(id: number, deleteCpfAnalysisDto: BaseDeleteDto) {
+    const user = await this.usersService.findOne(
+      deleteCpfAnalysisDto.excluidoPor,
+    );
+
     const result = await this.cpfAnalysisRepository.update(id, {
       status: 'E',
-      atualizadoPor: deleteCpfAnalysisDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {

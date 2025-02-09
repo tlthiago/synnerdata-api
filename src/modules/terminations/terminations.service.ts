@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { plainToInstance } from 'class-transformer';
 import { TerminationResponseDto } from './dto/termination-response.dto';
 import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class TerminationsService {
@@ -15,14 +16,20 @@ export class TerminationsService {
     @InjectRepository(Termination)
     private readonly terminationRepository: Repository<Termination>,
     private readonly employeesService: EmployeesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(employeeId: number, createTerminationDto: CreateTerminationDto) {
     const employee = await this.employeesService.findOne(employeeId);
 
+    const user = await this.usersService.findOne(
+      createTerminationDto.criadoPor,
+    );
+
     const termination = this.terminationRepository.create({
       ...createTerminationDto,
       funcionario: employee,
+      criadoPor: user,
     });
 
     await this.terminationRepository.save(termination);
@@ -78,8 +85,13 @@ export class TerminationsService {
   }
 
   async update(id: number, updateTerminationDto: UpdateTerminationDto) {
+    const user = await this.usersService.findOne(
+      updateTerminationDto.atualizadoPor,
+    );
+
     const result = await this.terminationRepository.update(id, {
       ...updateTerminationDto,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
@@ -90,9 +102,13 @@ export class TerminationsService {
   }
 
   async remove(id: number, deleteTerminationDto: BaseDeleteDto) {
+    const user = await this.usersService.findOne(
+      deleteTerminationDto.excluidoPor,
+    );
+
     const result = await this.terminationRepository.update(id, {
       status: 'E',
-      atualizadoPor: deleteTerminationDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {

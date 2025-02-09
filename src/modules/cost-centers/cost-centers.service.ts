@@ -8,6 +8,7 @@ import { CostCenter } from './entities/cost-center.entity';
 import { DeleteCostCenterDto } from './dto/delete-cost-center.dto';
 import { plainToInstance } from 'class-transformer';
 import { CostCenterResponseDto } from './dto/cost-center-response.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class CostCentersService {
@@ -15,14 +16,18 @@ export class CostCentersService {
     @InjectRepository(CostCenter)
     private readonly costCenterRepository: Repository<CostCenter>,
     private readonly companiesService: CompaniesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(companyId: number, createCostCenterDto: CreateCostCenterDto) {
     const company = await this.companiesService.findOne(companyId);
 
+    const user = await this.usersService.findOne(createCostCenterDto.criadoPor);
+
     const costCenter = this.costCenterRepository.create({
       ...createCostCenterDto,
       empresa: company,
+      criadoPor: user,
     });
 
     await this.costCenterRepository.save(costCenter);
@@ -55,8 +60,13 @@ export class CostCentersService {
   }
 
   async update(id: number, updateCostCenterDto: UpdateCostCenterDto) {
+    const user = await this.usersService.findOne(
+      updateCostCenterDto.atualizadoPor,
+    );
+
     const result = await this.costCenterRepository.update(id, {
       ...updateCostCenterDto,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
@@ -67,9 +77,13 @@ export class CostCentersService {
   }
 
   async remove(id: number, deleteCostCenterDto: DeleteCostCenterDto) {
+    const user = await this.usersService.findOne(
+      deleteCostCenterDto.excluidoPor,
+    );
+
     const result = await this.costCenterRepository.update(id, {
       status: 'E',
-      atualizadoPor: deleteCostCenterDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {

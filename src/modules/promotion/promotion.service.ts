@@ -9,6 +9,7 @@ import { plainToInstance } from 'class-transformer';
 import { PromotionResponseDto } from './dto/promotion-response.dto';
 import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
 import { RolesService } from '../roles/roles.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class PromotionService {
@@ -17,18 +18,23 @@ export class PromotionService {
     private readonly promotionRepository: Repository<Promotion>,
     private readonly employeesService: EmployeesService,
     private readonly roleService: RolesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(employeeId: number, createPromotionDto: CreatePromotionDto) {
     const employee = await this.employeesService.findOne(employeeId);
+
     const role = await this.roleService.findRoleById(
       createPromotionDto.funcaoId,
     );
+
+    const user = await this.usersService.findOne(createPromotionDto.criadoPor);
 
     const promotion = this.promotionRepository.create({
       ...createPromotionDto,
       funcao: role,
       funcionario: employee,
+      criadoPor: user,
     });
 
     await this.promotionRepository.save(promotion);
@@ -65,9 +71,14 @@ export class PromotionService {
       updatePromotionDto.funcaoId,
     );
 
+    const user = await this.usersService.findOne(
+      updatePromotionDto.atualizadoPor,
+    );
+
     const result = await this.promotionRepository.update(id, {
       ...updatePromotionDto,
       funcao: role,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
@@ -78,9 +89,13 @@ export class PromotionService {
   }
 
   async remove(id: number, deletePromotionDto: BaseDeleteDto) {
+    const user = await this.usersService.findOne(
+      deletePromotionDto.excluidoPor,
+    );
+
     const result = await this.promotionRepository.update(id, {
       status: 'E',
-      atualizadoPor: deletePromotionDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {

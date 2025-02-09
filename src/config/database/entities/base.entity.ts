@@ -1,8 +1,10 @@
+import { User } from '../../../modules/users/entities/user.entity';
 import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
 } from 'typeorm';
 
 export class BaseEntity {
@@ -17,8 +19,8 @@ export class BaseEntity {
   })
   status: string;
 
-  @Column({ name: 'criado_por', type: 'integer' })
-  criadoPor?: number;
+  @ManyToOne(() => User, { nullable: false, eager: true })
+  criadoPor: User;
 
   @CreateDateColumn({
     name: 'criado_em',
@@ -26,8 +28,8 @@ export class BaseEntity {
   })
   readonly criadoEm: Date;
 
-  @Column({ name: 'atualizado_por', type: 'integer', nullable: true })
-  atualizadoPor?: number;
+  @ManyToOne(() => User, { nullable: true, eager: true })
+  atualizadoPor: User;
 
   @UpdateDateColumn({
     name: 'atualizado_em',

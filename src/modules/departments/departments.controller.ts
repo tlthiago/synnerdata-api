@@ -22,6 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { DepartmentResponseDto } from './dto/department-response.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Setores')
@@ -197,8 +198,11 @@ export class DepartmentsController {
     },
   })
   @UseGuards(JwtAuthGuard)
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    await this.departmentsService.remove(id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() deleteDepartmentDto: BaseDeleteDto,
+  ) {
+    await this.departmentsService.remove(id, deleteDepartmentDto);
 
     return {
       succeeded: true,

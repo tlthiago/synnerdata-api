@@ -4,9 +4,14 @@ import { TerminationsController } from './terminations.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Termination } from './entities/termination.entity';
 import { EmployeesModule } from '../employees/employees.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Termination]), EmployeesModule],
+  imports: [
+    TypeOrmModule.forFeature([Termination]),
+    EmployeesModule,
+    UsersModule,
+  ],
   controllers: [TerminationsController],
   providers: [TerminationsService],
 })

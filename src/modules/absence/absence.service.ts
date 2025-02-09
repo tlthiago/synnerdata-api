@@ -8,6 +8,7 @@ import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { AbsenceResponseDto } from './dto/absence-response.dto';
 import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AbsenceService {
@@ -15,14 +16,18 @@ export class AbsenceService {
     @InjectRepository(Absence)
     private readonly absenceRepository: Repository<Absence>,
     private readonly employeesService: EmployeesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(employeeId: number, createAbsenceDto: CreateAbsenceDto) {
     const employee = await this.employeesService.findOne(employeeId);
 
+    const user = await this.usersService.findOne(createAbsenceDto.criadoPor);
+
     const absence = this.absenceRepository.create({
       ...createAbsenceDto,
       funcionario: employee,
+      criadoPor: user,
     });
 
     await this.absenceRepository.save(absence);
@@ -55,8 +60,13 @@ export class AbsenceService {
   }
 
   async update(id: number, updateAbsenceDto: UpdateAbsenceDto) {
+    const user = await this.usersService.findOne(
+      updateAbsenceDto.atualizadoPor,
+    );
+
     const result = await this.absenceRepository.update(id, {
       ...updateAbsenceDto,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
@@ -67,9 +77,11 @@ export class AbsenceService {
   }
 
   async remove(id: number, deleteAbsenceDto: BaseDeleteDto) {
+    const user = await this.usersService.findOne(deleteAbsenceDto.excluidoPor);
+
     const result = await this.absenceRepository.update(id, {
       status: 'E',
-      atualizadoPor: deleteAbsenceDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {

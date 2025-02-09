@@ -13,6 +13,7 @@ import {
   EpiDeliveryAction,
   EpiDeliveryLogs,
 } from './entities/delivery-epi-logs.entity';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class EpiDeliveryService {
@@ -21,6 +22,7 @@ export class EpiDeliveryService {
     private readonly epiDeliveryRepository: Repository<EpiDelivery>,
     private readonly employeesService: EmployeesService,
     private readonly episService: EpisService,
+    private readonly usersService: UsersService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -29,10 +31,15 @@ export class EpiDeliveryService {
 
     const epis = await this.episService.findByIds(createEpiDeliveryDto.epis);
 
+    const user = await this.usersService.findOne(
+      createEpiDeliveryDto.criadoPor,
+    );
+
     const epiDelivery = this.epiDeliveryRepository.create({
       ...createEpiDeliveryDto,
       funcionario: employee,
       epis,
+      criadoPor: user,
     });
 
     await this.epiDeliveryRepository.save(epiDelivery);
@@ -116,9 +123,13 @@ export class EpiDeliveryService {
   }
 
   async remove(id: number, deleteEpiDeliveryDto: BaseDeleteDto) {
+    const user = await this.usersService.findOne(
+      deleteEpiDeliveryDto.excluidoPor,
+    );
+
     const result = await this.epiDeliveryRepository.update(id, {
       status: 'E',
-      atualizadoPor: deleteEpiDeliveryDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {

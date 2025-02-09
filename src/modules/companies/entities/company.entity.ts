@@ -1,12 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
-  ManyToOne,
-} from 'typeorm';
+import { Entity, Column, OneToMany } from 'typeorm';
 import { Branch } from '../../../modules/branches/entities/branch.entity';
 import { Department } from '../../../modules/departments/entities/department.entity';
 import { CostCenter } from '../../../modules/cost-centers/entities/cost-center.entity';
@@ -15,13 +7,10 @@ import { Epi } from '../../../modules/epis/entities/epi.entity';
 import { Role } from '../../../modules/roles/entities/role.entity';
 import { Project } from '../../../modules/projects/entities/project.entity';
 import { Employee } from '../../../modules/employees/entities/employee.entity';
-import { User } from '../../../modules/users/entities/user.entity';
+import { BaseEntity } from '../../../config/database/entities/base.entity';
 
 @Entity('empresas')
-export class Company {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class Company extends BaseEntity {
   @Column({ name: 'nome_fantasia', type: 'varchar', length: 255 })
   nomeFantasia: string;
 
@@ -78,32 +67,6 @@ export class Company {
 
   @Column({ name: 'logo_url', type: 'varchar', length: 500, nullable: true })
   logoUrl?: string;
-
-  @Column({
-    name: 'status',
-    type: 'enum',
-    enum: ['A', 'I', 'E'],
-    default: 'A',
-  })
-  status: string;
-
-  @ManyToOne(() => User, { nullable: false, eager: true })
-  criadoPor: User;
-
-  @CreateDateColumn({
-    name: 'criado_em',
-    type: 'timestamptz',
-  })
-  readonly criadoEm: Date;
-
-  @ManyToOne(() => User, { nullable: true, eager: true })
-  atualizadoPor: User;
-
-  @UpdateDateColumn({
-    name: 'atualizado_em',
-    type: 'timestamptz',
-  })
-  readonly atualizadoEm?: Date;
 
   @OneToMany(() => Branch, (branch) => branch.empresa)
   filiais: Branch[];

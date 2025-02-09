@@ -24,7 +24,7 @@ export class CompaniesService {
   async create(createCompanyDto: CreateCompanyDto) {
     const user = await this.usersService.findOne(createCompanyDto.criadoPor);
 
-    const companyExists = await this.findCompanyByCnpj(createCompanyDto.cnpj);
+    const companyExists = await this.findByCnpj(createCompanyDto.cnpj);
 
     if (companyExists) {
       throw new ConflictException('Já existe uma empresa com o mesmo CNPJ.');
@@ -55,14 +55,26 @@ export class CompaniesService {
       },
     });
 
-    if (!company) throw new NotFoundException('Empresa não encontrada.');
+    if (!company) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
 
     return plainToInstance(CompanyResponseDto, company, {
       excludeExtraneousValues: true,
     });
   }
 
-  async findCompanyByCnpj(cnpj: string): Promise<boolean> {
+  async findById(id: number) {
+    const company = await this.companiesRepository.findOne({ where: { id } });
+
+    if (!company) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+
+    return company;
+  }
+
+  async findByCnpj(cnpj: string): Promise<boolean> {
     const company = await this.companiesRepository.findOne({
       where: {
         cnpj,
@@ -78,7 +90,7 @@ export class CompaniesService {
     );
 
     if (updateCompanyDto.cnpj) {
-      const companyExists = await this.findCompanyByCnpj(updateCompanyDto.cnpj);
+      const companyExists = await this.findByCnpj(updateCompanyDto.cnpj);
 
       if (companyExists) {
         throw new ConflictException('Já existe uma empresa com o mesmo CNPJ.');

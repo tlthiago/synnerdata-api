@@ -10,6 +10,7 @@ import { RoleResponseDto } from './dto/role-response.dto';
 import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
 import { EpisService } from '../epis/epis.service';
 import { RoleEpiAction, RoleEpiLogs } from './entities/role-epi-logs.entity';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class RolesService {
@@ -17,6 +18,7 @@ export class RolesService {
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
     private readonly companiesService: CompaniesService,
+    private readonly usersService: UsersService,
     private readonly episService: EpisService,
     private readonly dataSource: DataSource,
   ) {}
@@ -24,11 +26,14 @@ export class RolesService {
   async create(companyId: number, createRoleDto: CreateRoleDto) {
     const company = await this.companiesService.findOne(companyId);
 
+    const user = await this.usersService.findOne(createRoleDto.criadoPor);
+
     const epis = await this.episService.findByIds(createRoleDto.epis);
 
     const role = this.roleRepository.create({
       ...createRoleDto,
       empresa: company,
+      criadoPor: user,
       epis,
     });
 
@@ -83,6 +88,8 @@ export class RolesService {
   }
 
   async update(id: number, updateRoleDto: UpdateRoleDto) {
+    const user = await this.usersService.findOne(updateRoleDto.atualizadoPor);
+
     const role = await this.roleRepository.findOne({
       where: { id, status: 'A' },
       relations: ['epis'],
@@ -114,7 +121,7 @@ export class RolesService {
         role.epis = newEpis;
       }
 
-      role.atualizadoPor = updateRoleDto.atualizadoPor;
+      role.atualizadoPor.id = user.id;
       await manager.save(role);
 
       if (removedEpis.length > 0) {
@@ -133,9 +140,11 @@ export class RolesService {
   }
 
   async remove(id: number, deleteRoleDto: BaseDeleteDto) {
+    const user = await this.usersService.findOne(deleteRoleDto.excluidoPor);
+
     const result = await this.roleRepository.update(id, {
       status: 'E',
-      atualizadoPor: deleteRoleDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
