@@ -20,7 +20,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { DepartmentResponseDto } from './dto/department-response.dto';
 import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
@@ -66,7 +66,7 @@ export class DepartmentsController {
     @Param('empresaId', ParseIntPipe) companyId: number,
     @Body() createDepartmentDto: CreateDepartmentDto,
   ) {
-    const id = await this.departmentsService.create(
+    const departmentId = await this.departmentsService.create(
       companyId,
       createDepartmentDto,
     );
@@ -74,7 +74,7 @@ export class DepartmentsController {
     return {
       succeeded: true,
       data: null,
-      message: `Setor cadastrado com sucesso, id: #${id}.`,
+      message: `Setor cadastrado com sucesso, id: #${departmentId}.`,
     };
   }
 
@@ -160,12 +160,15 @@ export class DepartmentsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateDepartmentDto: UpdateDepartmentDto,
   ) {
-    await this.departmentsService.update(id, updateDepartmentDto);
+    const department = await this.departmentsService.update(
+      id,
+      updateDepartmentDto,
+    );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Setor id: #${id} atualizado com sucesso.`,
+      data: department,
+      message: `Setor id: #${department.id} atualizado com sucesso.`,
     };
   }
 

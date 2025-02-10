@@ -7,6 +7,8 @@ import { Department } from './entities/department.entity';
 import { CompaniesService } from '../companies/companies.service';
 import { UsersService } from '../users/users.service';
 import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
+import { plainToInstance } from 'class-transformer';
+import { DepartmentResponseDto } from './dto/department-response.dto';
 
 @Injectable()
 export class DepartmentsService {
@@ -34,22 +36,34 @@ export class DepartmentsService {
   }
 
   async findAll(companyId: number) {
-    await this.companiesService.findOne(companyId);
+    const company = await this.companiesService.findOne(companyId);
 
-    return this.departmentRepository.find({
+    const departments = this.departmentRepository.find({
       where: {
-        empresa: { id: companyId },
+        empresa: { id: company.id },
         status: 'A',
       },
     });
+
+    return plainToInstance(DepartmentResponseDto, departments, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  findOne(id: number) {
-    return this.departmentRepository.findOne({
+  async findOne(id: number) {
+    const department = await this.departmentRepository.findOne({
       where: {
         id,
         status: 'A',
       },
+    });
+
+    if (!department) {
+      throw new NotFoundException('Setor não encontrado.');
+    }
+
+    return plainToInstance(DepartmentResponseDto, department, {
+      excludeExtraneousValues: true,
     });
   }
 
@@ -67,7 +81,7 @@ export class DepartmentsService {
       throw new NotFoundException('Setor não encontrado.');
     }
 
-    return `O setor #${id} foi atualizado.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deleteDepartmentDto: BaseDeleteDto) {

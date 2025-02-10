@@ -46,6 +46,7 @@ export class BranchesService {
       empresa: company,
       criadoPor: user,
     });
+    
     await this.branchesRepository.save(branch);
 
     return branch.id;
