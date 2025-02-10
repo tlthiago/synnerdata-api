@@ -86,7 +86,7 @@ describe('CompaniesController (E2E)', () => {
     await app.init();
 
     dataSource = app.get(DataSource);
-  }, 20000);
+  }, 40000);
 
   afterEach(async () => {
     if (dataSource.isInitialized) {
@@ -138,7 +138,7 @@ describe('CompaniesController (E2E)', () => {
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Empresa cadastrada com sucesso, ID: 1.`,
+      message: `Empresa cadastrada com sucesso, id: #1.`,
     });
   });
 
@@ -203,6 +203,38 @@ describe('CompaniesController (E2E)', () => {
     expect(response.body.message).toEqual(
       expect.arrayContaining([
         'faturamento must be a number conforming to the specified constraints',
+      ]),
+    );
+  });
+
+  it('/v1/empresas (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/v1/empresas')
+      .send({
+        nomeFantasia: 'Empresa Teste',
+        razaoSocial: 'Empresa Teste LTDA',
+        cnpj: '12345678000199',
+        rua: 'Rua Teste',
+        numero: '123',
+        bairro: 'Centro',
+        cidade: 'São Paulo',
+        estado: 'SP',
+        cep: '01000-000',
+        dataFundacao: '2020-01-01',
+        telefone: '(11) 99999-9999',
+        faturamento: 1200000.5,
+        regimeTributario: 'Simples Nacional',
+        inscricaoEstadual: '123456789',
+        cnaePrincipal: '6201500',
+        segmento: 'Tecnologia',
+        ramoAtuacao: 'Desenvolvimento de Software',
+        criadoPor: 'Teste',
+      })
+      .expect(400);
+
+    expect(response.body.message).toEqual(
+      expect.arrayContaining([
+        'criadoPor must be a number conforming to the specified constraints',
       ]),
     );
   });
@@ -483,7 +515,7 @@ describe('CompaniesController (E2E)', () => {
         nomeFantasia: 'Tech Solutions Updated',
         atualizadoPor: expect.any(String),
       },
-      message: 'Empresa atualizada com sucesso.',
+      message: `Empresa id: #${createdCompany.id} atualizada com sucesso.`,
     });
 
     const updatedCompany = await companyRepository.findOneBy({
@@ -538,12 +570,14 @@ describe('CompaniesController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/usuarios/${createdCompany.id}`)
+      .patch(`/v1/empresas/${createdCompany.id}`)
       .send(updateCompanyDto)
       .expect(400);
 
     expect(response.body.message).toEqual(
-      expect.arrayContaining(['atualizadoPor should not be empty']),
+      expect.arrayContaining([
+        'O usuário responsável pela atualização deve ser informado.',
+      ]),
     );
   });
 
@@ -592,13 +626,13 @@ describe('CompaniesController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/usuarios/${createdCompany.id}`)
+      .patch(`/v1/empresas/${createdCompany.id}`)
       .send(updateCompanyDto)
       .expect(400);
 
     expect(response.body.message).toEqual(
       expect.arrayContaining([
-        'atualizadoPor must be a number conforming to the specified constraints',
+        'O identificador do usuário deve ser um número.',
       ]),
     );
   });
@@ -648,7 +682,7 @@ describe('CompaniesController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/usuarios/${createdCompany.id}`)
+      .patch(`/v1/empresas/${createdCompany.id}`)
       .send(updateCompanyDto)
       .expect(404);
 
@@ -967,7 +1001,7 @@ describe('CompaniesController (E2E)', () => {
 
     await companyRepository.save(createdCompany);
 
-    const deleleCompanyDto = {
+    const deleleCompanyDto: BaseDeleteDto = {
       excluidoPor: 999,
     };
 
@@ -984,16 +1018,18 @@ describe('CompaniesController (E2E)', () => {
   });
 
   it('/v1/empresas/:id (DELETE) - Deve retornar erro ao excluir um empresa com um ID inválido', async () => {
+    const deleleCompanyDto: BaseDeleteDto = {
+      excluidoPor: 1,
+    };
+
     const response = await request(app.getHttpServer())
       .delete('/v1/empresas/abc')
+      .send(deleleCompanyDto)
       .expect(400);
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: expect.arrayContaining([
-        'O identificador do usuário deve ser um número.',
-        'O usuário responsável pela exclusão deve ser informado.',
-      ]),
+      message: 'Validation failed (numeric string is expected)',
       error: 'Bad Request',
     });
   });

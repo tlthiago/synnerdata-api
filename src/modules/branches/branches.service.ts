@@ -24,9 +24,9 @@ export class BranchesService {
   ) {}
 
   async create(companyId: number, createBranchDto: CreateBranchDto) {
-    const user = await this.usersService.findOne(createBranchDto.criadoPor);
+    const company = await this.companiesService.findOne(companyId);
 
-    await this.companiesService.findById(companyId);
+    const user = await this.usersService.findOne(createBranchDto.criadoPor);
 
     const companyWithSameCnpj = await this.companiesService.findByCnpj(
       createBranchDto.cnpj,
@@ -40,13 +40,11 @@ export class BranchesService {
       );
     }
 
-    const company = await this.companiesService.findOne(companyId);
-
     const branch = this.branchesRepository.create({
       ...createBranchDto,
       dataFundacao: new Date(createBranchDto.dataFundacao),
-      criadoPor: user,
       empresa: company,
+      criadoPor: user,
     });
     await this.branchesRepository.save(branch);
 
@@ -68,8 +66,8 @@ export class BranchesService {
     });
   }
 
-  findOne(id: number) {
-    const branch = this.branchesRepository.findOne({
+  async findOne(id: number) {
+    const branch = await this.branchesRepository.findOne({
       where: {
         id,
         status: 'A',

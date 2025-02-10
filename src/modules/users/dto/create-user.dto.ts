@@ -33,5 +33,5 @@ export class CreateUserDto {
   @ApiProperty({ description: 'Usuário responsável pela criação do usuário.' })
   @IsOptional()
   @IsNumber()
-  criadoPor: number;
+  criadoPor?: number;
 }

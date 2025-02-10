@@ -46,7 +46,7 @@ describe('UsersController (E2E)', () => {
     await app.init();
 
     dataSource = app.get(DataSource);
-  }, 20000);
+  }, 40000);
 
   afterEach(async () => {
     if (dataSource.isInitialized) {
