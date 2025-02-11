@@ -260,7 +260,7 @@ describe('CboController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/cbos/:id (GET) - Deve retornar erro ao buscar uma cbo inexistente', async () => {
+  it('/v1/empresas/cbos/:id (GET) - Deve retornar erro ao buscar um cbo inexistente', async () => {
     const response = await request(app.getHttpServer())
       .get('/v1/empresas/cbos/999')
       .expect(404);
@@ -317,6 +317,30 @@ describe('CboController (E2E)', () => {
     });
 
     expect(updatedcbo.nome).toBe(updateData.nome);
+  });
+
+  it('/v1/empresas/cbos/:id (PATCH) - Deve retornar um erro ao atualizar um cbo com tipo de dado inválido', async () => {
+    const cboRepository = dataSource.getRepository(Cbo);
+    const createdCbo = await cboRepository.save({
+      ...cbo,
+      empresa: createdCompany,
+      criadoPor: createdUser,
+    });
+
+    const updateData = {
+      nome: 123,
+      atualizadoPor: createdUser.id,
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/empresas/cbos/${createdCbo.id}`)
+      .send(updateData)
+      .expect(400);
+
+    expect(response.body).toHaveProperty('message');
+    expect(response.body.message).toEqual(
+      expect.arrayContaining(['nome must be a string']),
+    );
   });
 
   it('/v1/empresas/cbos/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
@@ -393,7 +417,7 @@ describe('CboController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/cbos/:id (PATCH) - Deve retornar erro ao atualizar uma cbo com um ID inválido', async () => {
+  it('/v1/empresas/cbos/:id (PATCH) - Deve retornar erro ao atualizar um cbo com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
       .patch('/v1/empresas/cbos/abc')
       .send({

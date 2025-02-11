@@ -319,6 +319,30 @@ describe('DepartmentsController (E2E)', () => {
     expect(updatedDepartment.nome).toBe(updateData.nome);
   });
 
+  it('/v1/empresas/setores/:id (PATCH) - Deve retornar um erro ao atualizar um setor com tipo de dado inválido', async () => {
+    const departmentsRepository = dataSource.getRepository(Department);
+    const createdDepartment = await departmentsRepository.save({
+      ...department,
+      empresa: createdCompany,
+      criadoPor: createdUser,
+    });
+
+    const updateData = {
+      nome: 123,
+      atualizadoPor: createdUser.id,
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/empresas/setores/${createdDepartment.id}`)
+      .send(updateData)
+      .expect(400);
+
+    expect(response.body).toHaveProperty('message');
+    expect(response.body.message).toEqual(
+      expect.arrayContaining(['nome must be a string']),
+    );
+  });
+
   it('/v1/empresas/setores/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
     const departmentsRepository = dataSource.getRepository(Department);
     const createdDepartment = await departmentsRepository.save({

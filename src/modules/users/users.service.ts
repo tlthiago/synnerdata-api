@@ -57,6 +57,20 @@ export class UsersService {
     });
   }
 
+  async findById(id: number): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    return user;
+  }
+
   async findOneByEmail(email: string) {
     const user = await this.usersRepository.findOne({
       where: { email },

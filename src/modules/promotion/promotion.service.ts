@@ -24,9 +24,7 @@ export class PromotionService {
   async create(employeeId: number, createPromotionDto: CreatePromotionDto) {
     const employee = await this.employeesService.findOne(employeeId);
 
-    const role = await this.roleService.findRoleById(
-      createPromotionDto.funcaoId,
-    );
+    const role = await this.roleService.findById(createPromotionDto.funcaoId);
 
     const user = await this.usersService.findOne(createPromotionDto.criadoPor);
 
@@ -67,9 +65,7 @@ export class PromotionService {
   }
 
   async update(id: number, updatePromotionDto: UpdatePromotionDto) {
-    const role = await this.roleService.findRoleById(
-      updatePromotionDto.funcaoId,
-    );
+    const role = await this.roleService.findById(updatePromotionDto.funcaoId);
 
     const user = await this.usersService.findOne(
       updatePromotionDto.atualizadoPor,

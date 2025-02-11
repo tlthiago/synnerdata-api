@@ -98,6 +98,6 @@ export class DepartmentsService {
       throw new NotFoundException('Setor não encontrado.');
     }
 
-    return `O setor #${id} foi excluído.`;
+    return { id, status: 'E' };
   }
 }

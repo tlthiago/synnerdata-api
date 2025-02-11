@@ -6,11 +6,12 @@ import { Role } from './entities/role.entity';
 import { DataSource, Repository } from 'typeorm';
 import { CompaniesService } from '../companies/companies.service';
 import { plainToInstance } from 'class-transformer';
-import { RoleResponseDto } from './dto/role-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { RoleEpiResponseDto, RoleResponseDto } from './dto/role-response.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { EpisService } from '../epis/epis.service';
 import { RoleEpiAction, RoleEpiLogs } from './entities/role-epi-logs.entity';
 import { UsersService } from '../users/users.service';
+import { Epi } from '../epis/entities/epi.entity';
 
 @Injectable()
 export class RolesService {
@@ -28,7 +29,11 @@ export class RolesService {
 
     const user = await this.usersService.findOne(createRoleDto.criadoPor);
 
-    const epis = await this.episService.findByIds(createRoleDto.epis);
+    let epis: Epi[];
+
+    if (createRoleDto.epis && createRoleDto.epis.length > 0) {
+      epis = await this.episService.findByIds(createRoleDto.epis);
+    }
 
     const role = this.roleRepository.create({
       ...createRoleDto,
@@ -43,17 +48,26 @@ export class RolesService {
   }
 
   async findAll(companyId: number) {
-    await this.companiesService.findOne(companyId);
+    const company = await this.companiesService.findOne(companyId);
 
     const roles = await this.roleRepository.find({
       where: {
-        empresa: { id: companyId },
+        empresa: { id: company.id },
         status: 'A',
       },
       relations: ['epis'],
     });
 
-    return plainToInstance(RoleResponseDto, roles);
+    const rolesWithTransformedEpis = roles.map((role) => ({
+      ...role,
+      epis: plainToInstance(RoleEpiResponseDto, role.epis, {
+        excludeExtraneousValues: true,
+      }),
+    }));
+
+    return plainToInstance(RoleResponseDto, rolesWithTransformedEpis, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
@@ -69,10 +83,19 @@ export class RolesService {
       throw new NotFoundException('Função não encontrada.');
     }
 
-    return plainToInstance(RoleResponseDto, role);
+    return plainToInstance(
+      RoleResponseDto,
+      {
+        ...role,
+        epis: plainToInstance(RoleEpiResponseDto, role.epis, {
+          excludeExtraneousValues: true,
+        }),
+      },
+      { excludeExtraneousValues: true },
+    );
   }
 
-  async findRoleById(id: number) {
+  async findById(id: number) {
     const role = await this.roleRepository.findOne({
       where: {
         id,
@@ -88,7 +111,7 @@ export class RolesService {
   }
 
   async update(id: number, updateRoleDto: UpdateRoleDto) {
-    const user = await this.usersService.findOne(updateRoleDto.atualizadoPor);
+    const user = await this.usersService.findById(updateRoleDto.atualizadoPor);
 
     const role = await this.roleRepository.findOne({
       where: { id, status: 'A' },
@@ -121,7 +144,8 @@ export class RolesService {
         role.epis = newEpis;
       }
 
-      role.atualizadoPor.id = user.id;
+      role.atualizadoPor = user;
+
       await manager.save(role);
 
       if (removedEpis.length > 0) {
@@ -132,11 +156,11 @@ export class RolesService {
           descricao: `O usuário ${updateRoleDto.atualizadoPor} removeu o EPI ${epi.id} da função ${role.id}.`,
           criadoPor: updateRoleDto.atualizadoPor,
         }));
-        await manager.insert(RoleEpiLogs, logs);
+        await manager.save(RoleEpiLogs, logs);
       }
     });
 
-    return `A função #${id} foi atualizada.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deleteRoleDto: BaseDeleteDto) {
@@ -151,6 +175,6 @@ export class RolesService {
       throw new NotFoundException('Função não encontrada.');
     }
 
-    return `A função #${id} foi excluída.`;
+    return { id, status: 'E' };
   }
 }

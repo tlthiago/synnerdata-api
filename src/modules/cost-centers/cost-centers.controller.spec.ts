@@ -319,6 +319,30 @@ describe('CostCenterController (E2E)', () => {
     expect(updatedcostCenter.nome).toBe(updateData.nome);
   });
 
+  it('/v1/empresas/centros-de-custo/:id (PATCH) - Deve retornar um erro ao atualizar um centro de custo com tipo de dado inválido', async () => {
+    const costCenterRepository = dataSource.getRepository(CostCenter);
+    const createdcostCenter = await costCenterRepository.save({
+      ...costCenter,
+      empresa: createdCompany,
+      criadoPor: createdUser,
+    });
+
+    const updateData = {
+      nome: 123,
+      atualizadoPor: createdUser.id,
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/empresas/centros-de-custo/${createdcostCenter.id}`)
+      .send(updateData)
+      .expect(400);
+
+    expect(response.body).toHaveProperty('message');
+    expect(response.body.message).toEqual(
+      expect.arrayContaining(['nome must be a string']),
+    );
+  });
+
   it('/v1/empresas/centros-de-custo/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
     const costCenterRepository = dataSource.getRepository(CostCenter);
     const createdcostCenter = await costCenterRepository.save({
@@ -385,8 +409,6 @@ describe('CostCenterController (E2E)', () => {
       .patch(`/v1/empresas/centros-de-custo/${createdcostCenter.id}`)
       .send(updateData)
       .expect(404);
-
-    console.log(response.body);
 
     expect(response.body).toEqual({
       statusCode: 404,

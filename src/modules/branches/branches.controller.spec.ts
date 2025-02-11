@@ -376,6 +376,30 @@ describe('BranchesController (E2E)', () => {
     expect(updatedBranch.telefone).toBe(updateData.telefone);
   });
 
+  it('/v1/empresas/filiais/:id (PATCH) - Deve retornar erro ao atualizar uma filial com tipo de dado inválido', async () => {
+    const branchesRepository = dataSource.getRepository(Branch);
+    const createdBranch = await branchesRepository.save({
+      ...branch,
+      empresa: createdCompany,
+      criadoPor: createdUser,
+    });
+
+    const updateData = {
+      nome: 123,
+      telefone: '(11) 98888-7777',
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/empresas/filiais/${createdBranch.id}`)
+      .send(updateData)
+      .expect(400);
+
+    expect(response.body).toHaveProperty('message');
+    expect(response.body.message).toEqual(
+      expect.arrayContaining(['nome must be a string']),
+    );
+  });
+
   it('/v1/empresas/filiais/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
     const branchesRepository = dataSource.getRepository(Branch);
     const createdBranch = await branchesRepository.save({

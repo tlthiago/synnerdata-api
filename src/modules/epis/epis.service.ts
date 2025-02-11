@@ -60,9 +60,15 @@ export class EpisService {
   }
 
   async findByIds(ids: number[]) {
-    return await this.epiRepository.findBy({
+    const epis = await this.epiRepository.findBy({
       id: In(ids),
     });
+
+    if (epis.length === 0) {
+      throw new NotFoundException('Epi(s) não encontrado(s).');
+    }
+
+    return epis;
   }
 
   async update(id: number, updateEpiDto: UpdateEpiDto) {

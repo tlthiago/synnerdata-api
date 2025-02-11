@@ -6,7 +6,7 @@ export class UpdateCboDto extends PartialType(
   OmitType(CreateCboDto, ['criadoPor'] as const),
 ) {
   @ApiProperty({
-    description: 'Usuário responsável pela atualização do centro de custo.',
+    description: 'Usuário responsável pela atualização do cbo.',
   })
   @IsNotEmpty({
     message: 'O usuário responsável pela atualização deve ser informado.',

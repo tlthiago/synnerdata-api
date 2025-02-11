@@ -20,9 +20,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { EpiResponseDto } from './dto/epi-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Epis')

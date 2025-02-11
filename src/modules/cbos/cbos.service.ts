@@ -94,6 +94,6 @@ export class CbosService {
       throw new NotFoundException('Cbo não encontrado.');
     }
 
-    return `O cbo #${id} foi excluído.`;
+    return { id, status: 'E' };
   }
 }

@@ -98,6 +98,6 @@ export class CostCentersService {
       throw new NotFoundException('Centro de custo não encontrado.');
     }
 
-    return `O centro de custo #${id} foi excluído.`;
+    return { id, status: 'E' };
   }
 }
