@@ -14,7 +14,7 @@ import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { Branch } from '../branches/entities/branch.entity';
 import { Department } from '../departments/entities/department.entity';
 import { CostCenter } from '../cost-centers/entities/cost-center.entity';
-import { Cbo } from '../cbos/entities/cbo.entity';
+import { Cbo } from '../../modules/cbos/entities/cbo.entity';
 import { Epi } from '../epis/entities/epi.entity';
 import { Role } from '../roles/entities/role.entity';
 import { Project } from '../projects/entities/project.entity';
@@ -30,17 +30,19 @@ import { LaborAction } from '../labor-actions/entities/labor-action.entity';
 import { EpiDelivery } from '../epi-delivery/entities/epi-delivery.entity';
 import { Vacation } from '../vacations/entities/vacation.entity';
 import { User } from '../users/entities/user.entity';
-import { CbosModule } from './cbos.module';
-import { UpdateCboDto } from './dto/update-cbo.dto';
+import { EpisModule } from './epis.module';
+import { UpdateEpiDto } from './dto/update-epi.dto';
 
-describe('CboController (E2E)', () => {
+describe('EpiController (E2E)', () => {
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
   let createdUser: User;
   let createdCompany: Company;
-  const cbo = {
-    nome: 'Desenvolvedor de Sistemas Web',
+  const epi = {
+    nome: 'Epi Teste',
+    descricao: 'Descrição Teste',
+    equipamentos: 'Equipamento Teste',
     criadoPor: 1,
   };
 
@@ -76,7 +78,7 @@ describe('CboController (E2E)', () => {
             Vacation,
           ],
         }),
-        CbosModule,
+        EpisModule,
       ],
     })
       .overrideGuard(JwtAuthGuard)
@@ -132,27 +134,27 @@ describe('CboController (E2E)', () => {
 
   afterEach(async () => {
     if (dataSource.isInitialized) {
-      await dataSource.query('DELETE FROM "cbos" CASCADE;');
+      await dataSource.query('DELETE FROM "epis" CASCADE;');
     }
   });
 
-  it('/v1/empresas/:empresaId/cbos (POST) - Deve cadastrar um cbo', async () => {
+  it('/v1/empresas/:empresaId/epis (POST) - Deve cadastrar um epi', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/cbos`)
-      .send(cbo)
+      .post(`/v1/empresas/${createdCompany.id}/epis`)
+      .send(epi)
       .expect(201);
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Cbo cadastrado com sucesso, id: #1.`,
+      message: `Epi cadastrado com sucesso, id: #1.`,
     });
   });
 
-  it('/v1/empresas/:empresaId/cbos (POST) - Deve retornar erro ao criar um cbo sem informações obrigatórias', async () => {
+  it('/v1/empresas/:empresaId/epis (POST) - Deve retornar erro ao criar um epi sem informações obrigatórias', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/cbos`)
+      .post(`/v1/empresas/${createdCompany.id}/epis`)
       .send({})
       .expect(400);
 
@@ -166,10 +168,10 @@ describe('CboController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/:empresaId/cbos (POST) - Deve retornar erro ao criar um cbo com tipo de dado inválido', async () => {
+  it('/v1/empresas/:empresaId/epis (POST) - Deve retornar erro ao criar um epi com tipo de dado inválido', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/cbos`)
-      .send({ ...cbo, nome: 123 })
+      .post(`/v1/empresas/${createdCompany.id}/epis`)
+      .send({ ...epi, nome: 123 })
       .expect(400);
 
     expect(response.body).toHaveProperty('message');
@@ -178,11 +180,11 @@ describe('CboController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/:empresaId/cbos (POST) - Deve retornar erro caso o ID da empresa não exista', async () => {
+  it('/v1/empresas/:empresaId/epis (POST) - Deve retornar erro caso o ID da empresa não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/999/cbos`)
+      .post(`/v1/empresas/999/epis`)
       .send({
-        ...cbo,
+        ...epi,
         criadoPor: createdUser.id,
       })
       .expect(404);
@@ -194,11 +196,11 @@ describe('CboController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/:empresaId/cbos (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
+  it('/v1/empresas/:empresaId/epis (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/cbos`)
+      .post(`/v1/empresas/${createdCompany.id}/epis`)
       .send({
-        ...cbo,
+        ...epi,
         criadoPor: 'Teste',
       })
       .expect(400);
@@ -210,11 +212,11 @@ describe('CboController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/:empresaId/cbos (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
+  it('/v1/empresas/:empresaId/epis (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/cbos`)
+      .post(`/v1/empresas/${createdCompany.id}/epis`)
       .send({
-        ...cbo,
+        ...epi,
         criadoPor: 999,
       })
       .expect(404);
@@ -226,55 +228,55 @@ describe('CboController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/:empresaId/cbos (GET) - Deve listar todos os cbos de uma empresa', async () => {
-    const cboRepository = dataSource.getRepository(Cbo);
-    await cboRepository.save({
-      ...cbo,
+  it('/v1/empresas/:empresaId/epis (GET) - Deve listar todos os epis de uma empresa', async () => {
+    const epiRepository = dataSource.getRepository(Epi);
+    await epiRepository.save({
+      ...epi,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/empresas/${createdCompany.id}/cbos`)
+      .get(`/v1/empresas/${createdCompany.id}/epis`)
       .expect(200);
 
     expect(response.body).toBeInstanceOf(Array);
     expect(response.body.length).toBeGreaterThan(0);
   });
 
-  it('/v1/empresas/cbos/:id (GET) - Deve retonar um cbo específico', async () => {
-    const cboRepository = dataSource.getRepository(Cbo);
-    const createdCbo = await cboRepository.save({
-      ...cbo,
+  it('/v1/empresas/epis/:id (GET) - Deve retonar um epi específico', async () => {
+    const epiRepository = dataSource.getRepository(Epi);
+    const createdEpi = await epiRepository.save({
+      ...epi,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/empresas/cbos/${createdCbo.id}`)
+      .get(`/v1/empresas/epis/${createdEpi.id}`)
       .expect(200);
 
     expect(response.body).toMatchObject({
-      id: createdCbo.id,
-      nome: createdCbo.nome,
+      id: createdEpi.id,
+      nome: createdEpi.nome,
     });
   });
 
-  it('/v1/empresas/cbos/:id (GET) - Deve retornar erro ao buscar um cbo inexistente', async () => {
+  it('/v1/empresas/epis/:id (GET) - Deve retornar erro ao buscar um epi inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/empresas/cbos/999')
+      .get('/v1/empresas/epis/999')
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Cbo não encontrado.',
+      message: 'Epi não encontrado.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/empresas/cbos/:id (GET) - Deve retornar erro ao buscar um cbo com um ID inválido', async () => {
+  it('/v1/empresas/epis/:id (GET) - Deve retornar erro ao buscar um epi com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/empresas/cbos/abc')
+      .get('/v1/empresas/epis/abc')
       .expect(400);
 
     expect(response.body).toEqual({
@@ -284,21 +286,21 @@ describe('CboController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/cbos/:id (PATCH) - Deve atualizar os dados de um cbo', async () => {
-    const cboRepository = dataSource.getRepository(Cbo);
-    const createdCbo = await cboRepository.save({
-      ...cbo,
+  it('/v1/empresas/epis/:id (PATCH) - Deve atualizar os dados de um epi', async () => {
+    const epiRepository = dataSource.getRepository(Epi);
+    const createdEpi = await epiRepository.save({
+      ...epi,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
-    const updateData: UpdateCboDto = {
-      nome: 'Desenvolvedor de Sistemas',
+    const updateData: UpdateEpiDto = {
+      nome: 'Capacete',
       atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/cbos/${createdCbo.id}`)
+      .patch(`/v1/empresas/epis/${createdEpi.id}`)
       .send(updateData)
       .expect(200);
 
@@ -306,23 +308,23 @@ describe('CboController (E2E)', () => {
       succeeded: true,
       data: {
         id: expect.any(Number),
-        nome: 'Desenvolvedor de Sistemas',
+        nome: 'Capacete',
         atualizadoPor: expect.any(String),
       },
-      message: `Cbo id: #${createdCbo.id} atualizado com sucesso.`,
+      message: `Epi id: #${createdEpi.id} atualizado com sucesso.`,
     });
 
-    const updatedcbo = await cboRepository.findOneBy({
-      id: createdCbo.id,
+    const updatedepi = await epiRepository.findOneBy({
+      id: createdEpi.id,
     });
 
-    expect(updatedcbo.nome).toBe(updateData.nome);
+    expect(updatedepi.nome).toBe(updateData.nome);
   });
 
-  it('/v1/empresas/cbos/:id (PATCH) - Deve retornar um erro ao atualizar um cbo com tipo de dado inválido', async () => {
-    const cboRepository = dataSource.getRepository(Cbo);
-    const createdCbo = await cboRepository.save({
-      ...cbo,
+  it('/v1/empresas/epis/:id (PATCH) - Deve retornar um erro ao atualizar um epi com tipo de dado inválido', async () => {
+    const epiRepository = dataSource.getRepository(Epi);
+    const createdEpi = await epiRepository.save({
+      ...epi,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
@@ -333,7 +335,7 @@ describe('CboController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/cbos/${createdCbo.id}`)
+      .patch(`/v1/empresas/epis/${createdEpi.id}`)
       .send(updateData)
       .expect(400);
 
@@ -343,20 +345,20 @@ describe('CboController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/cbos/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
-    const cboRepository = dataSource.getRepository(Cbo);
-    const createdCbo = await cboRepository.save({
-      ...cbo,
+  it('/v1/empresas/epis/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
+    const epiRepository = dataSource.getRepository(Epi);
+    const createdEpi = await epiRepository.save({
+      ...epi,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      nome: 'Desenvolvedor de Sistemas',
+      nome: 'Capacete',
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/cbos/${createdCbo.id}`)
+      .patch(`/v1/empresas/epis/${createdEpi.id}`)
       .send(updateData)
       .expect(400);
 
@@ -367,21 +369,21 @@ describe('CboController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/cbos/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
-    const cboRepository = dataSource.getRepository(Cbo);
-    const createdCbo = await cboRepository.save({
-      ...cbo,
+  it('/v1/empresas/epis/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
+    const epiRepository = dataSource.getRepository(Epi);
+    const createdEpi = await epiRepository.save({
+      ...epi,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      nome: 'Desenvolvedor de Sistemas',
+      nome: 'Capacete',
       atualizadoPor: 'Teste',
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/cbos/${createdCbo.id}`)
+      .patch(`/v1/empresas/epis/${createdEpi.id}`)
       .send(updateData)
       .expect(400);
 
@@ -392,21 +394,21 @@ describe('CboController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/cbos/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
-    const cboRepository = dataSource.getRepository(Cbo);
-    const createdCbo = await cboRepository.save({
-      ...cbo,
+  it('/v1/empresas/epis/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
+    const epiRepository = dataSource.getRepository(Epi);
+    const createdEpi = await epiRepository.save({
+      ...epi,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      nome: 'Desenvolvedor de Sistemas',
+      nome: 'Capacete',
       atualizadoPor: 999,
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/cbos/${createdCbo.id}`)
+      .patch(`/v1/empresas/epis/${createdEpi.id}`)
       .send(updateData)
       .expect(404);
 
@@ -417,11 +419,11 @@ describe('CboController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/cbos/:id (PATCH) - Deve retornar erro ao atualizar um cbo com um ID inválido', async () => {
+  it('/v1/empresas/epis/:id (PATCH) - Deve retornar erro ao atualizar um epi com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/empresas/cbos/abc')
+      .patch('/v1/empresas/epis/abc')
       .send({
-        nome: 'Desenvolvedor de Sistemas',
+        nome: 'Capacete',
         atualizadoPor: 1,
       })
       .expect(400);
@@ -433,55 +435,55 @@ describe('CboController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/cbos/:id (PATCH) - Deve retornar erro ao atualizar um cbo inexistente', async () => {
+  it('/v1/empresas/epis/:id (PATCH) - Deve retornar erro ao atualizar um epi inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/empresas/cbos/9999')
+      .patch('/v1/empresas/epis/9999')
       .send({
-        nomeFantasia: 'Cbo Inexistente',
+        nomeFantasia: 'Epi Inexistente',
         atualizadoPor: 1,
       })
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Cbo não encontrado.',
+      message: 'Epi não encontrado.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/empresas/cbos/:id (DELETE) - Deve excluir um cbo', async () => {
-    const cboRepository = dataSource.getRepository(Cbo);
-    const createdCbo = await cboRepository.save({
-      ...cbo,
+  it('/v1/empresas/epis/:id (DELETE) - Deve excluir um epi', async () => {
+    const epiRepository = dataSource.getRepository(Epi);
+    const createdEpi = await epiRepository.save({
+      ...epi,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
-    const delelecboDto: BaseDeleteDto = {
+    const deleleEpiDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/empresas/cbos/${createdCbo.id}`)
-      .send(delelecboDto)
+      .delete(`/v1/empresas/epis/${createdEpi.id}`)
+      .send(deleleEpiDto)
       .expect(200);
 
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Cbo id: #${createdCbo.id} excluído com sucesso.`,
+      message: `Epi id: #${createdEpi.id} excluído com sucesso.`,
     });
 
-    const deletedcbo = await cboRepository.findOneBy({
-      id: createdCbo.id,
+    const deletedepi = await epiRepository.findOneBy({
+      id: createdEpi.id,
     });
 
-    expect(deletedcbo.status).toBe('E');
+    expect(deletedepi.status).toBe('E');
   });
 
-  it('/v1/empresas/cbos/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
+  it('/v1/empresas/epis/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
     const response = await request(app.getHttpServer())
-      .delete(`/v1/empresas/cbos/1`)
+      .delete(`/v1/empresas/epis/1`)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -491,14 +493,14 @@ describe('CboController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/cbos/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
-    const delelecboDto = {
+  it('/v1/empresas/epis/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
+    const deleleEpiDto = {
       excluidoPor: 'Teste',
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/empresas/cbos/1`)
-      .send(delelecboDto)
+      .delete(`/v1/empresas/epis/1`)
+      .send(deleleEpiDto)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -508,14 +510,14 @@ describe('CboController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/cbos/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
-    const delelecboDto: BaseDeleteDto = {
+  it('/v1/empresas/epis/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
+    const deleleEpiDto: BaseDeleteDto = {
       excluidoPor: 999,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/empresas/cbos/${createdCompany.id}`)
-      .send(delelecboDto)
+      .delete(`/v1/empresas/epis/${createdCompany.id}`)
+      .send(deleleEpiDto)
       .expect(404);
 
     expect(response.body).toEqual({
@@ -525,14 +527,14 @@ describe('CboController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/cbos/:id (DELETE) - Deve retornar erro ao excluir um cbo com um ID inválido', async () => {
-    const delelecboDto: BaseDeleteDto = {
+  it('/v1/empresas/epis/:id (DELETE) - Deve retornar erro ao excluir um epi com um ID inválido', async () => {
+    const deleleEpiDto: BaseDeleteDto = {
       excluidoPor: 1,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/empresas/cbos/abc')
-      .send(delelecboDto)
+      .delete('/v1/empresas/epis/abc')
+      .send(deleleEpiDto)
       .expect(400);
 
     expect(response.body).toEqual({
@@ -542,19 +544,19 @@ describe('CboController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/cbos/:id (DELETE) - Deve retornar erro ao excluir um cbo inexistente', async () => {
-    const delelecboDto: BaseDeleteDto = {
+  it('/v1/empresas/epis/:id (DELETE) - Deve retornar erro ao excluir um epi inexistente', async () => {
+    const deleleEpiDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/empresas/cbos/9999')
-      .send(delelecboDto)
+      .delete('/v1/empresas/epis/9999')
+      .send(deleleEpiDto)
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Cbo não encontrado.',
+      message: 'Epi não encontrado.',
       error: 'Not Found',
     });
   });

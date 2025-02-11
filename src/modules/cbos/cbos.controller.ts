@@ -66,12 +66,12 @@ export class CbosController {
     @Param('empresaId', ParseIntPipe) companyId: number,
     @Body() createCboDto: CreateCboDto,
   ) {
-    const id = await this.cbosService.create(companyId, createCboDto);
+    const cboId = await this.cbosService.create(companyId, createCboDto);
 
     return {
       succeeded: true,
       data: null,
-      message: `Cbo cadastrado com sucesso, id: #${id}.`,
+      message: `Cbo cadastrado com sucesso, id: #${cboId}.`,
     };
   }
 
@@ -162,7 +162,7 @@ export class CbosController {
     return {
       succeeded: true,
       data: cbo,
-      message: `Cbo id: #${id} atualizado com sucesso.`,
+      message: `Cbo id: #${cbo.id} atualizado com sucesso.`,
     };
   }
 

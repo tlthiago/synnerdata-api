@@ -162,7 +162,7 @@ export class RolesController {
     return {
       succeeded: true,
       data: role,
-      message: `Função id: #${id} atualizada com sucesso.`,
+      message: `Função id: #${role.id} atualizada com sucesso.`,
     };
   }
 

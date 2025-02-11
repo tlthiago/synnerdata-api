@@ -7,7 +7,7 @@ import { In, Repository } from 'typeorm';
 import { CompaniesService } from '../companies/companies.service';
 import { plainToInstance } from 'class-transformer';
 import { EpiResponseDto } from './dto/epi-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -36,16 +36,18 @@ export class EpisService {
   }
 
   async findAll(companyId: number) {
-    await this.companiesService.findOne(companyId);
+    const company = await this.companiesService.findOne(companyId);
 
     const epis = await this.epiRepository.find({
       where: {
-        empresa: { id: companyId },
+        empresa: { id: company.id },
         status: 'A',
       },
     });
 
-    return plainToInstance(EpiResponseDto, epis);
+    return plainToInstance(EpiResponseDto, epis, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
@@ -56,7 +58,13 @@ export class EpisService {
       },
     });
 
-    return plainToInstance(EpiResponseDto, epi);
+    if (!epi) {
+      throw new NotFoundException('Epi não encontrado.');
+    }
+
+    return plainToInstance(EpiResponseDto, epi, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findByIds(ids: number[]) {
@@ -83,7 +91,7 @@ export class EpisService {
       throw new NotFoundException('Epi não encontrado.');
     }
 
-    return `O epi #${id} foi atualizado.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deleteEpiDto: BaseDeleteDto) {
@@ -98,6 +106,6 @@ export class EpisService {
       throw new NotFoundException('Epi não encontrado.');
     }
 
-    return `O epi #${id} foi excluído.`;
+    return { id, status: 'E' };
   }
 }

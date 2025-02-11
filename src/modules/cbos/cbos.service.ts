@@ -36,11 +36,11 @@ export class CbosService {
   }
 
   async findAll(companyId: number) {
-    await this.companiesService.findOne(companyId);
+    const company = await this.companiesService.findOne(companyId);
 
     const cbos = await this.cboRepository.find({
       where: {
-        empresa: { id: companyId },
+        empresa: { id: company.id },
         status: 'A',
       },
     });

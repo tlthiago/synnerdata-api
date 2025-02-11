@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -132,7 +136,9 @@ export class RolesService {
     );
 
     if (role.nome === updateRoleDto.nome && removedEpis.length === 0) {
-      return `Nenhuma alteração foi feita na função #${id}.`;
+      throw new BadRequestException(
+        `Nenhuma alteração foi feita na função #${id}.`,
+      );
     }
 
     await this.dataSource.transaction(async (manager) => {

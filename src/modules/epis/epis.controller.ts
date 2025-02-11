@@ -66,12 +66,12 @@ export class EpisController {
     @Param('empresaId', ParseIntPipe) companyId: number,
     @Body() createEpiDto: CreateEpiDto,
   ) {
-    const id = await this.episService.create(companyId, createEpiDto);
+    const epiId = await this.episService.create(companyId, createEpiDto);
 
     return {
       succeeded: true,
       data: null,
-      message: `Epi cadastrado com sucesso, id: #${id}.`,
+      message: `Epi cadastrado com sucesso, id: #${epiId}.`,
     };
   }
 
@@ -157,12 +157,12 @@ export class EpisController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateEpiDto: UpdateEpiDto,
   ) {
-    await this.episService.update(id, updateEpiDto);
+    const epi = await this.episService.update(id, updateEpiDto);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Epi id: #${id} atualizado com sucesso.`,
+      data: epi,
+      message: `Epi id: #${epi.id} atualizado com sucesso.`,
     };
   }
 

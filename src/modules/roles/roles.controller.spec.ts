@@ -595,6 +595,32 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
+  it('/v1/empresas/funcoes/:id (PATCH) - Deve retornar erro ao atualizar uma função com os mesmos dados', async () => {
+    const roleRepository = dataSource.getRepository(Role);
+    const createdRole = await roleRepository.save({
+      ...role,
+      epis: [createdEpi],
+      empresa: createdCompany,
+      criadoPor: createdUser,
+    });
+
+    const updateData = {
+      nome: createdRole.nome,
+      epis: [createdEpi.id],
+      atualizadoPor: createdUser.id,
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/empresas/funcoes/${createdRole.id}`)
+      .send(updateData)
+      .expect(400);
+
+    expect(response.body).toHaveProperty('message');
+    expect(response.body.message).toEqual(
+      `Nenhuma alteração foi feita na função #${createdRole.id}.`,
+    );
+  });
+
   it('/v1/empresas/funcoes/:id (PATCH) - Deve retornar erro ao atualizar uma função com tipo de dado inválido no nome', async () => {
     const roleRepository = dataSource.getRepository(Role);
     const createdRole = await roleRepository.save({
