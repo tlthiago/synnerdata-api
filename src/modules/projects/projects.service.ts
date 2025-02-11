@@ -7,7 +7,7 @@ import { Repository } from 'typeorm';
 import { CompaniesService } from '../companies/companies.service';
 import { plainToInstance } from 'class-transformer';
 import { ProjectResponseDto } from './dto/project-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -36,16 +36,18 @@ export class ProjectsService {
   }
 
   async findAll(companyId: number) {
-    await this.companiesService.findOne(companyId);
+    const company = await this.companiesService.findOne(companyId);
 
     const projects = await this.projectRepository.find({
       where: {
-        empresa: { id: companyId },
+        empresa: { id: company.id },
         status: 'A',
       },
     });
 
-    return plainToInstance(ProjectResponseDto, projects);
+    return plainToInstance(ProjectResponseDto, projects, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
@@ -56,7 +58,13 @@ export class ProjectsService {
       },
     });
 
-    return plainToInstance(ProjectResponseDto, project);
+    if (!project) {
+      throw new NotFoundException('Projeto não encontrado.');
+    }
+
+    return plainToInstance(ProjectResponseDto, project, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async update(id: number, updateProjectDto: UpdateProjectDto) {
@@ -73,7 +81,7 @@ export class ProjectsService {
       throw new NotFoundException('Projeto não encontrado.');
     }
 
-    return `O projeto #${id} foi atualizado.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deleteProjectDto: BaseDeleteDto) {
@@ -88,6 +96,6 @@ export class ProjectsService {
       throw new NotFoundException('Projeto não encontrado.');
     }
 
-    return `O projeto #${id} foi excluído.`;
+    return { id, status: 'E' };
   }
 }

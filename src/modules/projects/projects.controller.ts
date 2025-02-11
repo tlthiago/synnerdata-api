@@ -20,9 +20,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ProjectResponseDto } from './dto/project-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Projetos')
@@ -66,12 +66,15 @@ export class ProjectsController {
     @Param('empresaId', ParseIntPipe) companyId: number,
     @Body() createProjectDto: CreateProjectDto,
   ) {
-    const id = await this.projectsService.create(companyId, createProjectDto);
+    const projectId = await this.projectsService.create(
+      companyId,
+      createProjectDto,
+    );
 
     return {
       succeeded: true,
       data: null,
-      message: `Projeto cadastrado com sucesso, id: #${id}.`,
+      message: `Projeto cadastrado com sucesso, id: #${projectId}.`,
     };
   }
 
@@ -157,12 +160,12 @@ export class ProjectsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateProjectDto: UpdateProjectDto,
   ) {
-    await this.projectsService.update(id, updateProjectDto);
+    const project = await this.projectsService.update(id, updateProjectDto);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Projeto id: #${id} atualizado com sucesso.`,
+      data: project,
+      message: `Projeto id: #${project.id} atualizado com sucesso.`,
     };
   }
 

@@ -7,9 +7,16 @@ export class UpdateProjectDto extends PartialType(
   OmitType(CreateProjectDto, ['criadoPor'] as const),
 ) {
   @ApiProperty({
-    description: 'Usuário responsável pela atualização do epi.',
+    description: 'Usuário responsável pela atualização do projeto.',
   })
-  @IsNotEmpty()
-  @IsNumber()
+  @IsNotEmpty({
+    message: 'O usuário responsável pela atualização deve ser informado.',
+  })
+  @IsNumber(
+    {},
+    {
+      message: 'O identificador do usuário deve ser um número.',
+    },
+  )
   atualizadoPor: number;
 }

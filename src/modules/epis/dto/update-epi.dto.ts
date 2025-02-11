@@ -6,7 +6,7 @@ export class UpdateEpiDto extends PartialType(
   OmitType(CreateEpiDto, ['criadoPor'] as const),
 ) {
   @ApiProperty({
-    description: 'Usuário responsável pela atualização da função.',
+    description: 'Usuário responsável pela atualização do epi.',
   })
   @IsNotEmpty({
     message: 'O usuário responsável pela atualização deve ser informado.',
