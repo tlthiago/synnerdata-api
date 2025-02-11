@@ -5,7 +5,6 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   ParseIntPipe,
   UseGuards,
 } from '@nestjs/common';
@@ -20,8 +19,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @Controller('v1/empresas')
 @ApiTags('Funcionários')
@@ -33,6 +31,12 @@ export class EmployeesController {
   @ApiOperation({
     summary: 'Cadastrar um funcionário',
     description: 'Endpoint responsável por cadastrar um funcionário.',
+  })
+  @ApiParam({
+    name: 'empresaId',
+    description: 'ID da empresa.',
+    type: 'number',
+    required: true,
   })
   @ApiBody({
     description: 'Dados necessários para cadastrar um funcionario.',
@@ -59,20 +63,23 @@ export class EmployeesController {
     @Param('empresaId', ParseIntPipe) companyId: number,
     @Body() createEmployeeDto: CreateEmployeeDto,
   ) {
-    const id = await this.employeesService.create(companyId, createEmployeeDto);
+    const employeeId = await this.employeesService.create(
+      companyId,
+      createEmployeeDto,
+    );
     return {
       succeeded: true,
       data: null,
-      message: `Funcionário cadastrado com sucesso, id: #${id}.`,
+      message: `Funcionário cadastrado com sucesso, id: #${employeeId}.`,
     };
   }
 
   @Get(':empresaId/funcionarios')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Buscar todos os Funcionários',
+    summary: 'Buscar todos os funcionários',
     description:
-      'Endpoint responsável por listar todos os Funcionários cadastrados de uma empresa.',
+      'Endpoint responsável por listar todos os funcionários cadastrados de uma empresa.',
   })
   @ApiParam({
     name: 'empresaId',
@@ -82,9 +89,10 @@ export class EmployeesController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Retorna uma lista de Funcionários em casos de sucesso.',
+    description: 'Retorna uma lista de funcionários em casos de sucesso.',
     type: [CreateEmployeeDto],
   })
+  @UseGuards(JwtAuthGuard)
   findAll(@Param('empresaId', ParseIntPipe) companyId: number) {
     return this.employeesService.findAll(companyId);
   }
@@ -92,12 +100,12 @@ export class EmployeesController {
   @Get('funcionarios/:id')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Buscar Funcionário',
-    description: 'Endpoint responsável por listar dados de um Funcionário.',
+    summary: 'Buscar funcionário',
+    description: 'Endpoint responsável por listar dados de um funcionário.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID do Funcionario.',
+    description: 'ID do funcionário.',
     type: 'number',
     required: true,
   })
@@ -107,7 +115,6 @@ export class EmployeesController {
     type: CreateEmployeeDto,
   })
   @UseGuards(JwtAuthGuard)
-  @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.employeesService.findOne(id);
   }
@@ -115,18 +122,18 @@ export class EmployeesController {
   @Patch('funcionarios/:id')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Atualizar dados de um Funcionário',
+    summary: 'Atualizar dados de um funcionário',
     description:
       'Endpoint responsável por atualizar os dados de um funcionário.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID do funcionario.',
+    description: 'ID do funcionário.',
     type: 'number',
     required: true,
   })
   @ApiBody({
-    description: 'Dados necessários para atualizar os dados do funcionario',
+    description: 'Dados necessários para atualizar os dados do funcionário',
     type: UpdateEmployeeDto,
   })
   @ApiResponse({
@@ -146,15 +153,16 @@ export class EmployeesController {
     },
   })
   @UseGuards(JwtAuthGuard)
-  update(
-    @Param('id') id: string,
+  async update(
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateEmployeeDto: UpdateEmployeeDto,
   ) {
-    return this.employeesService.update(+id, updateEmployeeDto);
-  }
+    const employee = await this.employeesService.update(id, updateEmployeeDto);
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.employeesService.remove(+id);
+    return {
+      succeeded: true,
+      data: employee,
+      message: `Funcionário id: #${employee.id} atualizado com sucesso.`,
+    };
   }
 }

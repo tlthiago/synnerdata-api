@@ -36,16 +36,18 @@ export class AbsenceService {
   }
 
   async findAll(employeeId: number) {
-    await this.employeesService.findOne(employeeId);
+    const employee = await this.employeesService.findOne(employeeId);
 
     const absences = await this.absenceRepository.find({
       where: {
-        funcionario: { id: employeeId },
+        funcionario: { id: employee.id },
         status: 'A',
       },
     });
 
-    return plainToInstance(AbsenceResponseDto, absences);
+    return plainToInstance(AbsenceResponseDto, absences, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
@@ -56,7 +58,13 @@ export class AbsenceService {
       },
     });
 
-    return plainToInstance(AbsenceResponseDto, absence);
+    if (!absence) {
+      throw new NotFoundException('Falta não encontrada.');
+    }
+
+    return plainToInstance(AbsenceResponseDto, absence, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async update(id: number, updateAbsenceDto: UpdateAbsenceDto) {
@@ -73,7 +81,7 @@ export class AbsenceService {
       throw new NotFoundException('Falta não encontrada.');
     }
 
-    return `A falta #${id} foi atualizada.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deleteAbsenceDto: BaseDeleteDto) {
@@ -88,6 +96,6 @@ export class AbsenceService {
       throw new NotFoundException('Falta não encontrada.');
     }
 
-    return `A falta #${id} foi excluída.`;
+    return { id, status: 'E' };
   }
 }

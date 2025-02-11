@@ -15,27 +15,30 @@ import { In, Repository } from 'typeorm';
 export class EmployeesService {
   constructor(
     @InjectRepository(Employee)
-    private readonly employeesResitory: Repository<Employee>,
+    private readonly employeesRepository: Repository<Employee>,
     private readonly companiesService: CompaniesService,
   ) {}
 
   async create(companyId: number, createEmployeeDto: CreateEmployeeDto) {
-    const cpfExists = await this.findEmployeeBYCpf(createEmployeeDto.cpf);
     const company = await this.companiesService.findOne(companyId);
+
+    const cpfExists = await this.findEmployeeBYCpf(createEmployeeDto.cpf);
+
     if (cpfExists) {
       throw new ConflictException(
         'Já existe um funcionário cadastrado para esse CPF.',
       );
     }
-    const employee = this.employeesResitory.create({
+    const employee = this.employeesRepository.create({
       ...createEmployeeDto,
       empresa: company,
       dataNascimento: new Date(createEmployeeDto.dataNascimento),
     });
-    await this.employeesResitory.save(employee);
+    await this.employeesRepository.save(employee);
   }
+
   async findEmployeeBYCpf(cpf: string): Promise<boolean> {
-    const employee = await this.employeesResitory.findOne({
+    const employee = await this.employeesRepository.findOne({
       where: {
         cpf,
       },
@@ -45,7 +48,7 @@ export class EmployeesService {
 
   async findAll(companyId: number) {
     await this.companiesService.findOne(companyId);
-    const employee = await this.employeesResitory.find({
+    const employee = await this.employeesRepository.find({
       where: {
         empresa: { id: companyId },
       },
@@ -55,7 +58,7 @@ export class EmployeesService {
   }
 
   async findOne(id: number) {
-    const employee = await this.employeesResitory.findOne({
+    const employee = await this.employeesRepository.findOne({
       where: {
         id,
       },
@@ -66,19 +69,21 @@ export class EmployeesService {
   }
 
   async findByIds(ids: number[]) {
-    return await this.employeesResitory.findBy({
+    return await this.employeesRepository.findBy({
       id: In(ids),
     });
   }
 
   async update(id: number, updateEmployeeDto: UpdateEmployeeDto) {
-    const result = await this.employeesResitory.update(id, {
+    const result = await this.employeesRepository.update(id, {
       ...updateEmployeeDto,
     });
+
     if (result.affected === 0) {
       throw new NotFoundException('Funcionário não escontrada');
     }
-    return `Funcionário #${id} atualizado.`;
+
+    return this.findOne(id);
   }
 
   remove(id: number) {
@@ -86,7 +91,7 @@ export class EmployeesService {
   }
 
   async updateEmployeeStatus(id: number, status: string, updatedBy: number) {
-    const employee = await this.employeesResitory.findOne({
+    const employee = await this.employeesRepository.findOne({
       where: {
         id,
       },
@@ -96,7 +101,7 @@ export class EmployeesService {
       throw new NotFoundException('Funcionário não encontrado.');
     }
 
-    const result = await this.employeesResitory.update(id, {
+    const result = await this.employeesRepository.update(id, {
       status,
       atualizadoPor: updatedBy,
     });

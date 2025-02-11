@@ -22,7 +22,7 @@ import { Project } from '../../../modules/projects/entities/project.entity';
 import { Company } from '../../../modules/companies/entities/company.entity';
 import { GrauInstrucao, RegimeContratacao } from '../dto/create-employee.dto';
 
-@Entity('funcionario')
+@Entity('funcionarios')
 export class Employee {
   @PrimaryGeneratedColumn()
   id: number;
