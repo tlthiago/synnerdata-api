@@ -30,17 +30,17 @@ import { LaborAction } from '../labor-actions/entities/labor-action.entity';
 import { EpiDelivery } from '../epi-delivery/entities/epi-delivery.entity';
 import { Vacation } from '../vacations/entities/vacation.entity';
 import { User } from '../users/entities/user.entity';
-import { DepartmentsModule } from './departments.module';
-import { UpdateDepartmentDto } from './dto/update-department.dto';
+import { CostCentersModule } from './cost-centers.module';
+import { UpdateCostCenterDto } from './dto/update-cost-center.dto';
 
-describe('DepartmentsController (E2E)', () => {
+describe('costCenterController (E2E)', () => {
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
   let createdUser: User;
   let createdCompany: Company;
-  const department = {
-    nome: 'Tecnologia da Informação',
+  const costCenter = {
+    nome: 'TI - Sistemas',
     criadoPor: 1,
   };
 
@@ -76,7 +76,7 @@ describe('DepartmentsController (E2E)', () => {
             Vacation,
           ],
         }),
-        DepartmentsModule,
+        CostCentersModule,
       ],
     })
       .overrideGuard(JwtAuthGuard)
@@ -132,27 +132,27 @@ describe('DepartmentsController (E2E)', () => {
 
   afterEach(async () => {
     if (dataSource.isInitialized) {
-      await dataSource.query('DELETE FROM "setores" CASCADE;');
+      await dataSource.query('DELETE FROM "centros_de_custo" CASCADE;');
     }
   });
 
-  it('/v1/empresas/:empresaId/setores (POST) - Deve cadastrar um setor', async () => {
+  it('/v1/empresas/:empresaId/centros-de-custo (POST) - Deve cadastrar um centro de custo', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/setores`)
-      .send(department)
+      .post(`/v1/empresas/${createdCompany.id}/centros-de-custo`)
+      .send(costCenter)
       .expect(201);
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Setor cadastrado com sucesso, id: #1.`,
+      message: `Centro de custo cadastrado com sucesso, id: #1.`,
     });
   });
 
-  it('/v1/empresas/:empresaId/setores (POST) - Deve retornar erro ao criar um setor sem informações obrigatórias', async () => {
+  it('/v1/empresas/:empresaId/centros-de-custo (POST) - Deve retornar erro ao criar um centro de custo sem informações obrigatórias', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/setores`)
+      .post(`/v1/empresas/${createdCompany.id}/centros-de-custo`)
       .send({})
       .expect(400);
 
@@ -166,10 +166,10 @@ describe('DepartmentsController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/:empresaId/setores (POST) - Deve retornar erro ao criar um setor com tipo de dado inválido', async () => {
+  it('/v1/empresas/:empresaId/centros-de-custo (POST) - Deve retornar erro ao criar um centro de custo com tipo de dado inválido', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/setores`)
-      .send({ ...department, nome: 123 })
+      .post(`/v1/empresas/${createdCompany.id}/centros-de-custo`)
+      .send({ ...costCenter, nome: 123 })
       .expect(400);
 
     expect(response.body).toHaveProperty('message');
@@ -178,11 +178,11 @@ describe('DepartmentsController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/:empresaId/setores (POST) - Deve retornar erro caso o ID da empresa não exista', async () => {
+  it('/v1/empresas/:empresaId/centros-de-custo (POST) - Deve retornar erro caso o ID da empresa não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/999/setores`)
+      .post(`/v1/empresas/999/centros-de-custo`)
       .send({
-        ...department,
+        ...costCenter,
         criadoPor: createdUser.id,
       })
       .expect(404);
@@ -194,11 +194,11 @@ describe('DepartmentsController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/:empresaId/setores (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
+  it('/v1/empresas/:empresaId/centros-de-custo (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/setores`)
+      .post(`/v1/empresas/${createdCompany.id}/centros-de-custo`)
       .send({
-        ...department,
+        ...costCenter,
         criadoPor: 'Teste',
       })
       .expect(400);
@@ -210,11 +210,11 @@ describe('DepartmentsController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/:empresaId/setores (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
+  it('/v1/empresas/:empresaId/centros-de-custo (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/setores`)
+      .post(`/v1/empresas/${createdCompany.id}/centros-de-custo`)
       .send({
-        ...department,
+        ...costCenter,
         criadoPor: 999,
       })
       .expect(404);
@@ -226,55 +226,55 @@ describe('DepartmentsController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/:empresaId/setores (GET) - Deve listar todos os setores de uma empresa', async () => {
-    const departmentsRepository = dataSource.getRepository(Department);
-    await departmentsRepository.save({
-      ...department,
+  it('/v1/empresas/:empresaId/centros-de-custo (GET) - Deve listar todos os centros de custo de uma empresa', async () => {
+    const costCenterRepository = dataSource.getRepository(CostCenter);
+    await costCenterRepository.save({
+      ...costCenter,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/empresas/${createdCompany.id}/setores`)
+      .get(`/v1/empresas/${createdCompany.id}/centros-de-custo`)
       .expect(200);
 
     expect(response.body).toBeInstanceOf(Array);
     expect(response.body.length).toBeGreaterThan(0);
   });
 
-  it('/v1/empresas/setores/:id (GET) - Deve retonar um setor específico', async () => {
-    const departmentsRepository = dataSource.getRepository(Department);
-    const createdDepartment = await departmentsRepository.save({
-      ...department,
+  it('/v1/empresas/centros-de-custo/:id (GET) - Deve retonar um centro de custo específico', async () => {
+    const costCenterRepository = dataSource.getRepository(CostCenter);
+    const createdcostCenter = await costCenterRepository.save({
+      ...costCenter,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/empresas/setores/${createdDepartment.id}`)
+      .get(`/v1/empresas/centros-de-custo/${createdcostCenter.id}`)
       .expect(200);
 
     expect(response.body).toMatchObject({
-      id: createdDepartment.id,
-      nome: createdDepartment.nome,
+      id: createdcostCenter.id,
+      nome: createdcostCenter.nome,
     });
   });
 
-  it('/v1/empresas/setores/:id (GET) - Deve retornar erro ao buscar uma setor inexistente', async () => {
+  it('/v1/empresas/centros-de-custo/:id (GET) - Deve retornar erro ao buscar uma centro de custo inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/empresas/setores/999')
+      .get('/v1/empresas/centros-de-custo/999')
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Setor não encontrado.',
+      message: 'Centro de custo não encontrado.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/empresas/setores/:id (GET) - Deve retornar erro ao buscar um setor com um ID inválido', async () => {
+  it('/v1/empresas/centros-de-custo/:id (GET) - Deve retornar erro ao buscar um centro de custo com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/empresas/setores/abc')
+      .get('/v1/empresas/centros-de-custo/abc')
       .expect(400);
 
     expect(response.body).toEqual({
@@ -284,21 +284,21 @@ describe('DepartmentsController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/setores/:id (PATCH) - Deve atualizar os dados de um setor', async () => {
-    const departmentsRepository = dataSource.getRepository(Department);
-    const createdDepartment = await departmentsRepository.save({
-      ...department,
+  it('/v1/empresas/centros-de-custo/:id (PATCH) - Deve atualizar os dados de um centro de custo', async () => {
+    const costCenterRepository = dataSource.getRepository(CostCenter);
+    const createdcostCenter = await costCenterRepository.save({
+      ...costCenter,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
-    const updateData: UpdateDepartmentDto = {
-      nome: 'Recursos Humanos',
+    const updateData: UpdateCostCenterDto = {
+      nome: 'TI - Infraestrutura',
       atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/setores/${createdDepartment.id}`)
+      .patch(`/v1/empresas/centros-de-custo/${createdcostCenter.id}`)
       .send(updateData)
       .expect(200);
 
@@ -306,33 +306,33 @@ describe('DepartmentsController (E2E)', () => {
       succeeded: true,
       data: {
         id: expect.any(Number),
-        nome: 'Recursos Humanos',
+        nome: 'TI - Infraestrutura',
         atualizadoPor: expect.any(String),
       },
-      message: `Setor id: #${createdDepartment.id} atualizado com sucesso.`,
+      message: `Centro de custo id: #${createdcostCenter.id} atualizado com sucesso.`,
     });
 
-    const updatedDepartment = await departmentsRepository.findOneBy({
-      id: createdDepartment.id,
+    const updatedcostCenter = await costCenterRepository.findOneBy({
+      id: createdcostCenter.id,
     });
 
-    expect(updatedDepartment.nome).toBe(updateData.nome);
+    expect(updatedcostCenter.nome).toBe(updateData.nome);
   });
 
-  it('/v1/empresas/setores/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
-    const departmentsRepository = dataSource.getRepository(Department);
-    const createdDepartment = await departmentsRepository.save({
-      ...department,
+  it('/v1/empresas/centros-de-custo/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
+    const costCenterRepository = dataSource.getRepository(CostCenter);
+    const createdcostCenter = await costCenterRepository.save({
+      ...costCenter,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      nome: 'Recursos Humanos',
+      nome: 'TI - Infraestrutura',
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/setores/${createdDepartment.id}`)
+      .patch(`/v1/empresas/centros-de-custo/${createdcostCenter.id}`)
       .send(updateData)
       .expect(400);
 
@@ -343,21 +343,21 @@ describe('DepartmentsController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/setores/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
-    const departmentsRepository = dataSource.getRepository(Department);
-    const createdDepartment = await departmentsRepository.save({
-      ...department,
+  it('/v1/empresas/centros-de-custo/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
+    const costCenterRepository = dataSource.getRepository(CostCenter);
+    const createdcostCenter = await costCenterRepository.save({
+      ...costCenter,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      nome: 'Recursos Humanos',
+      nome: 'TI - Infraestrutura',
       atualizadoPor: 'Teste',
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/setores/${createdDepartment.id}`)
+      .patch(`/v1/empresas/centros-de-custo/${createdcostCenter.id}`)
       .send(updateData)
       .expect(400);
 
@@ -368,23 +368,25 @@ describe('DepartmentsController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/setores/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
-    const departmentsRepository = dataSource.getRepository(Department);
-    const createdDepartment = await departmentsRepository.save({
-      ...department,
+  it('/v1/empresas/centros-de-custo/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
+    const costCenterRepository = dataSource.getRepository(CostCenter);
+    const createdcostCenter = await costCenterRepository.save({
+      ...costCenter,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      nome: 'Recursos Humanos',
+      nome: 'TI - Infraestrutura',
       atualizadoPor: 999,
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/setores/${createdDepartment.id}`)
+      .patch(`/v1/empresas/centros-de-custo/${createdcostCenter.id}`)
       .send(updateData)
       .expect(404);
+
+    console.log(response.body);
 
     expect(response.body).toEqual({
       statusCode: 404,
@@ -393,11 +395,11 @@ describe('DepartmentsController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/setores/:id (PATCH) - Deve retornar erro ao atualizar uma setor com um ID inválido', async () => {
+  it('/v1/empresas/centros-de-custo/:id (PATCH) - Deve retornar erro ao atualizar uma centro de custo com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/empresas/setores/abc')
+      .patch('/v1/empresas/centros-de-custo/abc')
       .send({
-        nome: 'Recursos Humanos',
+        nome: 'TI - Infraestrutura',
         atualizadoPor: 1,
       })
       .expect(400);
@@ -409,55 +411,55 @@ describe('DepartmentsController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/setores/:id (PATCH) - Deve retornar erro ao atualizar um setor inexistente', async () => {
+  it('/v1/empresas/centros-de-custo/:id (PATCH) - Deve retornar erro ao atualizar um centro de custo inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/empresas/setores/9999')
+      .patch('/v1/empresas/centros-de-custo/9999')
       .send({
-        nomeFantasia: 'Setor Inexistente',
+        nomeFantasia: 'Centro de Custo Inexistente',
         atualizadoPor: 1,
       })
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Setor não encontrado.',
+      message: 'Centro de custo não encontrado.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/empresas/setores/:id (DELETE) - Deve excluir um setor', async () => {
-    const departmentsRepository = dataSource.getRepository(Department);
-    const createdDepartment = await departmentsRepository.save({
-      ...department,
+  it('/v1/empresas/centros-de-custo/:id (DELETE) - Deve excluir um centro de custo', async () => {
+    const costCenterRepository = dataSource.getRepository(CostCenter);
+    const createdcostCenter = await costCenterRepository.save({
+      ...costCenter,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
-    const deleleDepartmentDto: BaseDeleteDto = {
+    const delelecostCenterDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/empresas/setores/${createdDepartment.id}`)
-      .send(deleleDepartmentDto)
+      .delete(`/v1/empresas/centros-de-custo/${createdcostCenter.id}`)
+      .send(delelecostCenterDto)
       .expect(200);
 
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Setor id: #${createdDepartment.id} excluído com sucesso.`,
+      message: `Centro de custo id: #${createdcostCenter.id} excluído com sucesso.`,
     });
 
-    const deletedDepartment = await departmentsRepository.findOneBy({
-      id: createdDepartment.id,
+    const deletedcostCenter = await costCenterRepository.findOneBy({
+      id: createdcostCenter.id,
     });
 
-    expect(deletedDepartment.status).toBe('E');
+    expect(deletedcostCenter.status).toBe('E');
   });
 
-  it('/v1/empresas/setores/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
+  it('/v1/empresas/centros-de-custo/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
     const response = await request(app.getHttpServer())
-      .delete(`/v1/empresas/setores/1`)
+      .delete(`/v1/empresas/centros-de-custo/1`)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -467,14 +469,14 @@ describe('DepartmentsController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/setores/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
-    const deleleDepartmentDto = {
+  it('/v1/empresas/centros-de-custo/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
+    const delelecostCenterDto = {
       excluidoPor: 'Teste',
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/empresas/setores/1`)
-      .send(deleleDepartmentDto)
+      .delete(`/v1/empresas/centros-de-custo/1`)
+      .send(delelecostCenterDto)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -484,14 +486,14 @@ describe('DepartmentsController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/setores/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
-    const deleleDepartmentDto: BaseDeleteDto = {
+  it('/v1/empresas/centros-de-custo/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
+    const delelecostCenterDto: BaseDeleteDto = {
       excluidoPor: 999,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/empresas/setores/${createdCompany.id}`)
-      .send(deleleDepartmentDto)
+      .delete(`/v1/empresas/centros-de-custo/${createdCompany.id}`)
+      .send(delelecostCenterDto)
       .expect(404);
 
     expect(response.body).toEqual({
@@ -501,14 +503,14 @@ describe('DepartmentsController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/setores/:id (DELETE) - Deve retornar erro ao excluir um setor com um ID inválido', async () => {
-    const deleleDepartmentDto: BaseDeleteDto = {
+  it('/v1/empresas/centros-de-custo/:id (DELETE) - Deve retornar erro ao excluir um centro de custo com um ID inválido', async () => {
+    const delelecostCenterDto: BaseDeleteDto = {
       excluidoPor: 1,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/empresas/setores/abc')
-      .send(deleleDepartmentDto)
+      .delete('/v1/empresas/centros-de-custo/abc')
+      .send(delelecostCenterDto)
       .expect(400);
 
     expect(response.body).toEqual({
@@ -518,19 +520,19 @@ describe('DepartmentsController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/setores/:id (DELETE) - Deve retornar erro ao excluir um setor inexistente', async () => {
-    const deleleDepartmentDto: BaseDeleteDto = {
+  it('/v1/empresas/centros-de-custo/:id (DELETE) - Deve retornar erro ao excluir um centro de custo inexistente', async () => {
+    const delelecostCenterDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/empresas/setores/9999')
-      .send(deleleDepartmentDto)
+      .delete('/v1/empresas/centros-de-custo/9999')
+      .send(delelecostCenterDto)
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Setor não encontrado.',
+      message: 'Centro de custo não encontrado.',
       error: 'Not Found',
     });
   });
