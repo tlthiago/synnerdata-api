@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Cbo } from './entities/cbo.entity';
 import { CboResponseDto } from './dto/cbo-response.dto';
 import { plainToInstance } from 'class-transformer';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -24,15 +24,15 @@ export class CbosService {
 
     const user = await this.usersService.findOne(createCboDto.criadoPor);
 
-    const costCenter = this.cboRepository.create({
+    const cbo = this.cboRepository.create({
       ...createCboDto,
       empresa: company,
       criadoPor: user,
     });
 
-    await this.cboRepository.save(costCenter);
+    await this.cboRepository.save(cbo);
 
-    return costCenter.id;
+    return cbo.id;
   }
 
   async findAll(companyId: number) {
@@ -45,18 +45,26 @@ export class CbosService {
       },
     });
 
-    return plainToInstance(CboResponseDto, cbos);
+    return plainToInstance(CboResponseDto, cbos, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
-    const costCenter = await this.cboRepository.findOne({
+    const cbo = await this.cboRepository.findOne({
       where: {
         id,
         status: 'A',
       },
     });
 
-    return plainToInstance(CboResponseDto, costCenter);
+    if (!cbo) {
+      throw new NotFoundException('Cbo não encontrado.');
+    }
+
+    return plainToInstance(CboResponseDto, cbo, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async update(id: number, updateCboDto: UpdateCboDto) {
@@ -71,7 +79,7 @@ export class CbosService {
       throw new NotFoundException('Cbo não encontrado.');
     }
 
-    return `O cbo #${id} foi atualizado.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deleteCboDto: BaseDeleteDto) {

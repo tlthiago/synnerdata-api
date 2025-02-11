@@ -30,17 +30,17 @@ import { LaborAction } from '../labor-actions/entities/labor-action.entity';
 import { EpiDelivery } from '../epi-delivery/entities/epi-delivery.entity';
 import { Vacation } from '../vacations/entities/vacation.entity';
 import { User } from '../users/entities/user.entity';
-import { CostCentersModule } from './cost-centers.module';
-import { UpdateCostCenterDto } from './dto/update-cost-center.dto';
+import { CbosModule } from './cbos.module';
+import { UpdateCboDto } from './dto/update-cbo.dto';
 
-describe('CostCenterController (E2E)', () => {
+describe('CboController (E2E)', () => {
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
   let createdUser: User;
   let createdCompany: Company;
-  const costCenter = {
-    nome: 'TI - Sistemas',
+  const cbo = {
+    nome: 'Desenvolvedor de Sistemas Web',
     criadoPor: 1,
   };
 
@@ -76,7 +76,7 @@ describe('CostCenterController (E2E)', () => {
             Vacation,
           ],
         }),
-        CostCentersModule,
+        CbosModule,
       ],
     })
       .overrideGuard(JwtAuthGuard)
@@ -132,27 +132,27 @@ describe('CostCenterController (E2E)', () => {
 
   afterEach(async () => {
     if (dataSource.isInitialized) {
-      await dataSource.query('DELETE FROM "centros_de_custo" CASCADE;');
+      await dataSource.query('DELETE FROM "cbos" CASCADE;');
     }
   });
 
-  it('/v1/empresas/:empresaId/centros-de-custo (POST) - Deve cadastrar um centro de custo', async () => {
+  it('/v1/empresas/:empresaId/cbos (POST) - Deve cadastrar um cbo', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/centros-de-custo`)
-      .send(costCenter)
+      .post(`/v1/empresas/${createdCompany.id}/cbos`)
+      .send(cbo)
       .expect(201);
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Centro de custo cadastrado com sucesso, id: #1.`,
+      message: `Cbo cadastrado com sucesso, id: #1.`,
     });
   });
 
-  it('/v1/empresas/:empresaId/centros-de-custo (POST) - Deve retornar erro ao criar um centro de custo sem informações obrigatórias', async () => {
+  it('/v1/empresas/:empresaId/cbos (POST) - Deve retornar erro ao criar um cbo sem informações obrigatórias', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/centros-de-custo`)
+      .post(`/v1/empresas/${createdCompany.id}/cbos`)
       .send({})
       .expect(400);
 
@@ -166,10 +166,10 @@ describe('CostCenterController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/:empresaId/centros-de-custo (POST) - Deve retornar erro ao criar um centro de custo com tipo de dado inválido', async () => {
+  it('/v1/empresas/:empresaId/cbos (POST) - Deve retornar erro ao criar um cbo com tipo de dado inválido', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/centros-de-custo`)
-      .send({ ...costCenter, nome: 123 })
+      .post(`/v1/empresas/${createdCompany.id}/cbos`)
+      .send({ ...cbo, nome: 123 })
       .expect(400);
 
     expect(response.body).toHaveProperty('message');
@@ -178,11 +178,11 @@ describe('CostCenterController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/:empresaId/centros-de-custo (POST) - Deve retornar erro caso o ID da empresa não exista', async () => {
+  it('/v1/empresas/:empresaId/cbos (POST) - Deve retornar erro caso o ID da empresa não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/999/centros-de-custo`)
+      .post(`/v1/empresas/999/cbos`)
       .send({
-        ...costCenter,
+        ...cbo,
         criadoPor: createdUser.id,
       })
       .expect(404);
@@ -194,11 +194,11 @@ describe('CostCenterController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/:empresaId/centros-de-custo (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
+  it('/v1/empresas/:empresaId/cbos (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/centros-de-custo`)
+      .post(`/v1/empresas/${createdCompany.id}/cbos`)
       .send({
-        ...costCenter,
+        ...cbo,
         criadoPor: 'Teste',
       })
       .expect(400);
@@ -210,11 +210,11 @@ describe('CostCenterController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/:empresaId/centros-de-custo (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
+  it('/v1/empresas/:empresaId/cbos (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/centros-de-custo`)
+      .post(`/v1/empresas/${createdCompany.id}/cbos`)
       .send({
-        ...costCenter,
+        ...cbo,
         criadoPor: 999,
       })
       .expect(404);
@@ -226,55 +226,55 @@ describe('CostCenterController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/:empresaId/centros-de-custo (GET) - Deve listar todos os centros de custo de uma empresa', async () => {
-    const costCenterRepository = dataSource.getRepository(CostCenter);
-    await costCenterRepository.save({
-      ...costCenter,
+  it('/v1/empresas/:empresaId/cbos (GET) - Deve listar todos os centros de custo de uma empresa', async () => {
+    const cboRepository = dataSource.getRepository(Cbo);
+    await cboRepository.save({
+      ...cbo,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/empresas/${createdCompany.id}/centros-de-custo`)
+      .get(`/v1/empresas/${createdCompany.id}/cbos`)
       .expect(200);
 
     expect(response.body).toBeInstanceOf(Array);
     expect(response.body.length).toBeGreaterThan(0);
   });
 
-  it('/v1/empresas/centros-de-custo/:id (GET) - Deve retonar um centro de custo específico', async () => {
-    const costCenterRepository = dataSource.getRepository(CostCenter);
-    const createdcostCenter = await costCenterRepository.save({
-      ...costCenter,
+  it('/v1/empresas/cbos/:id (GET) - Deve retonar um cbo específico', async () => {
+    const cboRepository = dataSource.getRepository(Cbo);
+    const createdCbo = await cboRepository.save({
+      ...cbo,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/empresas/centros-de-custo/${createdcostCenter.id}`)
+      .get(`/v1/empresas/cbos/${createdCbo.id}`)
       .expect(200);
 
     expect(response.body).toMatchObject({
-      id: createdcostCenter.id,
-      nome: createdcostCenter.nome,
+      id: createdCbo.id,
+      nome: createdCbo.nome,
     });
   });
 
-  it('/v1/empresas/centros-de-custo/:id (GET) - Deve retornar erro ao buscar uma centro de custo inexistente', async () => {
+  it('/v1/empresas/cbos/:id (GET) - Deve retornar erro ao buscar uma cbo inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/empresas/centros-de-custo/999')
+      .get('/v1/empresas/cbos/999')
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Centro de custo não encontrado.',
+      message: 'Cbo não encontrado.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/empresas/centros-de-custo/:id (GET) - Deve retornar erro ao buscar um centro de custo com um ID inválido', async () => {
+  it('/v1/empresas/cbos/:id (GET) - Deve retornar erro ao buscar um cbo com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/empresas/centros-de-custo/abc')
+      .get('/v1/empresas/cbos/abc')
       .expect(400);
 
     expect(response.body).toEqual({
@@ -284,21 +284,21 @@ describe('CostCenterController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/centros-de-custo/:id (PATCH) - Deve atualizar os dados de um centro de custo', async () => {
-    const costCenterRepository = dataSource.getRepository(CostCenter);
-    const createdcostCenter = await costCenterRepository.save({
-      ...costCenter,
+  it('/v1/empresas/cbos/:id (PATCH) - Deve atualizar os dados de um cbo', async () => {
+    const cboRepository = dataSource.getRepository(Cbo);
+    const createdCbo = await cboRepository.save({
+      ...cbo,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
-    const updateData: UpdateCostCenterDto = {
-      nome: 'TI - Infraestrutura',
+    const updateData: UpdateCboDto = {
+      nome: 'Desenvolvedor de Sistemas',
       atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/centros-de-custo/${createdcostCenter.id}`)
+      .patch(`/v1/empresas/cbos/${createdCbo.id}`)
       .send(updateData)
       .expect(200);
 
@@ -306,33 +306,33 @@ describe('CostCenterController (E2E)', () => {
       succeeded: true,
       data: {
         id: expect.any(Number),
-        nome: 'TI - Infraestrutura',
+        nome: 'Desenvolvedor de Sistemas',
         atualizadoPor: expect.any(String),
       },
-      message: `Centro de custo id: #${createdcostCenter.id} atualizado com sucesso.`,
+      message: `Cbo id: #${createdCbo.id} atualizado com sucesso.`,
     });
 
-    const updatedcostCenter = await costCenterRepository.findOneBy({
-      id: createdcostCenter.id,
+    const updatedcbo = await cboRepository.findOneBy({
+      id: createdCbo.id,
     });
 
-    expect(updatedcostCenter.nome).toBe(updateData.nome);
+    expect(updatedcbo.nome).toBe(updateData.nome);
   });
 
-  it('/v1/empresas/centros-de-custo/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
-    const costCenterRepository = dataSource.getRepository(CostCenter);
-    const createdcostCenter = await costCenterRepository.save({
-      ...costCenter,
+  it('/v1/empresas/cbos/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
+    const cboRepository = dataSource.getRepository(Cbo);
+    const createdCbo = await cboRepository.save({
+      ...cbo,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      nome: 'TI - Infraestrutura',
+      nome: 'Desenvolvedor de Sistemas',
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/centros-de-custo/${createdcostCenter.id}`)
+      .patch(`/v1/empresas/cbos/${createdCbo.id}`)
       .send(updateData)
       .expect(400);
 
@@ -343,21 +343,21 @@ describe('CostCenterController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/centros-de-custo/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
-    const costCenterRepository = dataSource.getRepository(CostCenter);
-    const createdcostCenter = await costCenterRepository.save({
-      ...costCenter,
+  it('/v1/empresas/cbos/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
+    const cboRepository = dataSource.getRepository(Cbo);
+    const createdCbo = await cboRepository.save({
+      ...cbo,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      nome: 'TI - Infraestrutura',
+      nome: 'Desenvolvedor de Sistemas',
       atualizadoPor: 'Teste',
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/centros-de-custo/${createdcostCenter.id}`)
+      .patch(`/v1/empresas/cbos/${createdCbo.id}`)
       .send(updateData)
       .expect(400);
 
@@ -368,25 +368,23 @@ describe('CostCenterController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/centros-de-custo/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
-    const costCenterRepository = dataSource.getRepository(CostCenter);
-    const createdcostCenter = await costCenterRepository.save({
-      ...costCenter,
+  it('/v1/empresas/cbos/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
+    const cboRepository = dataSource.getRepository(Cbo);
+    const createdCbo = await cboRepository.save({
+      ...cbo,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      nome: 'TI - Infraestrutura',
+      nome: 'Desenvolvedor de Sistemas',
       atualizadoPor: 999,
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/centros-de-custo/${createdcostCenter.id}`)
+      .patch(`/v1/empresas/cbos/${createdCbo.id}`)
       .send(updateData)
       .expect(404);
-
-    console.log(response.body);
 
     expect(response.body).toEqual({
       statusCode: 404,
@@ -395,11 +393,11 @@ describe('CostCenterController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/centros-de-custo/:id (PATCH) - Deve retornar erro ao atualizar uma centro de custo com um ID inválido', async () => {
+  it('/v1/empresas/cbos/:id (PATCH) - Deve retornar erro ao atualizar uma cbo com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/empresas/centros-de-custo/abc')
+      .patch('/v1/empresas/cbos/abc')
       .send({
-        nome: 'TI - Infraestrutura',
+        nome: 'Desenvolvedor de Sistemas',
         atualizadoPor: 1,
       })
       .expect(400);
@@ -411,55 +409,55 @@ describe('CostCenterController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/centros-de-custo/:id (PATCH) - Deve retornar erro ao atualizar um centro de custo inexistente', async () => {
+  it('/v1/empresas/cbos/:id (PATCH) - Deve retornar erro ao atualizar um cbo inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/empresas/centros-de-custo/9999')
+      .patch('/v1/empresas/cbos/9999')
       .send({
-        nomeFantasia: 'Centro de Custo Inexistente',
+        nomeFantasia: 'Cbo Inexistente',
         atualizadoPor: 1,
       })
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Centro de custo não encontrado.',
+      message: 'Cbo não encontrado.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/empresas/centros-de-custo/:id (DELETE) - Deve excluir um centro de custo', async () => {
-    const costCenterRepository = dataSource.getRepository(CostCenter);
-    const createdcostCenter = await costCenterRepository.save({
-      ...costCenter,
+  it('/v1/empresas/cbos/:id (DELETE) - Deve excluir um cbo', async () => {
+    const cboRepository = dataSource.getRepository(Cbo);
+    const createdCbo = await cboRepository.save({
+      ...cbo,
       empresa: createdCompany,
       criadoPor: createdUser,
     });
 
-    const delelecostCenterDto: BaseDeleteDto = {
+    const delelecboDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/empresas/centros-de-custo/${createdcostCenter.id}`)
-      .send(delelecostCenterDto)
+      .delete(`/v1/empresas/cbos/${createdCbo.id}`)
+      .send(delelecboDto)
       .expect(200);
 
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Centro de custo id: #${createdcostCenter.id} excluído com sucesso.`,
+      message: `Cbo id: #${createdCbo.id} excluído com sucesso.`,
     });
 
-    const deletedcostCenter = await costCenterRepository.findOneBy({
-      id: createdcostCenter.id,
+    const deletedcbo = await cboRepository.findOneBy({
+      id: createdCbo.id,
     });
 
-    expect(deletedcostCenter.status).toBe('E');
+    expect(deletedcbo.status).toBe('E');
   });
 
-  it('/v1/empresas/centros-de-custo/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
+  it('/v1/empresas/cbos/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
     const response = await request(app.getHttpServer())
-      .delete(`/v1/empresas/centros-de-custo/1`)
+      .delete(`/v1/empresas/cbos/1`)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -469,14 +467,14 @@ describe('CostCenterController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/centros-de-custo/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
-    const delelecostCenterDto = {
+  it('/v1/empresas/cbos/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
+    const delelecboDto = {
       excluidoPor: 'Teste',
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/empresas/centros-de-custo/1`)
-      .send(delelecostCenterDto)
+      .delete(`/v1/empresas/cbos/1`)
+      .send(delelecboDto)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -486,14 +484,14 @@ describe('CostCenterController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/centros-de-custo/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
-    const delelecostCenterDto: BaseDeleteDto = {
+  it('/v1/empresas/cbos/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
+    const delelecboDto: BaseDeleteDto = {
       excluidoPor: 999,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/empresas/centros-de-custo/${createdCompany.id}`)
-      .send(delelecostCenterDto)
+      .delete(`/v1/empresas/cbos/${createdCompany.id}`)
+      .send(delelecboDto)
       .expect(404);
 
     expect(response.body).toEqual({
@@ -503,14 +501,14 @@ describe('CostCenterController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/centros-de-custo/:id (DELETE) - Deve retornar erro ao excluir um centro de custo com um ID inválido', async () => {
-    const delelecostCenterDto: BaseDeleteDto = {
+  it('/v1/empresas/cbos/:id (DELETE) - Deve retornar erro ao excluir um cbo com um ID inválido', async () => {
+    const delelecboDto: BaseDeleteDto = {
       excluidoPor: 1,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/empresas/centros-de-custo/abc')
-      .send(delelecostCenterDto)
+      .delete('/v1/empresas/cbos/abc')
+      .send(delelecboDto)
       .expect(400);
 
     expect(response.body).toEqual({
@@ -520,19 +518,19 @@ describe('CostCenterController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/centros-de-custo/:id (DELETE) - Deve retornar erro ao excluir um centro de custo inexistente', async () => {
-    const delelecostCenterDto: BaseDeleteDto = {
+  it('/v1/empresas/cbos/:id (DELETE) - Deve retornar erro ao excluir um cbo inexistente', async () => {
+    const delelecboDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/empresas/centros-de-custo/9999')
-      .send(delelecostCenterDto)
+      .delete('/v1/empresas/cbos/9999')
+      .send(delelecboDto)
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Centro de custo não encontrado.',
+      message: 'Cbo não encontrado.',
       error: 'Not Found',
     });
   });
