@@ -6,18 +6,9 @@ import {
   Matches,
   Length,
   IsNumber,
-  // IsDate,
   IsBoolean,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-
-export enum Status {
-  ATIVO = 'Ativo',
-  DEMITIDO = 'Demitido',
-  AFASTADO = 'Afastado',
-  EM_FERIAS = 'Em Férias',
-  FERIAs_PROGRAMADA = 'Férias Programada',
-}
 
 export enum RegimeContratacao {
   CLT = 'CLT',
@@ -31,6 +22,36 @@ export enum GrauInstrucao {
   POS_GRADUACAO = 'Pós-Graduação',
   MESTRADO = 'Mestrado',
   DOUTORADO = 'Doutorado',
+}
+
+export enum Sexo {
+  MASCULINO = 'Masculino',
+  FEMININO = 'Feminino',
+  NAO_DECLARADO = 'Não Declarado',
+  OUTRO = 'Outro',
+}
+
+export enum EstadoCivil {
+  SOLTEIRO = 'Solteiro',
+  CASADO = 'Casado',
+  DIVORCIADO = 'Divorciado',
+  VIUVO = 'Viúvo',
+  UNIAO_ESTAVEL = 'União Estável',
+  SEPARADO = 'Separado',
+}
+
+export enum Escala {
+  DOZE_TRINTA_SEIS = '12x36',
+  SEIS_UM = '6x1',
+  QUATRO_TRES = '4x3',
+}
+
+export enum Status {
+  ATIVO = 'Ativo',
+  DEMITIDO = 'Demitido',
+  AFASTADO = 'Afastado',
+  EM_FERIAS = 'Em Férias',
+  FERIAS_PROGRAMADA = 'Férias Programada',
 }
 
 export class CreateEmployeeDto {
@@ -73,7 +94,6 @@ export class CreateEmployeeDto {
     description: 'Data de admissão do funcionário',
     required: false,
   })
-  // @IsDate()
   @IsOptional()
   dataAdmissao?: string;
 
@@ -93,22 +113,18 @@ export class CreateEmployeeDto {
   cpf: string;
 
   @ApiProperty({ description: 'Data do último ASO', required: false })
-  // @IsDate()
   @IsOptional()
   dataUltimoASO?: string;
 
   @ApiProperty({ description: 'Data do exame demissional', required: false })
-  // @IsDate()
   @IsOptional()
   dataExameDemissional?: string;
 
   @ApiProperty({ description: 'Vencimento do primeiro prazo de experiência' })
-  // @IsDate()
   @IsNotEmpty()
   vencimentoPrazo1Experiencia: string;
 
   @ApiProperty({ description: 'Vencimento do segundo prazo de experiência' })
-  // @IsDate()
   @IsNotEmpty()
   vencimentoPrazo2Experiencia: string;
 
@@ -141,7 +157,6 @@ export class CreateEmployeeDto {
   sexo: string;
 
   @ApiProperty({ description: 'Data de nascimento' })
-  // @IsDate()
   @IsNotEmpty()
   dataNascimento: string;
 
