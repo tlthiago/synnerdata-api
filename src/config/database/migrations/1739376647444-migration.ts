@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class Migration1739281200671 implements MigrationInterface {
-  name = 'Migration1739281200671';
+export class Migration1739376647444 implements MigrationInterface {
+  name = 'Migration1739376647444';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
@@ -113,16 +113,25 @@ export class Migration1739281200671 implements MigrationInterface {
       `CREATE TABLE "ferias" ("id" SERIAL NOT NULL, "status" "public"."ferias_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data_inicio" TIMESTAMP WITH TIME ZONE NOT NULL, "data_fim" TIMESTAMP WITH TIME ZONE NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_15aaf56d0233a1f69ebb6dc1502" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."funcionario_regimecontratacao_enum" AS ENUM('CLT', 'PJ')`,
+      `CREATE TYPE "public"."funcionarios_status_enum" AS ENUM('A', 'I', 'E')`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."funcionario_grauinstrucao_enum" AS ENUM('Fundamental', 'Médio', 'Superior', 'Pós-Graduação', 'Mestrado', 'Doutorado')`,
+      `CREATE TYPE "public"."funcionarios_sexo_enum" AS ENUM('MASCULINO', 'FEMININO', 'NAO_DECLARADO', 'OUTRO')`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."funcionario_status_enum" AS ENUM('A', 'D', 'F', 'AF', 'FP')`,
+      `CREATE TYPE "public"."funcionarios_estado_civil_enum" AS ENUM('SOLTEIRO', 'CASADO', 'DIVORCIADO', 'VIUVO', 'UNIAO_ESTAVEL', 'SEPARADO')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "funcionario" ("id" SERIAL NOT NULL, "nome" character varying(255) NOT NULL, "funcao" character varying(255) NOT NULL, "setor" character varying(255) NOT NULL, "razao" character varying(255) NOT NULL, "cnpjContratacao" character varying(18) NOT NULL, "regimeContratacao" "public"."funcionario_regimecontratacao_enum" NOT NULL, "dataAdmissao" date, "salario" numeric(10,2) NOT NULL, "ctpsSerie" character varying(50) NOT NULL, "cpf" character varying(11) NOT NULL, "dataUltimoASO" date, "dataExameDemissional" date, "vencimentoPrazo1Experiencia" date NOT NULL, "vencimentoPrazo2Experiencia" date NOT NULL, "centroCusto" character varying(255) NOT NULL, "grauInstrucao" "public"."funcionario_grauinstrucao_enum" NOT NULL, "necessidadesEspeciais" boolean NOT NULL, "tipoDeficiencia" character varying(255), "sexo" character varying(10) NOT NULL, "dataNascimento" date NOT NULL, "estadoCivil" character varying(255) NOT NULL, "processoJudicial" boolean NOT NULL, "gestor" character varying(255) NOT NULL, "cbo" character varying(255) NOT NULL, "cep" character varying(10) NOT NULL, "rua" character varying(255) NOT NULL, "numero" character varying(10) NOT NULL, "complemento" character varying(100), "bairro" character varying(100) NOT NULL, "cidade" character varying(100) NOT NULL, "estado" character varying(2) NOT NULL, "criadoPor" integer NOT NULL, "criadoEm" TIMESTAMP NOT NULL DEFAULT now(), "atualizadoEm" TIMESTAMP NOT NULL DEFAULT now(), "atualizado_por" integer, "status" "public"."funcionario_status_enum" NOT NULL DEFAULT 'A', "empresaId" integer, CONSTRAINT "PK_2c5d0c275b4f652fd5cb381655f" PRIMARY KEY ("id"))`,
+      `CREATE TYPE "public"."funcionarios_regime_contratacao_enum" AS ENUM('CLT', 'PJ')`,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."funcionarios_grau_instrucao_enum" AS ENUM('FUNDAMENTAL', 'MEDIO', 'SUPERIOR', 'POS_GRADUACAO', 'MESTRADO', 'DOUTORADO')`,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."funcionarios_escala_enum" AS ENUM('DOZE_TRINTA_SEIS', 'SEIS_UM', 'QUATRO_TRES')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "funcionarios" ("id" SERIAL NOT NULL, "status" "public"."funcionarios_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "carteira_identidade" character varying(14) NOT NULL, "cpf" character varying(11) NOT NULL, "sexo" "public"."funcionarios_sexo_enum" NOT NULL, "data_nascimento" date NOT NULL, "estado_civil" "public"."funcionarios_estado_civil_enum" NOT NULL, "naturalidade" character varying(100) NOT NULL, "nacionalidade" character varying(100) NOT NULL, "altura" numeric(4,2) NOT NULL, "peso" numeric(6,2) NOT NULL, "nome_pai" character varying(100) NOT NULL, "nome_mae" character varying(100) NOT NULL, "email" character varying(100) NOT NULL, "pis" character varying(11) NOT NULL, "ctps_numero" character varying(7) NOT NULL, "ctps_serie" character varying(4) NOT NULL, "certificado_reservista" character varying(14) NOT NULL, "regime_contratacao" "public"."funcionarios_regime_contratacao_enum" NOT NULL, "data_admissao" date NOT NULL, "salario" numeric(10,2) NOT NULL, "data_ultimo_aso" date, "vencimento_experiencia_1" date, "vencimento_experiencia_2" date, "data_exame_demissional" date, "grau_instrucao" "public"."funcionarios_grau_instrucao_enum" NOT NULL, "necessidades_especiais" boolean NOT NULL, "tipo_deficiencia" character varying(255), "filhos" boolean NOT NULL, "quantidade_filhos" integer, "telefone" character varying(20), "celular" character varying(20) NOT NULL, "gestor" character varying(255) NOT NULL, "rua" character varying(255) NOT NULL, "numero" character varying(10) NOT NULL, "complemento" character varying(100), "bairro" character varying(100) NOT NULL, "cidade" character varying(100) NOT NULL, "estado" character varying(2) NOT NULL, "cep" character varying(10) NOT NULL, "latitude" numeric(9,6) NOT NULL, "longitude" numeric(9,6) NOT NULL, "quantidade_onibus" integer NOT NULL, "carga_horaria" numeric(5,2) NOT NULL, "escala" "public"."funcionarios_escala_enum" NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcaoId" integer NOT NULL, "setorId" integer NOT NULL, "centroCustoId" integer, "cboId" integer NOT NULL, "empresaId" integer, CONSTRAINT "UQ_a0de321e9da6c025e7fc92f0bd8" UNIQUE ("cpf"), CONSTRAINT "PK_a6ee7c0e30d968db531ad073337" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."advertencias_status_enum" AS ENUM('A', 'I', 'E')`,
@@ -182,7 +191,7 @@ export class Migration1739281200671 implements MigrationInterface {
       `ALTER TABLE "faltas" ADD CONSTRAINT "FK_116d4648371dcaba0b5856011c9" FOREIGN KEY ("atualizadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
-      `ALTER TABLE "faltas" ADD CONSTRAINT "FK_f1bc437430509d59102ebbdf011" FOREIGN KEY ("funcionarioId") REFERENCES "funcionario"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+      `ALTER TABLE "faltas" ADD CONSTRAINT "FK_f1bc437430509d59102ebbdf011" FOREIGN KEY ("funcionarioId") REFERENCES "funcionarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "atestados" ADD CONSTRAINT "FK_16b860dd3ae67e3d9ee1be638ed" FOREIGN KEY ("criadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
@@ -191,7 +200,7 @@ export class Migration1739281200671 implements MigrationInterface {
       `ALTER TABLE "atestados" ADD CONSTRAINT "FK_b7a5e3059ddad98b12b767a8cb0" FOREIGN KEY ("atualizadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
-      `ALTER TABLE "atestados" ADD CONSTRAINT "FK_2ff24f400261f385e385e7e9c9d" FOREIGN KEY ("funcionarioId") REFERENCES "funcionario"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+      `ALTER TABLE "atestados" ADD CONSTRAINT "FK_2ff24f400261f385e385e7e9c9d" FOREIGN KEY ("funcionarioId") REFERENCES "funcionarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "filiais" ADD CONSTRAINT "FK_43b35d8f05806f31e48a1703b7c" FOREIGN KEY ("criadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
@@ -236,7 +245,7 @@ export class Migration1739281200671 implements MigrationInterface {
       `ALTER TABLE "entregas_de_epis" ADD CONSTRAINT "FK_8c1e99672cb32d04fcff5e94aa4" FOREIGN KEY ("atualizadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
-      `ALTER TABLE "entregas_de_epis" ADD CONSTRAINT "FK_1b206ec9d4b3cf5a79a6a983fac" FOREIGN KEY ("funcionarioId") REFERENCES "funcionario"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+      `ALTER TABLE "entregas_de_epis" ADD CONSTRAINT "FK_1b206ec9d4b3cf5a79a6a983fac" FOREIGN KEY ("funcionarioId") REFERENCES "funcionarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "epis" ADD CONSTRAINT "FK_97f28a339d3a3b85eef5c41db47" FOREIGN KEY ("criadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
@@ -281,7 +290,7 @@ export class Migration1739281200671 implements MigrationInterface {
       `ALTER TABLE "promocoes" ADD CONSTRAINT "FK_5d1edcf14cfb23f2025aec7c246" FOREIGN KEY ("funcaoId") REFERENCES "funcoes"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
-      `ALTER TABLE "promocoes" ADD CONSTRAINT "FK_62c7165b5611d68710aa72cf899" FOREIGN KEY ("funcionarioId") REFERENCES "funcionario"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+      `ALTER TABLE "promocoes" ADD CONSTRAINT "FK_62c7165b5611d68710aa72cf899" FOREIGN KEY ("funcionarioId") REFERENCES "funcionarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "demissoes" ADD CONSTRAINT "FK_49b1654c4ae1e7b0c72b3ec7929" FOREIGN KEY ("criadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
@@ -290,7 +299,7 @@ export class Migration1739281200671 implements MigrationInterface {
       `ALTER TABLE "demissoes" ADD CONSTRAINT "FK_8a1be22fbd28dd53bec1e2b3037" FOREIGN KEY ("atualizadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
-      `ALTER TABLE "demissoes" ADD CONSTRAINT "FK_1259488a34ce786ad661b75e428" FOREIGN KEY ("funcionarioId") REFERENCES "funcionario"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+      `ALTER TABLE "demissoes" ADD CONSTRAINT "FK_1259488a34ce786ad661b75e428" FOREIGN KEY ("funcionarioId") REFERENCES "funcionarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "analise_de_cpf" ADD CONSTRAINT "FK_d8a94e5d0ba4e2a28ee13226085" FOREIGN KEY ("criadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
@@ -299,7 +308,7 @@ export class Migration1739281200671 implements MigrationInterface {
       `ALTER TABLE "analise_de_cpf" ADD CONSTRAINT "FK_2e3e99a798e0a3d982c5b66b057" FOREIGN KEY ("atualizadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
-      `ALTER TABLE "analise_de_cpf" ADD CONSTRAINT "FK_fe6571e99015f807165414251fd" FOREIGN KEY ("funcionarioId") REFERENCES "funcionario"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+      `ALTER TABLE "analise_de_cpf" ADD CONSTRAINT "FK_fe6571e99015f807165414251fd" FOREIGN KEY ("funcionarioId") REFERENCES "funcionarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "acidentes" ADD CONSTRAINT "FK_b4aecf910adb001a8962152268c" FOREIGN KEY ("criadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
@@ -308,7 +317,7 @@ export class Migration1739281200671 implements MigrationInterface {
       `ALTER TABLE "acidentes" ADD CONSTRAINT "FK_21348114d792699f6e737519eb6" FOREIGN KEY ("atualizadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
-      `ALTER TABLE "acidentes" ADD CONSTRAINT "FK_4806a9ce0ad4b5e77b478a004e8" FOREIGN KEY ("funcionarioId") REFERENCES "funcionario"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+      `ALTER TABLE "acidentes" ADD CONSTRAINT "FK_4806a9ce0ad4b5e77b478a004e8" FOREIGN KEY ("funcionarioId") REFERENCES "funcionarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "acoes_trabalhistas" ADD CONSTRAINT "FK_e122d0753a201779e91dd7d6e0f" FOREIGN KEY ("criadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
@@ -317,7 +326,7 @@ export class Migration1739281200671 implements MigrationInterface {
       `ALTER TABLE "acoes_trabalhistas" ADD CONSTRAINT "FK_50e5237cf9d7837336d0d91e56c" FOREIGN KEY ("atualizadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
-      `ALTER TABLE "acoes_trabalhistas" ADD CONSTRAINT "FK_18d74f5686cfdfbdb2711063dde" FOREIGN KEY ("funcionarioId") REFERENCES "funcionario"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+      `ALTER TABLE "acoes_trabalhistas" ADD CONSTRAINT "FK_18d74f5686cfdfbdb2711063dde" FOREIGN KEY ("funcionarioId") REFERENCES "funcionarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "ferias" ADD CONSTRAINT "FK_2023bcd21ef59f5df9f42ce0b52" FOREIGN KEY ("criadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
@@ -326,10 +335,28 @@ export class Migration1739281200671 implements MigrationInterface {
       `ALTER TABLE "ferias" ADD CONSTRAINT "FK_96dc7ee5c7e1f1762bfb8263042" FOREIGN KEY ("atualizadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
-      `ALTER TABLE "ferias" ADD CONSTRAINT "FK_1cd0290a6fac5c7463478647a9f" FOREIGN KEY ("funcionarioId") REFERENCES "funcionario"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+      `ALTER TABLE "ferias" ADD CONSTRAINT "FK_1cd0290a6fac5c7463478647a9f" FOREIGN KEY ("funcionarioId") REFERENCES "funcionarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
-      `ALTER TABLE "funcionario" ADD CONSTRAINT "FK_a2a616862df841a81cb92f07b8c" FOREIGN KEY ("empresaId") REFERENCES "empresas"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+      `ALTER TABLE "funcionarios" ADD CONSTRAINT "FK_5613d2967559a444e5d3c49e0a5" FOREIGN KEY ("criadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "funcionarios" ADD CONSTRAINT "FK_e83efff7a99204cd13959953083" FOREIGN KEY ("atualizadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "funcionarios" ADD CONSTRAINT "FK_3e68a1f3b32c19016d6f951dcb1" FOREIGN KEY ("funcaoId") REFERENCES "funcoes"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "funcionarios" ADD CONSTRAINT "FK_5997af78f6a20ffd2fe7e70554f" FOREIGN KEY ("setorId") REFERENCES "setores"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "funcionarios" ADD CONSTRAINT "FK_9f17e7b761300d3e2b275e6ccce" FOREIGN KEY ("centroCustoId") REFERENCES "centros_de_custo"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "funcionarios" ADD CONSTRAINT "FK_c219d9d003a589cc8051efc3a5f" FOREIGN KEY ("cboId") REFERENCES "cbos"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "funcionarios" ADD CONSTRAINT "FK_2bbe7cd2d280902d09e5c3c2ffc" FOREIGN KEY ("empresaId") REFERENCES "empresas"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "advertencias" ADD CONSTRAINT "FK_d6adc8bdb86adfe32785715f02f" FOREIGN KEY ("criadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
@@ -338,7 +365,7 @@ export class Migration1739281200671 implements MigrationInterface {
       `ALTER TABLE "advertencias" ADD CONSTRAINT "FK_b513054fede2f100f63f7060da3" FOREIGN KEY ("atualizadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
-      `ALTER TABLE "advertencias" ADD CONSTRAINT "FK_6b87a6021d5a34ee1cc4151f5d8" FOREIGN KEY ("funcionarioId") REFERENCES "funcionario"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+      `ALTER TABLE "advertencias" ADD CONSTRAINT "FK_6b87a6021d5a34ee1cc4151f5d8" FOREIGN KEY ("funcionarioId") REFERENCES "funcionarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "funcao_epi_logs" ADD CONSTRAINT "FK_4083feed2e23a0f569a3ddba9f1" FOREIGN KEY ("funcaoId") REFERENCES "funcoes"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
@@ -356,7 +383,7 @@ export class Migration1739281200671 implements MigrationInterface {
       `ALTER TABLE "funcionarios_projetos_logs" ADD CONSTRAINT "FK_e075a42d6171b9759ee25294865" FOREIGN KEY ("projetoId") REFERENCES "projetos"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
-      `ALTER TABLE "funcionarios_projetos_logs" ADD CONSTRAINT "FK_617e59ddd046a09f851786eabc2" FOREIGN KEY ("funcionarioId") REFERENCES "funcionario"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+      `ALTER TABLE "funcionarios_projetos_logs" ADD CONSTRAINT "FK_617e59ddd046a09f851786eabc2" FOREIGN KEY ("funcionarioId") REFERENCES "funcionarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "entregas_epis" ADD CONSTRAINT "FK_91ad62a43fee57030eacb542513" FOREIGN KEY ("entregaId") REFERENCES "entregas_de_epis"("id") ON DELETE CASCADE ON UPDATE CASCADE`,
@@ -368,7 +395,7 @@ export class Migration1739281200671 implements MigrationInterface {
       `ALTER TABLE "projetos_funcionarios" ADD CONSTRAINT "FK_8663a86eeb5c14f3d3f54060a19" FOREIGN KEY ("projetoId") REFERENCES "projetos"("id") ON DELETE CASCADE ON UPDATE CASCADE`,
     );
     await queryRunner.query(
-      `ALTER TABLE "projetos_funcionarios" ADD CONSTRAINT "FK_168dd5769f24892016a56553b84" FOREIGN KEY ("funcionarioId") REFERENCES "funcionario"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+      `ALTER TABLE "projetos_funcionarios" ADD CONSTRAINT "FK_168dd5769f24892016a56553b84" FOREIGN KEY ("funcionarioId") REFERENCES "funcionarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "funcoes_epis" ADD CONSTRAINT "FK_a38bc15b5ff546a5940e3fc9416" FOREIGN KEY ("funcaoId") REFERENCES "funcoes"("id") ON DELETE CASCADE ON UPDATE CASCADE`,
@@ -425,7 +452,25 @@ export class Migration1739281200671 implements MigrationInterface {
       `ALTER TABLE "advertencias" DROP CONSTRAINT "FK_d6adc8bdb86adfe32785715f02f"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "funcionario" DROP CONSTRAINT "FK_a2a616862df841a81cb92f07b8c"`,
+      `ALTER TABLE "funcionarios" DROP CONSTRAINT "FK_2bbe7cd2d280902d09e5c3c2ffc"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "funcionarios" DROP CONSTRAINT "FK_c219d9d003a589cc8051efc3a5f"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "funcionarios" DROP CONSTRAINT "FK_9f17e7b761300d3e2b275e6ccce"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "funcionarios" DROP CONSTRAINT "FK_5997af78f6a20ffd2fe7e70554f"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "funcionarios" DROP CONSTRAINT "FK_3e68a1f3b32c19016d6f951dcb1"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "funcionarios" DROP CONSTRAINT "FK_e83efff7a99204cd13959953083"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "funcionarios" DROP CONSTRAINT "FK_5613d2967559a444e5d3c49e0a5"`,
     );
     await queryRunner.query(
       `ALTER TABLE "ferias" DROP CONSTRAINT "FK_1cd0290a6fac5c7463478647a9f"`,
@@ -613,14 +658,19 @@ export class Migration1739281200671 implements MigrationInterface {
     await queryRunner.query(`DROP TYPE "public"."funcao_epi_logs_acao_enum"`);
     await queryRunner.query(`DROP TABLE "advertencias"`);
     await queryRunner.query(`DROP TYPE "public"."advertencias_status_enum"`);
-    await queryRunner.query(`DROP TABLE "funcionario"`);
-    await queryRunner.query(`DROP TYPE "public"."funcionario_status_enum"`);
+    await queryRunner.query(`DROP TABLE "funcionarios"`);
+    await queryRunner.query(`DROP TYPE "public"."funcionarios_escala_enum"`);
     await queryRunner.query(
-      `DROP TYPE "public"."funcionario_grauinstrucao_enum"`,
+      `DROP TYPE "public"."funcionarios_grau_instrucao_enum"`,
     );
     await queryRunner.query(
-      `DROP TYPE "public"."funcionario_regimecontratacao_enum"`,
+      `DROP TYPE "public"."funcionarios_regime_contratacao_enum"`,
     );
+    await queryRunner.query(
+      `DROP TYPE "public"."funcionarios_estado_civil_enum"`,
+    );
+    await queryRunner.query(`DROP TYPE "public"."funcionarios_sexo_enum"`);
+    await queryRunner.query(`DROP TYPE "public"."funcionarios_status_enum"`);
     await queryRunner.query(`DROP TABLE "ferias"`);
     await queryRunner.query(`DROP TYPE "public"."ferias_status_enum"`);
     await queryRunner.query(`DROP TABLE "acoes_trabalhistas"`);

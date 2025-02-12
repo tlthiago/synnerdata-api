@@ -11,24 +11,51 @@ import { EpiDelivery } from '../../../modules/epi-delivery/entities/epi-delivery
 import { Vacation } from '../../../modules/vacations/entities/vacation.entity';
 import { Project } from '../../../modules/projects/entities/project.entity';
 import { Company } from '../../../modules/companies/entities/company.entity';
-import {
-  Escala,
-  EstadoCivil,
-  GrauInstrucao,
-  RegimeContratacao,
-  Sexo,
-  Status,
-} from '../dto/create-employee.dto';
 import { BaseEntity } from '../../../config/database/entities/base.entity';
 import { Role } from '../../../modules/roles/entities/role.entity';
 import { Department } from '../../../modules/departments/entities/department.entity';
 import { CostCenter } from '../../../modules/cost-centers/entities/cost-center.entity';
 import { Cbo } from '../../../modules/cbos/entities/cbo.entity';
+import {
+  RegimeContratacao,
+  GrauInstrucao,
+  Sexo,
+  EstadoCivil,
+  Escala,
+  Status,
+} from '../enums/employees.enum';
 
 @Entity('funcionarios')
 export class Employee extends BaseEntity {
   @Column({ name: 'nome', type: 'varchar', length: 255 })
   nome: string;
+
+  @Column({ name: 'carteira_identidade', type: 'varchar', length: 14 })
+  carteiraIdentidade: string;
+
+  @Column({ name: 'cpf', type: 'varchar', length: 11, unique: true })
+  cpf: string;
+
+  @Column({ name: 'sexo', type: 'enum', enum: Sexo })
+  sexo: Sexo;
+
+  @Column({ name: 'data_nascimento', type: 'date' })
+  dataNascimento: Date;
+
+  @Column({ name: 'estado_civil', type: 'enum', enum: EstadoCivil })
+  estadoCivil: EstadoCivil;
+
+  @Column({ name: 'naturalidade', type: 'varchar', length: 100 })
+  naturalidade: string;
+
+  @Column({ name: 'nacionalidade', type: 'varchar', length: 100 })
+  nacionalidade: string;
+
+  @Column({ name: 'altura', type: 'decimal', precision: 4, scale: 2 })
+  altura: number;
+
+  @Column({ name: 'peso', type: 'decimal', precision: 6, scale: 2 })
+  peso: number;
 
   @Column({ name: 'nome_pai', type: 'varchar', length: 100 })
   nomePai: string;
@@ -36,17 +63,11 @@ export class Employee extends BaseEntity {
   @Column({ name: 'nome_mae', type: 'varchar', length: 100 })
   nomeMae: string;
 
-  @Column({ name: 'pis', type: 'varchar', length: 100 })
+  @Column({ name: 'email', type: 'varchar', length: 100 })
+  email: string;
+
+  @Column({ name: 'pis', type: 'varchar', length: 11 })
   pis: string;
-
-  @Column({ name: 'carteira_identidade', type: 'varchar', length: 100 })
-  carteiraIdentidade: string;
-
-  @Column({ name: 'cpf', type: 'varchar', length: 11, unique: true })
-  cpf: string;
-
-  @Column({ name: 'certificado_reservista', type: 'varchar', length: 100 })
-  certificadoReservista: string;
 
   @Column({ name: 'ctps_numero', type: 'varchar', length: 7 })
   ctpsNumero: string;
@@ -54,16 +75,19 @@ export class Employee extends BaseEntity {
   @Column({ name: 'ctps_serie', type: 'varchar', length: 4 })
   ctpsSerie: string;
 
+  @Column({ name: 'certificado_reservista', type: 'varchar', length: 14 })
+  certificadoReservista: string;
+
   @Column({ name: 'regime_contratacao', type: 'enum', enum: RegimeContratacao })
   regimeContratacao: RegimeContratacao;
 
-  @Column({ name: 'data_admissao', type: 'timestamptz' })
+  @Column({ name: 'data_admissao', type: 'date' })
   dataAdmissao: Date;
 
   @Column({ name: 'salario', type: 'decimal', precision: 10, scale: 2 })
   salario: number;
 
-  @Column({ name: 'data_ultimo_aso', type: 'timestamptz', nullable: true })
+  @Column({ name: 'data_ultimo_aso', type: 'date', nullable: true })
   dataUltimoASO?: Date;
 
   @ManyToOne(() => Role, { nullable: false, eager: true })
@@ -74,21 +98,21 @@ export class Employee extends BaseEntity {
 
   @Column({
     name: 'vencimento_experiencia_1',
-    type: 'timestamptz',
+    type: 'date',
     nullable: true,
   })
   vencimentoExperiencia1?: Date;
 
   @Column({
     name: 'vencimento_experiencia_2',
-    type: 'timestamptz',
+    type: 'date',
     nullable: true,
   })
   vencimentoExperiencia2?: Date;
 
   @Column({
     name: 'data_exame_demissional',
-    type: 'timestamptz',
+    type: 'date',
     nullable: true,
   })
   dataExameDemissional?: Date;
@@ -110,29 +134,17 @@ export class Employee extends BaseEntity {
   })
   tipoDeficiencia?: string;
 
-  @Column({ name: 'sexo', type: 'enum', enum: Sexo })
-  sexo: Sexo;
-
-  @Column({ name: 'data_nascimento', type: 'date' })
-  dataNascimento: Date;
-
-  @Column({ name: 'estado_civil', type: 'enum', enum: EstadoCivil })
-  estadoCivil: EstadoCivil;
-
   @Column({ name: 'filhos', type: 'boolean' })
   filhos: boolean;
 
-  @Column({ name: 'quantidade_filhos', type: 'varchar', nullable: true })
-  quantidadeFilhos?: boolean;
+  @Column({ name: 'quantidade_filhos', type: 'int', nullable: true })
+  quantidadeFilhos?: number;
 
   @Column({ name: 'telefone', type: 'varchar', length: 20, nullable: true })
   telefone?: string;
 
   @Column({ name: 'celular', type: 'varchar', length: 20 })
   celular: string;
-
-  @ManyToOne(() => LaborAction, { nullable: true, eager: true })
-  processoJudicial: LaborAction;
 
   @Column({ name: 'gestor', type: 'varchar', length: 255 })
   gestor: string;
@@ -161,30 +173,20 @@ export class Employee extends BaseEntity {
   @Column({ name: 'cep', type: 'varchar', length: 10 })
   cep: string;
 
-  @Column({ name: 'naturalidade', type: 'varchar', length: 100 })
-  naturalidade: string;
+  @Column({ name: 'latitude', type: 'decimal', precision: 9, scale: 6 })
+  latitude: number;
 
-  @Column({ name: 'nacionalidade', type: 'varchar', length: 100 })
-  nacionalidade: string;
+  @Column({ name: 'longitude', type: 'decimal', precision: 9, scale: 6 })
+  longitude: number;
 
-  @Column({ name: 'altura', type: 'varchar', length: 100 })
-  altura: string;
-
-  @Column({ name: 'peso', type: 'varchar', length: 100 })
-  peso: string;
-
-  @Column({ name: 'latitude', type: 'varchar', length: 100 })
-  latitude: string;
-
-  @Column({ name: 'longitude', type: 'varchar', length: 100 })
-  longitude: string;
-
-  @Column({ name: 'quantidade_onibus', type: 'varchar', length: 100 })
-  quantidadeOnibus: string;
+  @Column({ name: 'quantidade_onibus', type: 'int' })
+  quantidadeOnibus: number;
 
   @Column({
     name: 'carga_horaria',
-    type: 'integer',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
   })
   cargaHoraria: number;
 
@@ -199,9 +201,8 @@ export class Employee extends BaseEntity {
     name: 'status',
     type: 'enum',
     enum: Status,
-    default: Status.ATIVO,
   })
-  status: string;
+  status: Status;
 
   @OneToMany(() => Absence, (absence) => absence.funcionario)
   faltas: Absence[];

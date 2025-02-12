@@ -14,5 +14,6 @@ import { UsersModule } from '../users/users.module';
   ],
   controllers: [CostCentersController],
   providers: [CostCentersService],
+  exports: [CostCentersService],
 })
 export class CostCentersModule {}
