@@ -7,6 +7,8 @@ import { CompaniesModule } from '../companies/companies.module';
 import { RolesModule } from '../roles/roles.module';
 import { DepartmentsModule } from '../departments/departments.module';
 import { CostCentersModule } from '../cost-centers/cost-centers.module';
+import { CbosModule } from '../cbos/cbos.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { CostCentersModule } from '../cost-centers/cost-centers.module';
     RolesModule,
     DepartmentsModule,
     CostCentersModule,
+    CbosModule,
+    UsersModule,
   ],
   controllers: [EmployeesController],
   providers: [EmployeesService],

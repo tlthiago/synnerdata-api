@@ -22,7 +22,7 @@ import {
   Sexo,
   EstadoCivil,
   Escala,
-  Status,
+  StatusFuncionario,
 } from '../enums/employees.enum';
 
 @Entity('funcionarios')
@@ -173,11 +173,23 @@ export class Employee extends BaseEntity {
   @Column({ name: 'cep', type: 'varchar', length: 10 })
   cep: string;
 
-  @Column({ name: 'latitude', type: 'decimal', precision: 9, scale: 6 })
-  latitude: number;
+  @Column({
+    name: 'latitude',
+    type: 'decimal',
+    precision: 9,
+    scale: 6,
+    nullable: true,
+  })
+  latitude?: number;
 
-  @Column({ name: 'longitude', type: 'decimal', precision: 9, scale: 6 })
-  longitude: number;
+  @Column({
+    name: 'longitude',
+    type: 'decimal',
+    precision: 9,
+    scale: 6,
+    nullable: true,
+  })
+  longitude?: number;
 
   @Column({ name: 'quantidade_onibus', type: 'int' })
   quantidadeOnibus: number;
@@ -198,11 +210,12 @@ export class Employee extends BaseEntity {
   escala: Escala;
 
   @Column({
-    name: 'status',
+    name: 'status_funcionario',
     type: 'enum',
-    enum: Status,
+    enum: StatusFuncionario,
+    default: StatusFuncionario.ATIVO,
   })
-  status: Status;
+  statusFuncionario: StatusFuncionario;
 
   @OneToMany(() => Absence, (absence) => absence.funcionario)
   faltas: Absence[];

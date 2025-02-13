@@ -3,14 +3,14 @@ import {
   Get,
   Post,
   Body,
-  // Patch,
+  Patch,
   Param,
   ParseIntPipe,
   UseGuards,
 } from '@nestjs/common';
 import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
-// import { UpdateEmployeeDto } from './dto/update-employee.dto';
+import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -119,50 +119,50 @@ export class EmployeesController {
     return this.employeesService.findOne(id);
   }
 
-  // @Patch('funcionarios/:id')
-  // @ApiBearerAuth()
-  // @ApiOperation({
-  //   summary: 'Atualizar dados de um funcionário',
-  //   description:
-  //     'Endpoint responsável por atualizar os dados de um funcionário.',
-  // })
-  // @ApiParam({
-  //   name: 'id',
-  //   description: 'ID do funcionário.',
-  //   type: 'number',
-  //   required: true,
-  // })
-  // @ApiBody({
-  //   description: 'Dados necessários para atualizar os dados do funcionário',
-  //   type: UpdateEmployeeDto,
-  // })
-  // @ApiResponse({
-  //   status: 200,
-  //   description:
-  //     'Retorna uma mensagem de sucesso caso a atualização seja bem sucedida.',
-  //   schema: {
-  //     type: 'object',
-  //     properties: {
-  //       succeeded: { type: 'boolean' },
-  //       data: { type: 'string', nullable: true },
-  //       message: {
-  //         type: 'string',
-  //         description: 'Funcionário atualizado com sucesso.',
-  //       },
-  //     },
-  //   },
-  // })
-  // @UseGuards(JwtAuthGuard)
-  // async update(
-  //   @Param('id', ParseIntPipe) id: number,
-  //   @Body() updateEmployeeDto: UpdateEmployeeDto,
-  // ) {
-  //   const employee = await this.employeesService.update(id, updateEmployeeDto);
+  @Patch('funcionarios/:id')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Atualizar dados de um funcionário',
+    description:
+      'Endpoint responsável por atualizar os dados de um funcionário.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do funcionário.',
+    type: 'number',
+    required: true,
+  })
+  @ApiBody({
+    description: 'Dados necessários para atualizar os dados do funcionário',
+    type: UpdateEmployeeDto,
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Retorna uma mensagem de sucesso caso a atualização seja bem sucedida.',
+    schema: {
+      type: 'object',
+      properties: {
+        succeeded: { type: 'boolean' },
+        data: { type: 'string', nullable: true },
+        message: {
+          type: 'string',
+          description: 'Funcionário atualizado com sucesso.',
+        },
+      },
+    },
+  })
+  @UseGuards(JwtAuthGuard)
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateEmployeeDto: UpdateEmployeeDto,
+  ) {
+    const employee = await this.employeesService.update(id, updateEmployeeDto);
 
-  //   return {
-  //     succeeded: true,
-  //     data: employee,
-  //     message: `Funcionário id: #${employee.id} atualizado com sucesso.`,
-  //   };
-  // }
+    return {
+      succeeded: true,
+      data: employee,
+      message: `Funcionário id: #${employee.id} atualizado com sucesso.`,
+    };
+  }
 }

@@ -19,7 +19,6 @@ import {
   Sexo,
   EstadoCivil,
   Escala,
-  Status,
 } from '../enums/employees.enum';
 
 export class CreateEmployeeDto {
@@ -305,11 +304,6 @@ export class CreateEmployeeDto {
   @IsEnum(Escala)
   @IsNotEmpty()
   escala: Escala;
-
-  @ApiProperty({ description: 'Status (Ativo, Demitido, etc.)', enum: Status })
-  @IsEnum(Status)
-  @IsNotEmpty()
-  status: Status;
 
   @ApiProperty({
     description: 'Usuário responsável pelo cadastro do funcionário.',

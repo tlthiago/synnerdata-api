@@ -1,6 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseResponseDto } from '../../../common/utils/dto/base-response.dto';
-import { Expose, Transform } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
+import {
+  Escala,
+  EstadoCivil,
+  GrauInstrucao,
+  RegimeContratacao,
+  Sexo,
+  StatusFuncionario,
+} from '../enums/employees.enum';
+import { RoleResponseDto } from '../../../modules/roles/dto/role-response.dto';
+import { DepartmentResponseDto } from '../../../modules/departments/dto/department-response.dto';
+import { CostCenterResponseDto } from '../../../modules/cost-centers/dto/cost-center-response.dto';
+import { CboResponseDto } from '../../../modules/cbos/dto/cbo-response.dto';
 
 export class EmployeeResponseDto extends BaseResponseDto {
   @ApiProperty({ description: 'Nome' })
@@ -15,9 +27,9 @@ export class EmployeeResponseDto extends BaseResponseDto {
   @Expose()
   cpf: string;
 
-  @ApiProperty({ description: 'Sexo' })
+  @ApiProperty({ description: 'Sexo', enum: Sexo })
   @Expose()
-  sexo: string;
+  sexo: Sexo;
 
   @ApiProperty({ description: 'Data de Nascimento' })
   @Expose()
@@ -28,9 +40,9 @@ export class EmployeeResponseDto extends BaseResponseDto {
   )
   dataNascimento: Date;
 
-  @ApiProperty({ description: 'Estado civil' })
+  @ApiProperty({ description: 'Estado civil', enum: EstadoCivil })
   @Expose()
-  estadoCivil: string;
+  estadoCivil: EstadoCivil;
 
   @ApiProperty({ description: 'Naturalidade' })
   @Expose()
@@ -42,11 +54,11 @@ export class EmployeeResponseDto extends BaseResponseDto {
 
   @ApiProperty({ description: 'Altura' })
   @Expose()
-  altura: string;
+  altura: number;
 
   @ApiProperty({ description: 'Peso' })
   @Expose()
-  peso: string;
+  peso: number;
 
   @ApiProperty({ description: 'Nome do Pai' })
   @Expose()
@@ -76,9 +88,12 @@ export class EmployeeResponseDto extends BaseResponseDto {
   @Expose()
   certificadoReservista: string;
 
-  @ApiProperty({ description: 'Regime de Contratação' })
+  @ApiProperty({
+    description: 'Regime de Contratação',
+    enum: RegimeContratacao,
+  })
   @Expose()
-  regimeContratacao: string;
+  regimeContratacao: RegimeContratacao;
 
   @ApiProperty({ description: 'Data da Fundação' })
   @Expose()
@@ -104,11 +119,15 @@ export class EmployeeResponseDto extends BaseResponseDto {
 
   @ApiProperty({ description: 'Função' })
   @Expose()
-  funcao: string;
+  @Type(() => RoleResponseDto)
+  @Transform(({ value }) => value?.nome)
+  funcao: RoleResponseDto;
 
   @ApiProperty({ description: 'Setor' })
   @Expose()
-  setor: string;
+  @Type(() => DepartmentResponseDto)
+  @Transform(({ value }) => value?.nome)
+  setor: DepartmentResponseDto;
 
   @ApiProperty({
     description: 'Data do vencimento do 1º período de experiência',
@@ -143,11 +162,13 @@ export class EmployeeResponseDto extends BaseResponseDto {
 
   @ApiProperty({ description: 'Centro de Custo' })
   @Expose()
-  centroCusto: string;
+  @Type(() => CostCenterResponseDto)
+  @Transform(({ value }) => value?.nome)
+  centroCusto: CostCenterResponseDto;
 
-  @ApiProperty({ description: 'Grau de Instrução' })
+  @ApiProperty({ description: 'Grau de Instrução', enum: GrauInstrucao })
   @Expose()
-  grauInstrucao: string;
+  grauInstrucao: GrauInstrucao;
 
   @ApiProperty({ description: 'Possui necessidades Especiais?' })
   @Expose()
@@ -179,7 +200,9 @@ export class EmployeeResponseDto extends BaseResponseDto {
 
   @ApiProperty({ description: 'Cbo' })
   @Expose()
-  cbo: string;
+  @Type(() => CboResponseDto)
+  @Transform(({ value }) => value?.nome)
+  cbo: CboResponseDto;
 
   @ApiProperty({ description: 'Rua' })
   @Expose()
@@ -211,11 +234,11 @@ export class EmployeeResponseDto extends BaseResponseDto {
 
   @ApiProperty({ description: 'Latitude' })
   @Expose()
-  latitude: string;
+  latitude: number;
 
   @ApiProperty({ description: 'Longitude' })
   @Expose()
-  longitude: string;
+  longitude: number;
 
   @ApiProperty({ description: 'Quantidade de ônibus' })
   @Expose()
@@ -223,9 +246,13 @@ export class EmployeeResponseDto extends BaseResponseDto {
 
   @ApiProperty({ description: 'Carga horária mensal' })
   @Expose()
-  cargaHoraria: string;
+  cargaHoraria: number;
 
-  @ApiProperty({ description: 'Escala de trabalho' })
+  @ApiProperty({ description: 'Escala de trabalho', enum: Escala })
   @Expose()
-  escala: string;
+  escala: Escala;
+
+  @ApiProperty({ description: 'Escala de trabalho', enum: StatusFuncionario })
+  @Expose()
+  status: StatusFuncionario;
 }

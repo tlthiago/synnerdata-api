@@ -40,7 +40,7 @@ export class User {
     name: 'criado_em',
     type: 'timestamptz',
   })
-  readonly criadoEm!: Date;
+  readonly criadoEm: Date;
 
   @Column({ name: 'atualizado_por', type: 'integer', nullable: true })
   atualizadoPor?: number;

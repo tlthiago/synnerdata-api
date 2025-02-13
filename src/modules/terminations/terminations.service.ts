@@ -9,6 +9,8 @@ import { plainToInstance } from 'class-transformer';
 import { TerminationResponseDto } from './dto/termination-response.dto';
 import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
+import { UpdateStatusDto } from '../employees/dto/update-status-employee.dto';
+import { StatusFuncionario } from '../employees/enums/employees.enum';
 
 @Injectable()
 export class TerminationsService {
@@ -34,12 +36,14 @@ export class TerminationsService {
 
     await this.terminationRepository.save(termination);
 
-    const status = 'D';
+    const updateStatusDto: UpdateStatusDto = {
+      status: StatusFuncionario.DEMITIDO,
+      atualizadoPor: user.id,
+    };
 
     await this.employeesService.updateEmployeeStatus(
       employeeId,
-      status,
-      createTerminationDto.criadoPor,
+      updateStatusDto,
     );
 
     return termination.id;
@@ -117,12 +121,14 @@ export class TerminationsService {
 
     const employee = await this.findEmployeeByTermination(id);
 
-    const status = 'A';
+    const updateStatusDto: UpdateStatusDto = {
+      status: StatusFuncionario.ATIVO,
+      atualizadoPor: user.id,
+    };
 
     await this.employeesService.updateEmployeeStatus(
       employee.id,
-      status,
-      deleteTerminationDto.excluidoPor,
+      updateStatusDto,
     );
 
     return `A demissão #${id} foi excluída.`;

@@ -10,5 +10,6 @@ import { UsersModule } from '../users/users.module';
   imports: [TypeOrmModule.forFeature([Cbo]), CompaniesModule, UsersModule],
   controllers: [CbosController],
   providers: [CbosService],
+  exports: [CbosService],
 })
 export class CbosModule {}

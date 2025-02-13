@@ -34,7 +34,7 @@ export enum Escala {
   QUATRO_TRES = 'QUATRO_TRES',
 }
 
-export enum Status {
+export enum StatusFuncionario {
   ATIVO = 'ATIVO',
   DEMITIDO = 'DEMITIDO',
   AFASTADO = 'AFASTADO',
