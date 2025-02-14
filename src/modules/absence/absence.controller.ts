@@ -162,7 +162,7 @@ export class AbsenceController {
     return {
       succeeded: true,
       data: absence,
-      message: `Falta id: #${id} atualizada com sucesso.`,
+      message: `Falta id: #${absence.id} atualizada com sucesso.`,
     };
   }
 

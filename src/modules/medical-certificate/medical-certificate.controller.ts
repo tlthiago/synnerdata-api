@@ -20,9 +20,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { MedicalCertificateResponseDto } from './dto/medical-certificate-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Controller('v1/funcionarios')
 @ApiTags('Atestados')
@@ -68,7 +68,7 @@ export class MedicalCertificateController {
     @Param('funcionarioId', ParseIntPipe) employeeId: number,
     @Body() createMedicalCertificateDto: CreateMedicalCertificateDto,
   ) {
-    const id = await this.medicalCertificateService.create(
+    const medicalCertificateId = await this.medicalCertificateService.create(
       employeeId,
       createMedicalCertificateDto,
     );
@@ -76,7 +76,7 @@ export class MedicalCertificateController {
     return {
       succeeded: true,
       data: null,
-      message: `Atestado cadastrado com sucesso, id: #${id}.`,
+      message: `Atestado cadastrado com sucesso, id: #${medicalCertificateId}.`,
     };
   }
 
@@ -162,15 +162,15 @@ export class MedicalCertificateController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateMedicalCertificateDto: UpdateMedicalCertificateDto,
   ) {
-    await this.medicalCertificateService.update(
+    const medicalCertificate = await this.medicalCertificateService.update(
       id,
       updateMedicalCertificateDto,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Atestado id: #${id} atualizada com sucesso.`,
+      data: medicalCertificate,
+      message: `Atestado id: #${medicalCertificate.id} atualizada com sucesso.`,
     };
   }
 

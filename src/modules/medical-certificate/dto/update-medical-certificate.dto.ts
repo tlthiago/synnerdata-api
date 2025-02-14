@@ -8,7 +8,14 @@ export class UpdateMedicalCertificateDto extends PartialType(
   @ApiProperty({
     description: 'Usuário responsável pela atualização do atestado.',
   })
-  @IsNotEmpty()
-  @IsNumber()
+  @IsNotEmpty({
+    message: 'O usuário responsável pela atualização deve ser informado.',
+  })
+  @IsNumber(
+    {},
+    {
+      message: 'O identificador do usuário deve ser um número.',
+    },
+  )
   atualizadoPor: number;
 }

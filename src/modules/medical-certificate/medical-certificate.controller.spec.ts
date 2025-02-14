@@ -30,8 +30,6 @@ import { LaborAction } from '../labor-actions/entities/labor-action.entity';
 import { EpiDelivery } from '../epi-delivery/entities/epi-delivery.entity';
 import { Vacation } from '../vacations/entities/vacation.entity';
 import { User } from '../users/entities/user.entity';
-import { AbsenceModule } from './absence.module';
-import { UpdateAbsenceDto } from './dto/update-absence.dto';
 import {
   Escala,
   EstadoCivil,
@@ -39,15 +37,18 @@ import {
   RegimeContratacao,
   Sexo,
 } from '../employees/enums/employees.enum';
+import { MedicalCertificateModule } from './medical-certificate.module';
+import { UpdateMedicalCertificateDto } from './dto/update-medical-certificate.dto';
 
-describe('faltaController (E2E)', () => {
+describe('atestadoController (E2E)', () => {
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
   let createdUser: User;
   let createdEmployee: Employee;
-  const absence = {
-    data: '2025-01-29',
+  const medicalCertificate = {
+    dataInicio: '2025-02-10',
+    dataFim: '2025-02-14',
     motivo: 'Motivo Teste',
     criadoPor: 1,
   };
@@ -84,7 +85,7 @@ describe('faltaController (E2E)', () => {
             Vacation,
           ],
         }),
-        AbsenceModule,
+        MedicalCertificateModule,
       ],
     })
       .overrideGuard(JwtAuthGuard)
@@ -209,27 +210,27 @@ describe('faltaController (E2E)', () => {
 
   afterEach(async () => {
     if (dataSource.isInitialized) {
-      await dataSource.query('DELETE FROM "faltas" CASCADE;');
+      await dataSource.query('DELETE FROM "atestados" CASCADE;');
     }
   });
 
-  it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve cadastrar uma falta', async () => {
+  it('/v1/funcionarios/:funcionarioId/atestados (POST) - Deve cadastrar um atestado', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/faltas`)
-      .send(absence)
+      .post(`/v1/funcionarios/${createdEmployee.id}/atestados`)
+      .send(medicalCertificate)
       .expect(201);
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Falta cadastrada com sucesso, id: #1.`,
+      message: `Atestado cadastrado com sucesso, id: #1.`,
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve retornar erro ao criar uma falta sem informações obrigatórias', async () => {
+  it('/v1/funcionarios/:funcionarioId/atestados (POST) - Deve retornar erro ao criar um atestado sem informações obrigatórias', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/faltas`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/atestados`)
       .send({})
       .expect(400);
 
@@ -237,29 +238,47 @@ describe('faltaController (E2E)', () => {
     expect(Array.isArray(response.body.message)).toBe(true);
     expect(response.body.message).toEqual(
       expect.arrayContaining([
-        'data should not be empty',
+        'dataInicio should not be empty',
         'criadoPor should not be empty',
       ]),
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve retornar erro ao criar uma falta com tipo de dado inválido', async () => {
+  it('/v1/funcionarios/:funcionarioId/atestados (POST) - Deve retornar erro ao criar um atestado com tipo de dado inválido', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/faltas`)
-      .send({ ...absence, data: 123 })
+      .post(`/v1/funcionarios/${createdEmployee.id}/atestados`)
+      .send({ ...medicalCertificate, dataInicio: 123 })
       .expect(400);
 
     expect(response.body).toHaveProperty('message');
     expect(response.body.message).toEqual(
-      expect.arrayContaining(['data must be a string']),
+      expect.arrayContaining([
+        'dataInicio must be a valid ISO 8601 date string',
+      ]),
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
+  it('/v1/funcionarios/:funcionarioId/atestados (POST) - Deve retornar erro ao criar um atestado com data fim anterior a data inicio', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/999/faltas`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/atestados`)
       .send({
-        ...absence,
+        ...medicalCertificate,
+        dataInicio: '2025-02-14',
+        dataFim: '2025-02-10',
+      })
+      .expect(400);
+
+    expect(response.body).toHaveProperty('message');
+    expect(response.body.message).toEqual(
+      'A data fim deve ser posterior à data início.',
+    );
+  });
+
+  it('/v1/funcionarios/:funcionarioId/atestados (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/v1/funcionarios/999/atestados`)
+      .send({
+        ...medicalCertificate,
         criadoPor: createdUser.id,
       })
       .expect(404);
@@ -271,11 +290,11 @@ describe('faltaController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
+  it('/v1/funcionarios/:funcionarioId/atestados (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/faltas`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/atestados`)
       .send({
-        ...absence,
+        ...medicalCertificate,
         criadoPor: 'Teste',
       })
       .expect(400);
@@ -287,11 +306,11 @@ describe('faltaController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
+  it('/v1/funcionarios/:funcionarioId/atestados (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/faltas`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/atestados`)
       .send({
-        ...absence,
+        ...medicalCertificate,
         criadoPor: 999,
       })
       .expect(404);
@@ -303,57 +322,59 @@ describe('faltaController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/faltas (GET) - Deve listar todas as faltas de um funcionário', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/:funcionarioId/atestados (GET) - Deve listar todos as atestados de um funcionário', async () => {
+    const medicalCertificateRepository =
+      dataSource.getRepository(MedicalCertificate);
+    await medicalCertificateRepository.save({
+      ...medicalCertificate,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/funcionarios/${createdEmployee.id}/faltas`)
+      .get(`/v1/funcionarios/${createdEmployee.id}/atestados`)
       .expect(200);
 
     expect(response.body).toBeInstanceOf(Array);
     expect(response.body.length).toBeGreaterThan(0);
   });
 
-  it('/v1/funcionarios/faltas/:id (GET) - Deve retonar uma falta específica', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    const createdAbsence = await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/atestados/:id (GET) - Deve retonar um atestado específico', async () => {
+    const medicalCertificateRepository =
+      dataSource.getRepository(MedicalCertificate);
+    const createdMedicalCertificate = await medicalCertificateRepository.save({
+      ...medicalCertificate,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/funcionarios/faltas/${createdAbsence.id}`)
+      .get(`/v1/funcionarios/atestados/${createdMedicalCertificate.id}`)
       .expect(200);
 
     expect(response.body).toMatchObject({
-      id: createdAbsence.id,
-      data: new Intl.DateTimeFormat('pt-BR', {
+      id: createdMedicalCertificate.id,
+      dataInicio: new Intl.DateTimeFormat('pt-BR', {
         dateStyle: 'short',
-      }).format(new Date(createdAbsence.data)),
+      }).format(new Date(createdMedicalCertificate.dataInicio)),
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (GET) - Deve retornar erro ao buscar uma falta inexistente', async () => {
+  it('/v1/funcionarios/atestados/:id (GET) - Deve retornar erro ao buscar um atestado inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/funcionarios/faltas/999')
+      .get('/v1/funcionarios/atestados/999')
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Falta não encontrada.',
+      message: 'Atestado não encontrado.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (GET) - Deve retornar erro ao buscar uma falta com um ID inválido', async () => {
+  it('/v1/funcionarios/atestados/:id (GET) - Deve retornar erro ao buscar um atestado com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/funcionarios/faltas/abc')
+      .get('/v1/funcionarios/atestados/abc')
       .expect(400);
 
     expect(response.body).toEqual({
@@ -363,89 +384,102 @@ describe('faltaController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (PATCH) - Deve atualizar os dados de uma falta', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    const createdAbsence = await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/atestados/:id (PATCH) - Deve atualizar os dados de um atestado', async () => {
+    const medicalCertificateRepository =
+      dataSource.getRepository(MedicalCertificate);
+    const createdMedicalCertificate = await medicalCertificateRepository.save({
+      ...medicalCertificate,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
-    const updateData: UpdateAbsenceDto = {
-      data: '2025-02-13',
+    const updateData: UpdateMedicalCertificateDto = {
+      dataInicio: '2025-02-11',
+      dataFim: '2025-02-14',
       atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/faltas/${createdAbsence.id}`)
+      .patch(`/v1/funcionarios/atestados/${createdMedicalCertificate.id}`)
       .send(updateData)
       .expect(200);
+
+    console.log(response.body);
 
     expect(response.body).toMatchObject({
       succeeded: true,
       data: {
         id: expect.any(Number),
-        data: new Intl.DateTimeFormat('pt-BR', {
-          dateStyle: 'short',
-        }).format(new Date(updateData.data)),
+        dataInicio: updateData.dataInicio,
         atualizadoPor: expect.any(String),
       },
-      message: `Falta id: #${createdAbsence.id} atualizada com sucesso.`,
+      message: `Atestado id: #${createdMedicalCertificate.id} atualizada com sucesso.`,
     });
 
-    const updatedAbsence = await absenceRepository.findOneBy({
-      id: createdAbsence.id,
-    });
+    const updatedMedicalCertificate =
+      await medicalCertificateRepository.findOneBy({
+        id: createdMedicalCertificate.id,
+      });
 
-    expect(
-      new Intl.DateTimeFormat('pt-BR', {
-        dateStyle: 'short',
-      }).format(new Date(updatedAbsence.data)),
-    ).toBe(
-      new Intl.DateTimeFormat('pt-BR', {
-        dateStyle: 'short',
-      }).format(new Date(updateData.data)),
+    // expect(
+    //   new Intl.DateTimeFormat('pt-BR', {
+    //     dateStyle: 'short',
+    //   }).format(new Date(updatedMedicalCertificate.dataInicio)),
+    // ).toBe(
+    //   new Intl.DateTimeFormat('pt-BR', {
+    //     dateStyle: 'short',
+    //   }).format(new Date(updateData.dataInicio)),
+    // );
+    expect(updatedMedicalCertificate.dataInicio.toISOString()).toBe(
+      new Date(updateData.dataInicio).toISOString(),
+    );
+    expect(updatedMedicalCertificate.dataFim.toISOString()).toBe(
+      new Date(updateData.dataFim).toISOString(),
     );
   });
 
-  it('/v1/funcionarios/faltas/:id (PATCH) - Deve retornar um erro ao atualizar uma falta com tipo de dado inválido', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    const createdAbsence = await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/atestados/:id (PATCH) - Deve retornar um erro ao atualizar um atestado com tipo de dado inválido', async () => {
+    const medicalCertificateRepository =
+      dataSource.getRepository(MedicalCertificate);
+    const createdMedicalCertificate = await medicalCertificateRepository.save({
+      ...medicalCertificate,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      data: 123,
+      dataInicio: 123,
       atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/faltas/${createdAbsence.id}`)
+      .patch(`/v1/funcionarios/atestados/${createdMedicalCertificate.id}`)
       .send(updateData)
       .expect(400);
 
     expect(response.body).toHaveProperty('message');
     expect(response.body.message).toEqual(
-      expect.arrayContaining(['data must be a string']),
+      expect.arrayContaining([
+        'dataInicio must be a valid ISO 8601 date string',
+      ]),
     );
   });
 
-  it('/v1/funcionarios/faltas/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    const createdAbsence = await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/atestados/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
+    const medicalCertificateRepository =
+      dataSource.getRepository(MedicalCertificate);
+    const createdMedicalCertificate = await medicalCertificateRepository.save({
+      ...medicalCertificate,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      data: '2025-02-11',
+      dataInicio: '2025-02-11',
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/faltas/${createdAbsence.id}`)
+      .patch(`/v1/funcionarios/atestados/${createdMedicalCertificate.id}`)
       .send(updateData)
       .expect(400);
 
@@ -456,21 +490,22 @@ describe('faltaController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/faltas/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    const createdAbsence = await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/atestados/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
+    const medicalCertificateRepository =
+      dataSource.getRepository(MedicalCertificate);
+    const createdMedicalCertificate = await medicalCertificateRepository.save({
+      ...medicalCertificate,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      data: '2025-02-11',
+      dataInicio: '2025-02-11',
       atualizadoPor: 'Teste',
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/faltas/${createdAbsence.id}`)
+      .patch(`/v1/funcionarios/atestados/${createdMedicalCertificate.id}`)
       .send(updateData)
       .expect(400);
 
@@ -481,21 +516,22 @@ describe('faltaController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/faltas/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    const createdAbsence = await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/atestados/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
+    const medicalCertificateRepository =
+      dataSource.getRepository(MedicalCertificate);
+    const createdMedicalCertificate = await medicalCertificateRepository.save({
+      ...medicalCertificate,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      data: '2025-02-11',
+      dataInicio: '2025-02-11',
       atualizadoPor: 999,
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/faltas/${createdAbsence.id}`)
+      .patch(`/v1/funcionarios/atestados/${createdMedicalCertificate.id}`)
       .send(updateData)
       .expect(404);
 
@@ -506,11 +542,11 @@ describe('faltaController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (PATCH) - Deve retornar erro ao atualizar uma falta com um ID inválido', async () => {
+  it('/v1/funcionarios/atestados/:id (PATCH) - Deve retornar erro ao atualizar um atestado com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/funcionarios/faltas/abc')
+      .patch('/v1/funcionarios/atestados/abc')
       .send({
-        data: '2025-02-11',
+        dataInicio: '2025-02-11',
         atualizadoPor: 1,
       })
       .expect(400);
@@ -522,55 +558,58 @@ describe('faltaController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (PATCH) - Deve retornar erro ao atualizar uma falta inexistente', async () => {
+  it('/v1/funcionarios/atestados/:id (PATCH) - Deve retornar erro ao atualizar uma atestado inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/funcionarios/faltas/9999')
+      .patch('/v1/funcionarios/atestados/9999')
       .send({
-        data: '2025-02-11',
+        dataInicio: '2025-02-11',
+        dataFim: '2025-02-14',
         atualizadoPor: 1,
       })
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Falta não encontrada.',
+      message: 'Atestado não encontrado.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (DELETE) - Deve excluir uma falta', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    const createdAbsence = await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/atestados/:id (DELETE) - Deve excluir um atestado', async () => {
+    const medicalCertificateRepository =
+      dataSource.getRepository(MedicalCertificate);
+    const createdMedicalCertificate = await medicalCertificateRepository.save({
+      ...medicalCertificate,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
-    const deleteAbsenceDto: BaseDeleteDto = {
+    const deleteMedicalCertificateDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/faltas/${createdAbsence.id}`)
-      .send(deleteAbsenceDto)
+      .delete(`/v1/funcionarios/atestados/${createdMedicalCertificate.id}`)
+      .send(deleteMedicalCertificateDto)
       .expect(200);
 
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Falta id: #${createdAbsence.id} excluída com sucesso.`,
+      message: `Atestado id: #${createdMedicalCertificate.id} excluído com sucesso.`,
     });
 
-    const deletedfalta = await absenceRepository.findOneBy({
-      id: createdAbsence.id,
-    });
+    const deletedmedicalcertificate =
+      await medicalCertificateRepository.findOneBy({
+        id: createdMedicalCertificate.id,
+      });
 
-    expect(deletedfalta.status).toBe('E');
+    expect(deletedmedicalcertificate.status).toBe('E');
   });
 
-  it('/v1/funcionarios/faltas/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
+  it('/v1/funcionarios/atestados/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/faltas/1`)
+      .delete(`/v1/funcionarios/atestados/1`)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -580,14 +619,14 @@ describe('faltaController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/faltas/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
-    const deleteAbsenceDto = {
+  it('/v1/funcionarios/atestados/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
+    const deleteMedicalCertificateDto = {
       excluidoPor: 'Teste',
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/faltas/1`)
-      .send(deleteAbsenceDto)
+      .delete(`/v1/funcionarios/atestados/1`)
+      .send(deleteMedicalCertificateDto)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -597,14 +636,14 @@ describe('faltaController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/faltas/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
-    const deleteAbsenceDto: BaseDeleteDto = {
+  it('/v1/funcionarios/atestados/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
+    const deleteMedicalCertificateDto: BaseDeleteDto = {
       excluidoPor: 999,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/faltas/${createdEmployee.id}`)
-      .send(deleteAbsenceDto)
+      .delete(`/v1/funcionarios/atestados/${createdEmployee.id}`)
+      .send(deleteMedicalCertificateDto)
       .expect(404);
 
     expect(response.body).toEqual({
@@ -614,14 +653,14 @@ describe('faltaController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (DELETE) - Deve retornar erro ao excluir uma falta com um ID inválido', async () => {
-    const deleteAbsenceDto: BaseDeleteDto = {
+  it('/v1/funcionarios/atestados/:id (DELETE) - Deve retornar erro ao excluir um atestado com um ID inválido', async () => {
+    const deleteMedicalCertificateDto: BaseDeleteDto = {
       excluidoPor: 1,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/funcionarios/faltas/abc')
-      .send(deleteAbsenceDto)
+      .delete('/v1/funcionarios/atestados/abc')
+      .send(deleteMedicalCertificateDto)
       .expect(400);
 
     expect(response.body).toEqual({
@@ -631,19 +670,19 @@ describe('faltaController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (DELETE) - Deve retornar erro ao excluir uma falta inexistente', async () => {
-    const deleteAbsenceDto: BaseDeleteDto = {
+  it('/v1/funcionarios/atestados/:id (DELETE) - Deve retornar erro ao excluir um atestado inexistente', async () => {
+    const deleteMedicalCertificateDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/funcionarios/faltas/9999')
-      .send(deleteAbsenceDto)
+      .delete('/v1/funcionarios/atestados/9999')
+      .send(deleteMedicalCertificateDto)
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Falta não encontrada.',
+      message: 'Atestado não encontrado.',
       error: 'Not Found',
     });
   });
