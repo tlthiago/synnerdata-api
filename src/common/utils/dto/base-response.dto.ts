@@ -26,7 +26,7 @@ export class BaseResponseDto {
       timeZone: 'America/Sao_Paulo',
     }).format(new Date(value)),
   )
-  criadoEm: string;
+  criadoEm: Date;
 
   @ApiProperty({ description: 'Atualizado por' })
   @Expose()
@@ -43,5 +43,5 @@ export class BaseResponseDto {
       timeZone: 'America/Sao_Paulo',
     }).format(new Date(value)),
   )
-  atualizadoEm: string;
+  atualizadoEm: Date;
 }

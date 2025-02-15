@@ -11,6 +11,7 @@ import {
   IsLongitude,
   IsPhoneNumber,
   IsEmail,
+  IsDateString,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -46,7 +47,7 @@ export class CreateEmployeeDto {
   sexo: Sexo;
 
   @ApiProperty({ description: 'Data de nascimento', type: 'string' })
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
   dataNascimento: string;
 
@@ -127,7 +128,7 @@ export class CreateEmployeeDto {
   regimeContratacao: RegimeContratacao;
 
   @ApiProperty({ description: 'Data de admissão', type: 'string' })
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
   dataAdmissao: string;
 
@@ -137,7 +138,7 @@ export class CreateEmployeeDto {
   salario: number;
 
   @ApiProperty({ description: 'Data do último ASO', type: 'string' })
-  @IsString()
+  @IsDateString()
   @IsOptional()
   dataUltimoASO?: string;
 
@@ -155,7 +156,7 @@ export class CreateEmployeeDto {
     description: 'Data do vencimento do 1º período de experiência',
     type: 'string',
   })
-  @IsString()
+  @IsDateString()
   @IsOptional()
   vencimentoExperiencia1?: string;
 
@@ -163,12 +164,12 @@ export class CreateEmployeeDto {
     description: 'Data do vencimento do 2º período de experiência',
     type: 'string',
   })
-  @IsString()
+  @IsDateString()
   @IsOptional()
   vencimentoExperiencia2?: string;
 
   @ApiProperty({ description: 'Data do exame demissional', type: 'string' })
-  @IsString()
+  @IsDateString()
   @IsOptional()
   dataExameDemissional?: string;
 

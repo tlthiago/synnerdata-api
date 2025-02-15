@@ -46,7 +46,7 @@ export class BranchResponseDto extends BaseResponseDto {
       dateStyle: 'short',
     }).format(new Date(value)),
   )
-  dataFundacao: Date;
+  dataFundacao: string;
 
   @ApiProperty({ description: 'Telefone.' })
   @Expose()

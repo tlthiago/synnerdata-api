@@ -18,7 +18,7 @@ export class ProjectResponseDto extends BaseResponseDto {
       dateStyle: 'short',
     }).format(new Date(value)),
   )
-  dataInicio: Date;
+  dataInicio: string;
 
   @ApiProperty({ description: 'Cno do projeto' })
   @Expose()

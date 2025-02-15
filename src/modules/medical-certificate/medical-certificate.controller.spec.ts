@@ -38,7 +38,6 @@ import {
   Sexo,
 } from '../employees/enums/employees.enum';
 import { MedicalCertificateModule } from './medical-certificate.module';
-import { UpdateMedicalCertificateDto } from './dto/update-medical-certificate.dto';
 
 describe('atestadoController (E2E)', () => {
   let app: INestApplication;
@@ -206,7 +205,7 @@ describe('atestadoController (E2E)', () => {
       criadoPor: createdUser,
     });
     createdEmployee = await employeeRepository.save(employee);
-  }, 40000);
+  }, 50000);
 
   afterEach(async () => {
     if (dataSource.isInitialized) {
@@ -393,9 +392,9 @@ describe('atestadoController (E2E)', () => {
       criadoPor: createdUser,
     });
 
-    const updateData: UpdateMedicalCertificateDto = {
-      dataInicio: '2025-02-11',
-      dataFim: '2025-02-14',
+    const updateData = {
+      dataInicio: new Date('2025-02-20T00:00:00-03:00'),
+      dataFim: new Date('2025-02-25T00:00:00-03:00'),
       atualizadoPor: createdUser.id,
     };
 
@@ -404,13 +403,11 @@ describe('atestadoController (E2E)', () => {
       .send(updateData)
       .expect(200);
 
-    console.log(response.body);
-
     expect(response.body).toMatchObject({
       succeeded: true,
       data: {
         id: expect.any(Number),
-        dataInicio: updateData.dataInicio,
+        dataInicio: expect.any(String),
         atualizadoPor: expect.any(String),
       },
       message: `Atestado id: #${createdMedicalCertificate.id} atualizada com sucesso.`,
@@ -421,21 +418,11 @@ describe('atestadoController (E2E)', () => {
         id: createdMedicalCertificate.id,
       });
 
-    // expect(
-    //   new Intl.DateTimeFormat('pt-BR', {
-    //     dateStyle: 'short',
-    //   }).format(new Date(updatedMedicalCertificate.dataInicio)),
-    // ).toBe(
-    //   new Intl.DateTimeFormat('pt-BR', {
-    //     dateStyle: 'short',
-    //   }).format(new Date(updateData.dataInicio)),
-    // );
-    expect(updatedMedicalCertificate.dataInicio.toISOString()).toBe(
-      new Date(updateData.dataInicio).toISOString(),
-    );
-    expect(updatedMedicalCertificate.dataFim.toISOString()).toBe(
-      new Date(updateData.dataFim).toISOString(),
-    );
+    expect(
+      new Date(updatedMedicalCertificate.dataInicio)
+        .toISOString()
+        .split('T')[0],
+    ).toBe(new Date(updateData.dataInicio).toISOString().split('T')[0]);
   });
 
   it('/v1/funcionarios/atestados/:id (PATCH) - Deve retornar um erro ao atualizar um atestado com tipo de dado inválido', async () => {

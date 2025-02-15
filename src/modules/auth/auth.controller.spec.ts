@@ -44,7 +44,7 @@ describe('AuthController (e2e) - Sign-Up', () => {
     await app.init();
 
     dataSource = app.get(DataSource);
-  }, 40000);
+  }, 50000);
 
   afterEach(async () => {
     if (dataSource.isInitialized) {

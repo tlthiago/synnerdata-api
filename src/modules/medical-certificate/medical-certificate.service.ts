@@ -95,14 +95,8 @@ export class MedicalCertificateService {
   ) {
     const { dataInicio, dataFim, ...rest } = updateMedicalCertificateDto;
 
-    console.log(dataInicio);
-    console.log(dataFim);
-
     const dataInicioDate = new Date(dataInicio);
     const dataFimDate = new Date(dataFim);
-
-    console.log(dataInicioDate);
-    console.log(dataFimDate);
 
     if (dataFimDate <= dataInicioDate) {
       throw new BadRequestException(

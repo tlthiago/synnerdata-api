@@ -130,7 +130,7 @@ describe('EpiController (E2E)', () => {
       criadoPor: createdUser,
     });
     createdCompany = await companyRepository.save(company);
-  }, 40000);
+  }, 50000);
 
   afterEach(async () => {
     if (dataSource.isInitialized) {

@@ -1,11 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, Length } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  Length,
+  IsDateString,
+} from 'class-validator';
 
 export class CreateAbsenceDto {
   @ApiProperty({ description: 'Data da falta.' })
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
-  @Length(1, 255)
   data: string;
 
   @ApiProperty({ description: 'Motivo da falta.' })

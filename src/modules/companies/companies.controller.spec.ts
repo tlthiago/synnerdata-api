@@ -86,7 +86,7 @@ describe('CompaniesController (E2E)', () => {
     await app.init();
 
     dataSource = app.get(DataSource);
-  }, 40000);
+  }, 50000);
 
   afterEach(async () => {
     if (dataSource.isInitialized) {

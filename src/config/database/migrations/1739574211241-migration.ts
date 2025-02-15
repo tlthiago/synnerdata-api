@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class Migration1739376647444 implements MigrationInterface {
-  name = 'Migration1739376647444';
+export class Migration1739574211241 implements MigrationInterface {
+  name = 'Migration1739574211241';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
@@ -20,7 +20,7 @@ export class Migration1739376647444 implements MigrationInterface {
       `CREATE TYPE "public"."atestados_status_enum" AS ENUM('A', 'I', 'E')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "atestados" ("id" SERIAL NOT NULL, "status" "public"."atestados_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data_inicio" TIMESTAMP WITH TIME ZONE NOT NULL, "data_fim" TIMESTAMP WITH TIME ZONE NOT NULL, "motivo" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_47af221bfabcbbc7075f3a09e64" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "atestados" ("id" SERIAL NOT NULL, "status" "public"."atestados_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data_inicio" date NOT NULL, "data_fim" date NOT NULL, "motivo" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_47af221bfabcbbc7075f3a09e64" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."filiais_status_enum" AS ENUM('A', 'I', 'E')`,
@@ -131,7 +131,10 @@ export class Migration1739376647444 implements MigrationInterface {
       `CREATE TYPE "public"."funcionarios_escala_enum" AS ENUM('DOZE_TRINTA_SEIS', 'SEIS_UM', 'QUATRO_TRES')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "funcionarios" ("id" SERIAL NOT NULL, "status" "public"."funcionarios_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "carteira_identidade" character varying(14) NOT NULL, "cpf" character varying(11) NOT NULL, "sexo" "public"."funcionarios_sexo_enum" NOT NULL, "data_nascimento" date NOT NULL, "estado_civil" "public"."funcionarios_estado_civil_enum" NOT NULL, "naturalidade" character varying(100) NOT NULL, "nacionalidade" character varying(100) NOT NULL, "altura" numeric(4,2) NOT NULL, "peso" numeric(6,2) NOT NULL, "nome_pai" character varying(100) NOT NULL, "nome_mae" character varying(100) NOT NULL, "email" character varying(100) NOT NULL, "pis" character varying(11) NOT NULL, "ctps_numero" character varying(7) NOT NULL, "ctps_serie" character varying(4) NOT NULL, "certificado_reservista" character varying(14) NOT NULL, "regime_contratacao" "public"."funcionarios_regime_contratacao_enum" NOT NULL, "data_admissao" date NOT NULL, "salario" numeric(10,2) NOT NULL, "data_ultimo_aso" date, "vencimento_experiencia_1" date, "vencimento_experiencia_2" date, "data_exame_demissional" date, "grau_instrucao" "public"."funcionarios_grau_instrucao_enum" NOT NULL, "necessidades_especiais" boolean NOT NULL, "tipo_deficiencia" character varying(255), "filhos" boolean NOT NULL, "quantidade_filhos" integer, "telefone" character varying(20), "celular" character varying(20) NOT NULL, "gestor" character varying(255) NOT NULL, "rua" character varying(255) NOT NULL, "numero" character varying(10) NOT NULL, "complemento" character varying(100), "bairro" character varying(100) NOT NULL, "cidade" character varying(100) NOT NULL, "estado" character varying(2) NOT NULL, "cep" character varying(10) NOT NULL, "latitude" numeric(9,6) NOT NULL, "longitude" numeric(9,6) NOT NULL, "quantidade_onibus" integer NOT NULL, "carga_horaria" numeric(5,2) NOT NULL, "escala" "public"."funcionarios_escala_enum" NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcaoId" integer NOT NULL, "setorId" integer NOT NULL, "centroCustoId" integer, "cboId" integer NOT NULL, "empresaId" integer, CONSTRAINT "UQ_a0de321e9da6c025e7fc92f0bd8" UNIQUE ("cpf"), CONSTRAINT "PK_a6ee7c0e30d968db531ad073337" PRIMARY KEY ("id"))`,
+      `CREATE TYPE "public"."funcionarios_status_funcionario_enum" AS ENUM('ATIVO', 'DEMITIDO', 'AFASTADO', 'EM_FERIAS', 'FERIAS_PROGRAMADA')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "funcionarios" ("id" SERIAL NOT NULL, "status" "public"."funcionarios_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "carteira_identidade" character varying(14) NOT NULL, "cpf" character varying(11) NOT NULL, "sexo" "public"."funcionarios_sexo_enum" NOT NULL, "data_nascimento" date NOT NULL, "estado_civil" "public"."funcionarios_estado_civil_enum" NOT NULL, "naturalidade" character varying(100) NOT NULL, "nacionalidade" character varying(100) NOT NULL, "altura" numeric(4,2) NOT NULL, "peso" numeric(6,2) NOT NULL, "nome_pai" character varying(100) NOT NULL, "nome_mae" character varying(100) NOT NULL, "email" character varying(100) NOT NULL, "pis" character varying(11) NOT NULL, "ctps_numero" character varying(7) NOT NULL, "ctps_serie" character varying(4) NOT NULL, "certificado_reservista" character varying(14) NOT NULL, "regime_contratacao" "public"."funcionarios_regime_contratacao_enum" NOT NULL, "data_admissao" date NOT NULL, "salario" numeric(10,2) NOT NULL, "data_ultimo_aso" date, "vencimento_experiencia_1" date, "vencimento_experiencia_2" date, "data_exame_demissional" date, "grau_instrucao" "public"."funcionarios_grau_instrucao_enum" NOT NULL, "necessidades_especiais" boolean NOT NULL, "tipo_deficiencia" character varying(255), "filhos" boolean NOT NULL, "quantidade_filhos" integer, "telefone" character varying(20), "celular" character varying(20) NOT NULL, "gestor" character varying(255) NOT NULL, "rua" character varying(255) NOT NULL, "numero" character varying(10) NOT NULL, "complemento" character varying(100), "bairro" character varying(100) NOT NULL, "cidade" character varying(100) NOT NULL, "estado" character varying(2) NOT NULL, "cep" character varying(10) NOT NULL, "latitude" numeric(9,6), "longitude" numeric(9,6), "quantidade_onibus" integer NOT NULL, "carga_horaria" numeric(5,2) NOT NULL, "escala" "public"."funcionarios_escala_enum" NOT NULL, "status_funcionario" "public"."funcionarios_status_funcionario_enum" NOT NULL DEFAULT 'ATIVO', "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcaoId" integer NOT NULL, "setorId" integer NOT NULL, "centroCustoId" integer, "cboId" integer NOT NULL, "empresaId" integer, CONSTRAINT "UQ_a0de321e9da6c025e7fc92f0bd8" UNIQUE ("cpf"), CONSTRAINT "PK_a6ee7c0e30d968db531ad073337" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."advertencias_status_enum" AS ENUM('A', 'I', 'E')`,
@@ -659,6 +662,9 @@ export class Migration1739376647444 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "advertencias"`);
     await queryRunner.query(`DROP TYPE "public"."advertencias_status_enum"`);
     await queryRunner.query(`DROP TABLE "funcionarios"`);
+    await queryRunner.query(
+      `DROP TYPE "public"."funcionarios_status_funcionario_enum"`,
+    );
     await queryRunner.query(`DROP TYPE "public"."funcionarios_escala_enum"`);
     await queryRunner.query(
       `DROP TYPE "public"."funcionarios_grau_instrucao_enum"`,

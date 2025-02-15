@@ -6,13 +6,13 @@ import {
   Length,
   IsArray,
   ArrayMinSize,
+  IsDateString,
 } from 'class-validator';
 
 export class CreateEpiDeliveryDto {
   @ApiProperty({ description: 'Data da entrega do(s) epi(s).' })
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
-  @Length(1, 255)
   data: string;
 
   @ApiProperty({ description: 'Epi(s) entregues.', type: [Number] })

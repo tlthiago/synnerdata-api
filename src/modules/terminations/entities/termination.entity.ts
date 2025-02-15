@@ -4,7 +4,7 @@ import { Employee } from '../../../modules/employees/entities/employee.entity';
 
 @Entity('demissoes')
 export class Termination extends BaseEntity {
-  @Column({ name: 'data', type: 'timestamptz' })
+  @Column({ name: 'data', type: 'date' })
   data: Date;
 
   @Column({ name: 'motivo_interno', type: 'varchar', length: 255 })

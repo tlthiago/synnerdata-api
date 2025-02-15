@@ -12,7 +12,7 @@ export class Project extends BaseEntity {
   @Column({ name: 'descricao', type: 'varchar', length: 255 })
   descricao: string;
 
-  @Column({ name: 'data_inicio', type: 'timestamptz' })
+  @Column({ name: 'data_inicio', type: 'date' })
   dataInicio: Date;
 
   @Column({ name: 'cno', type: 'varchar', length: 12 })

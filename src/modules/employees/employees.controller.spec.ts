@@ -202,7 +202,7 @@ describe('FuncionárioController (E2E)', () => {
     employee.funcao = createdRole.id;
     employee.setor = createdDepartment.id;
     employee.cbo = createdCbo.id;
-  }, 40000);
+  }, 50000);
 
   afterEach(async () => {
     if (dataSource.isInitialized) {

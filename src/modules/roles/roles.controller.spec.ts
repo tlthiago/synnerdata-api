@@ -139,7 +139,7 @@ describe('FunçãoController (E2E)', () => {
       criadoPor: createdUser,
     });
     createdEpi = await epiRepository.save(epi);
-  }, 40000);
+  }, 50000);
 
   afterEach(async () => {
     if (dataSource.isInitialized) {

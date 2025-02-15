@@ -38,7 +38,7 @@ export class EmployeeResponseDto extends BaseResponseDto {
       dateStyle: 'short',
     }).format(new Date(value)),
   )
-  dataNascimento: Date;
+  dataNascimento: string;
 
   @ApiProperty({ description: 'Estado civil', enum: EstadoCivil })
   @Expose()
@@ -102,7 +102,7 @@ export class EmployeeResponseDto extends BaseResponseDto {
       dateStyle: 'short',
     }).format(new Date(value)),
   )
-  dataAdmissao: Date;
+  dataAdmissao: string;
 
   @ApiProperty({ description: 'Salário' })
   @Expose()
@@ -115,7 +115,7 @@ export class EmployeeResponseDto extends BaseResponseDto {
       dateStyle: 'short',
     }).format(new Date(value)),
   )
-  dataUltimoASO: Date;
+  dataUltimoASO: string;
 
   @ApiProperty({ description: 'Função' })
   @Expose()
@@ -138,7 +138,7 @@ export class EmployeeResponseDto extends BaseResponseDto {
       dateStyle: 'short',
     }).format(new Date(value)),
   )
-  vencimentoExperiencia1: Date;
+  vencimentoExperiencia1: string;
 
   @ApiProperty({
     description: 'Data do vencimento do 2º período de experiência',
@@ -149,7 +149,7 @@ export class EmployeeResponseDto extends BaseResponseDto {
       dateStyle: 'short',
     }).format(new Date(value)),
   )
-  vencimentoExperiencia2: Date;
+  vencimentoExperiencia2: string;
 
   @ApiProperty({ description: 'Data do exame demissional' })
   @Expose()
@@ -158,7 +158,7 @@ export class EmployeeResponseDto extends BaseResponseDto {
       dateStyle: 'short',
     }).format(new Date(value)),
   )
-  dataExameDemissional: Date;
+  dataExameDemissional: string;
 
   @ApiProperty({ description: 'Centro de Custo' })
   @Expose()

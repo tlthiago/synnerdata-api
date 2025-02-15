@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, Length } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsDateString } from 'class-validator';
 
 export class CreatePromotionDto {
   @ApiProperty({ description: 'Nova função.' })
@@ -13,9 +13,8 @@ export class CreatePromotionDto {
   salario: number;
 
   @ApiProperty({ description: 'Data da promoção.' })
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
-  @Length(1, 255)
   data: string;
 
   @ApiProperty({

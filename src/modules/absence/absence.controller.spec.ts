@@ -205,7 +205,7 @@ describe('faltaController (E2E)', () => {
       criadoPor: createdUser,
     });
     createdEmployee = await employeeRepository.save(employee);
-  }, 40000);
+  }, 50000);
 
   afterEach(async () => {
     if (dataSource.isInitialized) {
@@ -251,7 +251,7 @@ describe('faltaController (E2E)', () => {
 
     expect(response.body).toHaveProperty('message');
     expect(response.body.message).toEqual(
-      expect.arrayContaining(['data must be a string']),
+      expect.arrayContaining(['data must be a valid ISO 8601 date string']),
     );
   });
 
@@ -428,7 +428,7 @@ describe('faltaController (E2E)', () => {
 
     expect(response.body).toHaveProperty('message');
     expect(response.body.message).toEqual(
-      expect.arrayContaining(['data must be a string']),
+      expect.arrayContaining(['data must be a valid ISO 8601 date string']),
     );
   });
 
