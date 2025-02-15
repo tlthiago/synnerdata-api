@@ -41,16 +41,18 @@ export class PromotionService {
   }
 
   async findAll(employeeId: number) {
-    await this.employeesService.findOne(employeeId);
+    const employee = await this.employeesService.findOne(employeeId);
 
     const promotions = await this.promotionRepository.find({
       where: {
-        funcionario: { id: employeeId },
+        funcionario: { id: employee.id },
         status: 'A',
       },
     });
 
-    return plainToInstance(PromotionResponseDto, promotions);
+    return plainToInstance(PromotionResponseDto, promotions, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
@@ -61,7 +63,13 @@ export class PromotionService {
       },
     });
 
-    return plainToInstance(PromotionResponseDto, promotion);
+    if (!promotion) {
+      throw new NotFoundException('Promoção não encontrada.');
+    }
+
+    return plainToInstance(PromotionResponseDto, promotion, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async update(id: number, updatePromotionDto: UpdatePromotionDto) {
@@ -81,7 +89,7 @@ export class PromotionService {
       throw new NotFoundException('Promoção não encontrada.');
     }
 
-    return `A promoção #${id} foi atualizada.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deletePromotionDto: BaseDeleteDto) {
@@ -98,6 +106,6 @@ export class PromotionService {
       throw new NotFoundException('Promoção não encontrada.');
     }
 
-    return `A promoção #${id} foi excluída.`;
+    return { id, status: 'E' };
   }
 }

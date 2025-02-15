@@ -20,9 +20,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PromotionResponseDto } from './dto/promotion-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Controller('v1/funcionarios')
 @ApiTags('Promoções')
@@ -66,7 +66,7 @@ export class PromotionController {
     @Param('funcionarioId', ParseIntPipe) employeeId: number,
     @Body() createPromotionDto: CreatePromotionDto,
   ) {
-    const id = await this.promotionService.create(
+    const promotionId = await this.promotionService.create(
       employeeId,
       createPromotionDto,
     );
@@ -74,7 +74,7 @@ export class PromotionController {
     return {
       succeeded: true,
       data: null,
-      message: `Promoção cadastrada com sucesso, id: #${id}.`,
+      message: `Promoção cadastrada com sucesso, id: #${promotionId}.`,
     };
   }
 
@@ -160,12 +160,15 @@ export class PromotionController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updatePromotionDto: UpdatePromotionDto,
   ) {
-    await this.promotionService.update(id, updatePromotionDto);
+    const promotion = await this.promotionService.update(
+      id,
+      updatePromotionDto,
+    );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Promoção id: #${id} atualizada com sucesso.`,
+      data: promotion,
+      message: `Promoção id: #${promotion.id} atualizada com sucesso.`,
     };
   }
 
