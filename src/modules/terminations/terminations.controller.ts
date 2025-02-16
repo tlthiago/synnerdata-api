@@ -20,9 +20,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { TerminationResponseDto } from './dto/termination-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Controller('v1/funcionarios')
 @ApiTags('Demissões')
@@ -66,7 +66,7 @@ export class TerminationsController {
     @Param('funcionarioId', ParseIntPipe) employeeId: number,
     @Body() createTerminationDto: CreateTerminationDto,
   ) {
-    const id = await this.terminationsService.create(
+    const terminationId = await this.terminationsService.create(
       employeeId,
       createTerminationDto,
     );
@@ -74,7 +74,7 @@ export class TerminationsController {
     return {
       succeeded: true,
       data: null,
-      message: `Demissão cadastrada com sucesso, id: #${id}.`,
+      message: `Demissão cadastrada com sucesso, id: #${terminationId}.`,
     };
   }
 
@@ -160,12 +160,15 @@ export class TerminationsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateTerminationDto: UpdateTerminationDto,
   ) {
-    await this.terminationsService.update(id, updateTerminationDto);
+    const termination = await this.terminationsService.update(
+      id,
+      updateTerminationDto,
+    );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Demissão id: #${id} atualizada com sucesso.`,
+      data: termination,
+      message: `Demissão id: #${termination.id} atualizada com sucesso.`,
     };
   }
 

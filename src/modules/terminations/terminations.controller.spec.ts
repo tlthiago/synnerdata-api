@@ -37,18 +37,20 @@ import {
   RegimeContratacao,
   Sexo,
 } from '../employees/enums/employees.enum';
-import { PromotionModule } from './promotion.module';
+import { TerminationsModule } from './terminations.module';
 
-describe('PromotionController (E2E)', () => {
+describe('TerminationController (E2E)', () => {
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
   let createdUser: User;
   let createdEmployee: Employee;
-  const promotion = {
-    funcaoId: 1,
-    salario: 3799,
-    data: '2025-02-15',
+  const termination = {
+    data: '2025-02-16',
+    motivoInterno: 'Motivo teste',
+    motivoTrabalhista: 'Motivo teste',
+    acaoTrabalhista: '123456789',
+    formaDemissao: 'Teste de forma',
     criadoPor: 1,
   };
 
@@ -84,7 +86,7 @@ describe('PromotionController (E2E)', () => {
             Vacation,
           ],
         }),
-        PromotionModule,
+        TerminationsModule,
       ],
     })
       .overrideGuard(JwtAuthGuard)
@@ -209,27 +211,34 @@ describe('PromotionController (E2E)', () => {
 
   afterEach(async () => {
     if (dataSource.isInitialized) {
-      await dataSource.query('DELETE FROM "promocoes" CASCADE;');
+      await dataSource.query('DELETE FROM "demissoes" CASCADE;');
     }
   });
 
-  it('/v1/funcionarios/:funcionarioId/promocoes (POST) - Deve cadastrar uma promoção', async () => {
+  it('/v1/funcionarios/:funcionarioId/demissoes (POST) - Deve cadastrar uma demissão', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/promocoes`)
-      .send(promotion)
+      .post(`/v1/funcionarios/${createdEmployee.id}/demissoes`)
+      .send(termination)
       .expect(201);
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Promoção cadastrada com sucesso, id: #1.`,
+      message: `Demissão cadastrada com sucesso, id: #1.`,
     });
+
+    const employeeRepository = dataSource.getRepository(Employee);
+    const updatedEmployee = await employeeRepository.findOne({
+      where: { id: createdEmployee.id },
+    });
+
+    expect(updatedEmployee.statusFuncionario).toBe('DEMITIDO');
   });
 
-  it('/v1/funcionarios/:funcionarioId/promocoes (POST) - Deve retornar erro ao criar uma promoção sem informações obrigatórias', async () => {
+  it('/v1/funcionarios/:funcionarioId/demissoes (POST) - Deve retornar erro ao criar uma demissão sem informações obrigatórias', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/promocoes`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/demissoes`)
       .send({})
       .expect(400);
 
@@ -243,10 +252,10 @@ describe('PromotionController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/promocoes (POST) - Deve retornar erro ao criar uma promoção com tipo de dado inválido', async () => {
+  it('/v1/funcionarios/:funcionarioId/demissoes (POST) - Deve retornar erro ao criar uma demissão com tipo de dado inválido', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/promocoes`)
-      .send({ ...promotion, data: 123 })
+      .post(`/v1/funcionarios/${createdEmployee.id}/demissoes`)
+      .send({ ...termination, data: 123 })
       .expect(400);
 
     expect(response.body).toHaveProperty('message');
@@ -255,24 +264,11 @@ describe('PromotionController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/promocoes (POST) - Deve retornar erro ao criar uma promoção com um função inexistente', async () => {
+  it('/v1/funcionarios/:funcionarioId/demissoes (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/promocoes`)
+      .post(`/v1/funcionarios/999/demissoes`)
       .send({
-        ...promotion,
-        funcaoId: 999,
-      })
-      .expect(404);
-
-    expect(response.body).toHaveProperty('message');
-    expect(response.body.message).toEqual('Função não encontrada.');
-  });
-
-  it('/v1/funcionarios/:funcionarioId/promocoes (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
-    const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/999/promocoes`)
-      .send({
-        ...promotion,
+        ...termination,
         criadoPor: createdUser.id,
       })
       .expect(404);
@@ -284,11 +280,11 @@ describe('PromotionController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/promocoes (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
+  it('/v1/funcionarios/:funcionarioId/demissoes (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/promocoes`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/demissoes`)
       .send({
-        ...promotion,
+        ...termination,
         criadoPor: 'Teste',
       })
       .expect(400);
@@ -300,11 +296,11 @@ describe('PromotionController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/promocoes (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
+  it('/v1/funcionarios/:funcionarioId/demissoes (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/promocoes`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/demissoes`)
       .send({
-        ...promotion,
+        ...termination,
         criadoPor: 999,
       })
       .expect(404);
@@ -316,57 +312,57 @@ describe('PromotionController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/promocoes (GET) - Deve listar todas as promoções de um funcionário', async () => {
-    const promotionRepository = dataSource.getRepository(Promotion);
-    await promotionRepository.save({
-      ...promotion,
+  it('/v1/funcionarios/:funcionarioId/demissoes (GET) - Deve listar todas as demissões de um funcionário', async () => {
+    const terminationRepository = dataSource.getRepository(Termination);
+    await terminationRepository.save({
+      ...termination,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/funcionarios/${createdEmployee.id}/promocoes`)
+      .get(`/v1/funcionarios/${createdEmployee.id}/demissoes`)
       .expect(200);
 
     expect(response.body).toBeInstanceOf(Array);
     expect(response.body.length).toBeGreaterThan(0);
   });
 
-  it('/v1/funcionarios/promocoes/:id (GET) - Deve retonar uma promoção específica', async () => {
-    const promotionRepository = dataSource.getRepository(Promotion);
-    const createdPromotion = await promotionRepository.save({
-      ...promotion,
+  it('/v1/funcionarios/demissoes/:id (GET) - Deve retonar uma demissão específica', async () => {
+    const terminationRepository = dataSource.getRepository(Termination);
+    const createdTermination = await terminationRepository.save({
+      ...termination,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/funcionarios/promocoes/${createdPromotion.id}`)
+      .get(`/v1/funcionarios/demissoes/${createdTermination.id}`)
       .expect(200);
 
     expect(response.body).toMatchObject({
-      id: createdPromotion.id,
+      id: createdTermination.id,
       data: new Intl.DateTimeFormat('pt-BR', {
         dateStyle: 'short',
-      }).format(new Date(createdPromotion.data)),
+      }).format(new Date(createdTermination.data)),
     });
   });
 
-  it('/v1/funcionarios/promocoes/:id (GET) - Deve retornar erro ao buscar uma promoção inexistente', async () => {
+  it('/v1/funcionarios/demissoes/:id (GET) - Deve retornar erro ao buscar uma demissão inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/funcionarios/promocoes/999')
+      .get('/v1/funcionarios/demissoes/999')
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Promoção não encontrada.',
+      message: 'Demissão não encontrada.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/funcionarios/promocoes/:id (GET) - Deve retornar erro ao buscar uma promoção com um ID inválido', async () => {
+  it('/v1/funcionarios/demissoes/:id (GET) - Deve retornar erro ao buscar uma demissão com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/funcionarios/promocoes/abc')
+      .get('/v1/funcionarios/demissoes/abc')
       .expect(400);
 
     expect(response.body).toEqual({
@@ -376,10 +372,10 @@ describe('PromotionController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/promocoes/:id (PATCH) - Deve atualizar os dados de uma promoção', async () => {
-    const promotionRepository = dataSource.getRepository(Promotion);
-    const createdPromotion = await promotionRepository.save({
-      ...promotion,
+  it('/v1/funcionarios/demissoes/:id (PATCH) - Deve atualizar os dados de uma demissão', async () => {
+    const terminationRepository = dataSource.getRepository(Termination);
+    const createdTermination = await terminationRepository.save({
+      ...termination,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
@@ -390,7 +386,7 @@ describe('PromotionController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/promocoes/${createdPromotion.id}`)
+      .patch(`/v1/funcionarios/demissoes/${createdTermination.id}`)
       .send(updateData)
       .expect(200);
 
@@ -401,22 +397,22 @@ describe('PromotionController (E2E)', () => {
         data: expect.any(String),
         atualizadoPor: expect.any(String),
       },
-      message: `Promoção id: #${createdPromotion.id} atualizada com sucesso.`,
+      message: `Demissão id: #${createdTermination.id} atualizada com sucesso.`,
     });
 
-    const updatedPromotion = await promotionRepository.findOneBy({
-      id: createdPromotion.id,
+    const updatedTermination = await terminationRepository.findOneBy({
+      id: createdTermination.id,
     });
 
-    expect(new Date(updatedPromotion.data).toISOString().split('T')[0]).toBe(
+    expect(new Date(updatedTermination.data).toISOString().split('T')[0]).toBe(
       new Date(updateData.data).toISOString().split('T')[0],
     );
   });
 
-  it('/v1/funcionarios/promocoes/:id (PATCH) - Deve retornar um erro ao atualizar um promoção com tipo de dado inválido', async () => {
-    const promotionRepository = dataSource.getRepository(Promotion);
-    const createdPromotion = await promotionRepository.save({
-      ...promotion,
+  it('/v1/funcionarios/demissoes/:id (PATCH) - Deve retornar um erro ao atualizar um demissão com tipo de dado inválido', async () => {
+    const terminationRepository = dataSource.getRepository(Termination);
+    const createdTermination = await terminationRepository.save({
+      ...termination,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
@@ -427,7 +423,7 @@ describe('PromotionController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/promocoes/${createdPromotion.id}`)
+      .patch(`/v1/funcionarios/demissoes/${createdTermination.id}`)
       .send(updateData)
       .expect(400);
 
@@ -437,31 +433,10 @@ describe('PromotionController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/promocoes/:id (PATCH) - Deve retornar erro ao atualizar uma promoção com uma função inexistente', async () => {
-    const promotionRepository = dataSource.getRepository(Promotion);
-    const createdPromotion = await promotionRepository.save({
-      ...promotion,
-      funcionario: createdEmployee,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      funcaoId: 999,
-      atualizadoPor: createdUser.id,
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/promocoes/${createdPromotion.id}`)
-      .send(updateData)
-      .expect(404);
-
-    expect(response.body.message).toEqual('Função não encontrada.');
-  });
-
-  it('/v1/funcionarios/promocoes/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
-    const promotionRepository = dataSource.getRepository(Promotion);
-    const createdPromotion = await promotionRepository.save({
-      ...promotion,
+  it('/v1/funcionarios/demissoes/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
+    const terminationRepository = dataSource.getRepository(Termination);
+    const createdTermination = await terminationRepository.save({
+      ...termination,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
@@ -471,7 +446,7 @@ describe('PromotionController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/promocoes/${createdPromotion.id}`)
+      .patch(`/v1/funcionarios/demissoes/${createdTermination.id}`)
       .send(updateData)
       .expect(400);
 
@@ -482,10 +457,10 @@ describe('PromotionController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/promocoes/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
-    const promotionRepository = dataSource.getRepository(Promotion);
-    const createdPromotion = await promotionRepository.save({
-      ...promotion,
+  it('/v1/funcionarios/demissoes/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
+    const terminationRepository = dataSource.getRepository(Termination);
+    const createdTermination = await terminationRepository.save({
+      ...termination,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
@@ -496,7 +471,7 @@ describe('PromotionController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/promocoes/${createdPromotion.id}`)
+      .patch(`/v1/funcionarios/demissoes/${createdTermination.id}`)
       .send(updateData)
       .expect(400);
 
@@ -507,10 +482,10 @@ describe('PromotionController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/promocoes/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
-    const promotionRepository = dataSource.getRepository(Promotion);
-    const createdPromotion = await promotionRepository.save({
-      ...promotion,
+  it('/v1/funcionarios/demissoes/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
+    const terminationRepository = dataSource.getRepository(Termination);
+    const createdTermination = await terminationRepository.save({
+      ...termination,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
@@ -521,7 +496,7 @@ describe('PromotionController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/promocoes/${createdPromotion.id}`)
+      .patch(`/v1/funcionarios/demissoes/${createdTermination.id}`)
       .send(updateData)
       .expect(404);
 
@@ -532,9 +507,9 @@ describe('PromotionController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/promocoes/:id (PATCH) - Deve retornar erro ao atualizar uma promoção com um ID inválido', async () => {
+  it('/v1/funcionarios/demissoes/:id (PATCH) - Deve retornar erro ao atualizar uma demissão com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/funcionarios/promocoes/abc')
+      .patch('/v1/funcionarios/demissoes/abc')
       .send({
         data: '2025-02-11',
         atualizadoPor: 1,
@@ -548,9 +523,9 @@ describe('PromotionController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/promocoes/:id (PATCH) - Deve retornar erro ao atualizar uma promoção inexistente', async () => {
+  it('/v1/funcionarios/demissoes/:id (PATCH) - Deve retornar erro ao atualizar uma demissão inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/funcionarios/promocoes/9999')
+      .patch('/v1/funcionarios/demissoes/9999')
       .send({
         data: '2025-02-11',
         atualizadoPor: 1,
@@ -559,44 +534,51 @@ describe('PromotionController (E2E)', () => {
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Promoção não encontrada.',
+      message: 'Demissão não encontrada.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/funcionarios/promocoes/:id (DELETE) - Deve excluir uma promoção', async () => {
-    const promotionRepository = dataSource.getRepository(Promotion);
-    const createdPromotion = await promotionRepository.save({
-      ...promotion,
+  it('/v1/funcionarios/demissoes/:id (DELETE) - Deve excluir uma demissão', async () => {
+    const terminationRepository = dataSource.getRepository(Termination);
+    const createdTermination = await terminationRepository.save({
+      ...termination,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
-    const deletePromotionDto: BaseDeleteDto = {
+    const deleteTerminationDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/promocoes/${createdPromotion.id}`)
-      .send(deletePromotionDto)
+      .delete(`/v1/funcionarios/demissoes/${createdTermination.id}`)
+      .send(deleteTerminationDto)
       .expect(200);
 
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Promoção id: #${createdPromotion.id} excluída com sucesso.`,
+      message: `Demissão id: #${createdTermination.id} excluída com sucesso.`,
     });
 
-    const deletedPromotion = await promotionRepository.findOneBy({
-      id: createdPromotion.id,
+    const deletedTermination = await terminationRepository.findOneBy({
+      id: createdTermination.id,
     });
 
-    expect(deletedPromotion.status).toBe('E');
+    expect(deletedTermination.status).toBe('E');
+
+    const employeeRepository = dataSource.getRepository(Employee);
+    const updatedEmployee = await employeeRepository.findOne({
+      where: { id: createdEmployee.id },
+    });
+
+    expect(updatedEmployee.statusFuncionario).toBe('ATIVO');
   });
 
-  it('/v1/funcionarios/promocoes/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
+  it('/v1/funcionarios/demissoes/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/promocoes/1`)
+      .delete(`/v1/funcionarios/demissoes/1`)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -606,14 +588,14 @@ describe('PromotionController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/promocoes/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
-    const deletePromotionDto = {
+  it('/v1/funcionarios/demissoes/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
+    const deleteTerminationDto = {
       excluidoPor: 'Teste',
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/promocoes/1`)
-      .send(deletePromotionDto)
+      .delete(`/v1/funcionarios/demissoes/1`)
+      .send(deleteTerminationDto)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -623,14 +605,14 @@ describe('PromotionController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/promocoes/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
-    const deletePromotionDto: BaseDeleteDto = {
+  it('/v1/funcionarios/demissoes/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
+    const deleteTerminationDto: BaseDeleteDto = {
       excluidoPor: 999,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/promocoes/${createdEmployee.id}`)
-      .send(deletePromotionDto)
+      .delete(`/v1/funcionarios/demissoes/${createdEmployee.id}`)
+      .send(deleteTerminationDto)
       .expect(404);
 
     expect(response.body).toEqual({
@@ -640,14 +622,14 @@ describe('PromotionController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/promocoes/:id (DELETE) - Deve retornar erro ao excluir uma promoção com um ID inválido', async () => {
-    const deletePromotionDto: BaseDeleteDto = {
+  it('/v1/funcionarios/demissoes/:id (DELETE) - Deve retornar erro ao excluir uma demissão com um ID inválido', async () => {
+    const deleteTerminationDto: BaseDeleteDto = {
       excluidoPor: 1,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/funcionarios/promocoes/abc')
-      .send(deletePromotionDto)
+      .delete('/v1/funcionarios/demissoes/abc')
+      .send(deleteTerminationDto)
       .expect(400);
 
     expect(response.body).toEqual({
@@ -657,19 +639,19 @@ describe('PromotionController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/promocoes/:id (DELETE) - Deve retornar erro ao excluir uma promoção inexistente', async () => {
-    const deletePromotionDto: BaseDeleteDto = {
+  it('/v1/funcionarios/demissoes/:id (DELETE) - Deve retornar erro ao excluir uma demissão inexistente', async () => {
+    const deleteTerminationDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/funcionarios/promocoes/9999')
-      .send(deletePromotionDto)
+      .delete('/v1/funcionarios/demissoes/9999')
+      .send(deleteTerminationDto)
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Promoção não encontrada.',
+      message: 'Demissão não encontrada.',
       error: 'Not Found',
     });
   });

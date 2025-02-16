@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class Migration1739574211241 implements MigrationInterface {
-  name = 'Migration1739574211241';
+export class Migration1739741413322 implements MigrationInterface {
+  name = 'Migration1739741413322';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
@@ -14,7 +14,7 @@ export class Migration1739574211241 implements MigrationInterface {
       `CREATE TYPE "public"."faltas_status_enum" AS ENUM('A', 'I', 'E')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "faltas" ("id" SERIAL NOT NULL, "status" "public"."faltas_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" TIMESTAMP WITH TIME ZONE NOT NULL, "motivo" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_f5990e028829287d55315bd6ed2" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "faltas" ("id" SERIAL NOT NULL, "status" "public"."faltas_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" date NOT NULL, "motivo" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_f5990e028829287d55315bd6ed2" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."atestados_status_enum" AS ENUM('A', 'I', 'E')`,
@@ -50,7 +50,7 @@ export class Migration1739574211241 implements MigrationInterface {
       `CREATE TYPE "public"."entregas_de_epis_status_enum" AS ENUM('A', 'I', 'E')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "entregas_de_epis" ("id" SERIAL NOT NULL, "status" "public"."entregas_de_epis_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" TIMESTAMP WITH TIME ZONE NOT NULL, "motivo" character varying(255) NOT NULL, "entregue_por" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_0cc69811debcd4c43332a1210ec" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "entregas_de_epis" ("id" SERIAL NOT NULL, "status" "public"."entregas_de_epis_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" date NOT NULL, "motivo" character varying(255) NOT NULL, "entregue_por" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_0cc69811debcd4c43332a1210ec" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."epis_status_enum" AS ENUM('A', 'I', 'E')`,
@@ -62,7 +62,7 @@ export class Migration1739574211241 implements MigrationInterface {
       `CREATE TYPE "public"."projetos_status_enum" AS ENUM('A', 'I', 'E')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "projetos" ("id" SERIAL NOT NULL, "status" "public"."projetos_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "descricao" character varying(255) NOT NULL, "data_inicio" TIMESTAMP WITH TIME ZONE NOT NULL, "cno" character varying(12) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "empresaId" integer, CONSTRAINT "PK_fb6b6aed4b30e10b976fe8bdf5b" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "projetos" ("id" SERIAL NOT NULL, "status" "public"."projetos_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "descricao" character varying(255) NOT NULL, "data_inicio" date NOT NULL, "cno" character varying(12) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "empresaId" integer, CONSTRAINT "PK_fb6b6aed4b30e10b976fe8bdf5b" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."empresas_status_enum" AS ENUM('A', 'I', 'E')`,
@@ -80,13 +80,13 @@ export class Migration1739574211241 implements MigrationInterface {
       `CREATE TYPE "public"."promocoes_status_enum" AS ENUM('A', 'I', 'E')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "promocoes" ("id" SERIAL NOT NULL, "status" "public"."promocoes_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "salario" TIMESTAMP WITH TIME ZONE NOT NULL, "data" TIMESTAMP WITH TIME ZONE NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcaoId" integer, "funcionarioId" integer, CONSTRAINT "PK_71c26f436e5727cf140cd8a095e" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "promocoes" ("id" SERIAL NOT NULL, "status" "public"."promocoes_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "salario" numeric(10,2) NOT NULL, "data" date NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcaoId" integer, "funcionarioId" integer, CONSTRAINT "PK_71c26f436e5727cf140cd8a095e" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."demissoes_status_enum" AS ENUM('A', 'I', 'E')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "demissoes" ("id" SERIAL NOT NULL, "status" "public"."demissoes_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" TIMESTAMP WITH TIME ZONE NOT NULL, "motivo_interno" character varying(255) NOT NULL, "motivo_trabalhista" character varying(255) NOT NULL, "acao_trabalhista" character varying(255) NOT NULL, "forma_demissao" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_5b29022a7f9c3e19a579ade42fb" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "demissoes" ("id" SERIAL NOT NULL, "status" "public"."demissoes_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" date NOT NULL, "motivo_interno" character varying(255) NOT NULL, "motivo_trabalhista" character varying(255) NOT NULL, "acao_trabalhista" character varying(255) NOT NULL, "forma_demissao" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_5b29022a7f9c3e19a579ade42fb" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."analise_de_cpf_status_enum" AS ENUM('A', 'I', 'E')`,
@@ -98,19 +98,19 @@ export class Migration1739574211241 implements MigrationInterface {
       `CREATE TYPE "public"."acidentes_status_enum" AS ENUM('A', 'I', 'E')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "acidentes" ("id" SERIAL NOT NULL, "status" "public"."acidentes_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "descricao" character varying(255) NOT NULL, "data" TIMESTAMP WITH TIME ZONE NOT NULL, "natureza" character varying(255) NOT NULL, "cat" character varying(15) NOT NULL, "medidasTomadas" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_69d71abea5206c911e07ce91335" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "acidentes" ("id" SERIAL NOT NULL, "status" "public"."acidentes_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "descricao" character varying(255) NOT NULL, "data" date NOT NULL, "natureza" character varying(255) NOT NULL, "cat" character varying(15) NOT NULL, "medidasTomadas" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_69d71abea5206c911e07ce91335" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."acoes_trabalhistas_status_enum" AS ENUM('A', 'I', 'E')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "acoes_trabalhistas" ("id" SERIAL NOT NULL, "status" "public"."acoes_trabalhistas_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "numero_processo" character varying NOT NULL, "tribunal" character varying NOT NULL, "data_ajuizamento" TIMESTAMP WITH TIME ZONE NOT NULL, "reclamante" character varying NOT NULL, "reclamado" character varying NOT NULL, "advogado_reclamante" character varying, "advogado_reclamado" character varying, "descricao" text NOT NULL, "valor_causa" numeric, "andamento" character varying, "decisao" text, "data_conclusao" TIMESTAMP WITH TIME ZONE, "recursos" text, "custas_despesas" numeric, "data_conhecimento" TIMESTAMP WITH TIME ZONE NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_41014cd4224847fd66b43fe5cfd" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "acoes_trabalhistas" ("id" SERIAL NOT NULL, "status" "public"."acoes_trabalhistas_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "numero_processo" character varying NOT NULL, "tribunal" character varying NOT NULL, "data_ajuizamento" date NOT NULL, "reclamante" character varying NOT NULL, "reclamado" character varying NOT NULL, "advogado_reclamante" character varying, "advogado_reclamado" character varying, "descricao" character varying NOT NULL, "valor_causa" numeric(10,2), "andamento" character varying, "decisao" character varying, "data_conclusao" date, "recursos" character varying, "custas_despesas" numeric(10,2), "data_conhecimento" date NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_41014cd4224847fd66b43fe5cfd" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."ferias_status_enum" AS ENUM('A', 'I', 'E')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "ferias" ("id" SERIAL NOT NULL, "status" "public"."ferias_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data_inicio" TIMESTAMP WITH TIME ZONE NOT NULL, "data_fim" TIMESTAMP WITH TIME ZONE NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_15aaf56d0233a1f69ebb6dc1502" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "ferias" ("id" SERIAL NOT NULL, "status" "public"."ferias_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data_inicio" date NOT NULL, "data_fim" date NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_15aaf56d0233a1f69ebb6dc1502" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."funcionarios_status_enum" AS ENUM('A', 'I', 'E')`,
@@ -140,7 +140,7 @@ export class Migration1739574211241 implements MigrationInterface {
       `CREATE TYPE "public"."advertencias_status_enum" AS ENUM('A', 'I', 'E')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "advertencias" ("id" SERIAL NOT NULL, "status" "public"."advertencias_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" TIMESTAMP WITH TIME ZONE NOT NULL, "motivo" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_daf66cb2e71e4926957c7d74b79" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "advertencias" ("id" SERIAL NOT NULL, "status" "public"."advertencias_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" date NOT NULL, "motivo" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_daf66cb2e71e4926957c7d74b79" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."funcao_epi_logs_acao_enum" AS ENUM('REMOVEU', 'ADICIONOU')`,
@@ -158,7 +158,7 @@ export class Migration1739574211241 implements MigrationInterface {
       `CREATE TYPE "public"."funcionarios_projetos_logs_acao_enum" AS ENUM('ADICIONOU', 'REMOVEU')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "funcionarios_projetos_logs" ("id" SERIAL NOT NULL, "data_inicio" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "acao" "public"."funcionarios_projetos_logs_acao_enum" NOT NULL, "descricao" character varying NOT NULL, "criado_por" integer NOT NULL, "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "projetoId" integer, "funcionarioId" integer, CONSTRAINT "PK_352175c674e09d7cffa8407088a" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "funcionarios_projetos_logs" ("id" SERIAL NOT NULL, "data_inicio" date NOT NULL DEFAULT now(), "acao" "public"."funcionarios_projetos_logs_acao_enum" NOT NULL, "descricao" character varying NOT NULL, "criado_por" integer NOT NULL, "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "projetoId" integer, "funcionarioId" integer, CONSTRAINT "PK_352175c674e09d7cffa8407088a" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TABLE "entregas_epis" ("entregaId" integer NOT NULL, "epiId" integer NOT NULL, CONSTRAINT "PK_f193c324d593c815ccf4ef1c24f" PRIMARY KEY ("entregaId", "epiId"))`,

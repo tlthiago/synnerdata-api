@@ -9,7 +9,7 @@ export class UpdateStatusDto {
   })
   @IsEnum(StatusFuncionario)
   @IsNotEmpty()
-  status: StatusFuncionario;
+  statusFuncionario: StatusFuncionario;
 
   @ApiProperty({
     description: 'Usuário responsável pela atualização do funcionário.',

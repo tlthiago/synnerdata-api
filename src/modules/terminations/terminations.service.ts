@@ -37,7 +37,7 @@ export class TerminationsService {
     await this.terminationRepository.save(termination);
 
     const updateStatusDto: UpdateStatusDto = {
-      status: StatusFuncionario.DEMITIDO,
+      statusFuncionario: StatusFuncionario.DEMITIDO,
       atualizadoPor: user.id,
     };
 
@@ -50,30 +50,21 @@ export class TerminationsService {
   }
 
   async findAll(employeeId: number) {
-    await this.employeesService.findOne(employeeId);
+    const employee = await this.employeesService.findOne(employeeId);
 
     const terminations = await this.terminationRepository.find({
       where: {
-        funcionario: { id: employeeId },
+        funcionario: { id: employee.id },
         status: 'A',
       },
     });
 
-    return plainToInstance(TerminationResponseDto, terminations);
+    return plainToInstance(TerminationResponseDto, terminations, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
-    const termination = await this.terminationRepository.findOne({
-      where: {
-        id,
-        status: 'A',
-      },
-    });
-
-    return plainToInstance(TerminationResponseDto, termination);
-  }
-
-  async findEmployeeByTermination(id: number) {
     const termination = await this.terminationRepository.findOne({
       where: {
         id,
@@ -85,7 +76,24 @@ export class TerminationsService {
       throw new NotFoundException('Demissão não encontrada.');
     }
 
-    return termination.funcionario;
+    return plainToInstance(TerminationResponseDto, termination);
+  }
+
+  async findEmployeeByTermination(id: number) {
+    const termination = await this.terminationRepository.findOne({
+      where: {
+        id,
+      },
+      relations: ['funcionario'],
+    });
+
+    if (!termination) {
+      throw new NotFoundException('Demissão não encontrada.');
+    }
+
+    const employee = this.employeesService.findOne(termination.funcionario.id);
+
+    return employee;
   }
 
   async update(id: number, updateTerminationDto: UpdateTerminationDto) {
@@ -102,7 +110,7 @@ export class TerminationsService {
       throw new NotFoundException('Demissão não encontrada.');
     }
 
-    return `A demissão #${id} foi atualizada.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deleteTerminationDto: BaseDeleteDto) {
@@ -122,7 +130,7 @@ export class TerminationsService {
     const employee = await this.findEmployeeByTermination(id);
 
     const updateStatusDto: UpdateStatusDto = {
-      status: StatusFuncionario.ATIVO,
+      statusFuncionario: StatusFuncionario.ATIVO,
       atualizadoPor: user.id,
     };
 
@@ -131,6 +139,6 @@ export class TerminationsService {
       updateStatusDto,
     );
 
-    return `A demissão #${id} foi excluída.`;
+    return { id, status: 'E' };
   }
 }
