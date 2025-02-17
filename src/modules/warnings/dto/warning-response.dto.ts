@@ -1,9 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseResponseDto } from '../../../common/utils/dto/base-response.dto';
-import { Transform } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 
 export class WarningResponseDto extends BaseResponseDto {
   @ApiProperty({ description: 'Data da advertência.' })
+  @Expose()
   @Transform(({ value }) =>
     new Intl.DateTimeFormat('pt-BR', {
       dateStyle: 'short',
@@ -12,5 +13,6 @@ export class WarningResponseDto extends BaseResponseDto {
   data: string;
 
   @ApiProperty({ description: 'Motivo da advertência.' })
+  @Expose()
   motivo: string;
 }

@@ -30,8 +30,6 @@ import { LaborAction } from '../labor-actions/entities/labor-action.entity';
 import { EpiDelivery } from '../epi-delivery/entities/epi-delivery.entity';
 import { Vacation } from '../vacations/entities/vacation.entity';
 import { User } from '../users/entities/user.entity';
-import { AbsenceModule } from './absence.module';
-import { UpdateAbsenceDto } from './dto/update-absence.dto';
 import {
   Escala,
   EstadoCivil,
@@ -39,14 +37,16 @@ import {
   RegimeContratacao,
   Sexo,
 } from '../employees/enums/employees.enum';
+import { WarningsModule } from './warnings.module';
+import { UpdateWarningDto } from './dto/update-warning.dto';
 
-describe('AbsenceController (E2E)', () => {
+describe('WarningsController (E2E)', () => {
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
   let createdUser: User;
   let createdEmployee: Employee;
-  const absence = {
+  const warning = {
     data: '2025-01-29',
     motivo: 'Motivo Teste',
     criadoPor: 1,
@@ -84,7 +84,7 @@ describe('AbsenceController (E2E)', () => {
             Vacation,
           ],
         }),
-        AbsenceModule,
+        WarningsModule,
       ],
     })
       .overrideGuard(JwtAuthGuard)
@@ -209,27 +209,27 @@ describe('AbsenceController (E2E)', () => {
 
   afterEach(async () => {
     if (dataSource.isInitialized) {
-      await dataSource.query('DELETE FROM "faltas" CASCADE;');
+      await dataSource.query('DELETE FROM "advertencias" CASCADE;');
     }
   });
 
-  it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve cadastrar uma falta', async () => {
+  it('/v1/funcionarios/:funcionarioId/advertencias (POST) - Deve cadastrar uma advertencia', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/faltas`)
-      .send(absence)
+      .post(`/v1/funcionarios/${createdEmployee.id}/advertencias`)
+      .send(warning)
       .expect(201);
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Falta cadastrada com sucesso, id: #1.`,
+      message: `Advertência cadastrada com sucesso, id: #1.`,
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve retornar erro ao criar uma falta sem informações obrigatórias', async () => {
+  it('/v1/funcionarios/:funcionarioId/advertencias (POST) - Deve retornar erro ao criar uma advertência sem informações obrigatórias', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/faltas`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/advertencias`)
       .send({})
       .expect(400);
 
@@ -243,10 +243,10 @@ describe('AbsenceController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve retornar erro ao criar uma falta com tipo de dado inválido', async () => {
+  it('/v1/funcionarios/:funcionarioId/advertencias (POST) - Deve retornar erro ao criar uma advertência com tipo de dado inválido', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/faltas`)
-      .send({ ...absence, data: 123 })
+      .post(`/v1/funcionarios/${createdEmployee.id}/advertencias`)
+      .send({ ...warning, data: 123 })
       .expect(400);
 
     expect(response.body).toHaveProperty('message');
@@ -255,11 +255,11 @@ describe('AbsenceController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
+  it('/v1/funcionarios/:funcionarioId/advertencias (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/999/faltas`)
+      .post(`/v1/funcionarios/999/advertencias`)
       .send({
-        ...absence,
+        ...warning,
         criadoPor: createdUser.id,
       })
       .expect(404);
@@ -271,11 +271,11 @@ describe('AbsenceController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
+  it('/v1/funcionarios/:funcionarioId/advertencias (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/faltas`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/advertencias`)
       .send({
-        ...absence,
+        ...warning,
         criadoPor: 'Teste',
       })
       .expect(400);
@@ -287,11 +287,11 @@ describe('AbsenceController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
+  it('/v1/funcionarios/:funcionarioId/advertencias (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/faltas`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/advertencias`)
       .send({
-        ...absence,
+        ...warning,
         criadoPor: 999,
       })
       .expect(404);
@@ -303,57 +303,57 @@ describe('AbsenceController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/faltas (GET) - Deve listar todas as faltas de um funcionário', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/:funcionarioId/advertencias (GET) - Deve listar todas as advertências de um funcionário', async () => {
+    const warningRepository = dataSource.getRepository(Warning);
+    await warningRepository.save({
+      ...warning,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/funcionarios/${createdEmployee.id}/faltas`)
+      .get(`/v1/funcionarios/${createdEmployee.id}/advertencias`)
       .expect(200);
 
     expect(response.body).toBeInstanceOf(Array);
     expect(response.body.length).toBeGreaterThan(0);
   });
 
-  it('/v1/funcionarios/faltas/:id (GET) - Deve retonar uma falta específica', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    const createdAbsence = await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/advertencias/:id (GET) - Deve retonar uma advertência específica', async () => {
+    const warningRepository = dataSource.getRepository(Warning);
+    const createdWarning = await warningRepository.save({
+      ...warning,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/funcionarios/faltas/${createdAbsence.id}`)
+      .get(`/v1/funcionarios/advertencias/${createdWarning.id}`)
       .expect(200);
 
     expect(response.body).toMatchObject({
-      id: createdAbsence.id,
+      id: createdWarning.id,
       data: new Intl.DateTimeFormat('pt-BR', {
         dateStyle: 'short',
-      }).format(new Date(createdAbsence.data)),
+      }).format(new Date(createdWarning.data)),
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (GET) - Deve retornar erro ao buscar uma falta inexistente', async () => {
+  it('/v1/funcionarios/advertencias/:id (GET) - Deve retornar erro ao buscar uma advertência inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/funcionarios/faltas/999')
+      .get('/v1/funcionarios/advertencias/999')
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Falta não encontrada.',
+      message: 'Advertência não encontrada.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (GET) - Deve retornar erro ao buscar uma falta com um ID inválido', async () => {
+  it('/v1/funcionarios/advertencias/:id (GET) - Deve retornar erro ao buscar uma advertência com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/funcionarios/faltas/abc')
+      .get('/v1/funcionarios/advertencias/abc')
       .expect(400);
 
     expect(response.body).toEqual({
@@ -363,21 +363,21 @@ describe('AbsenceController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (PATCH) - Deve atualizar os dados de uma falta', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    const createdAbsence = await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/advertencias/:id (PATCH) - Deve atualizar os dados de uma advertência', async () => {
+    const warningRepository = dataSource.getRepository(Warning);
+    const createdWarning = await warningRepository.save({
+      ...warning,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
-    const updateData: UpdateAbsenceDto = {
+    const updateData: UpdateWarningDto = {
       data: '2025-02-13',
       atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/faltas/${createdAbsence.id}`)
+      .patch(`/v1/funcionarios/advertencias/${createdWarning.id}`)
       .send(updateData)
       .expect(200);
 
@@ -390,17 +390,17 @@ describe('AbsenceController (E2E)', () => {
         }).format(new Date(updateData.data)),
         atualizadoPor: expect.any(String),
       },
-      message: `Falta id: #${createdAbsence.id} atualizada com sucesso.`,
+      message: `Advertência id: #${createdWarning.id} atualizada com sucesso.`,
     });
 
-    const updatedAbsence = await absenceRepository.findOneBy({
-      id: createdAbsence.id,
+    const updatedWarning = await warningRepository.findOneBy({
+      id: createdWarning.id,
     });
 
     expect(
       new Intl.DateTimeFormat('pt-BR', {
         dateStyle: 'short',
-      }).format(new Date(updatedAbsence.data)),
+      }).format(new Date(updatedWarning.data)),
     ).toBe(
       new Intl.DateTimeFormat('pt-BR', {
         dateStyle: 'short',
@@ -408,10 +408,10 @@ describe('AbsenceController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/faltas/:id (PATCH) - Deve retornar um erro ao atualizar uma falta com tipo de dado inválido', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    const createdAbsence = await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/advertencias/:id (PATCH) - Deve retornar um erro ao atualizar uma advertência com tipo de dado inválido', async () => {
+    const warningRepository = dataSource.getRepository(Warning);
+    const createdWarning = await warningRepository.save({
+      ...warning,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
@@ -422,7 +422,7 @@ describe('AbsenceController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/faltas/${createdAbsence.id}`)
+      .patch(`/v1/funcionarios/advertencias/${createdWarning.id}`)
       .send(updateData)
       .expect(400);
 
@@ -432,10 +432,10 @@ describe('AbsenceController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/faltas/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    const createdAbsence = await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/advertencias/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
+    const warningRepository = dataSource.getRepository(Warning);
+    const createdWarning = await warningRepository.save({
+      ...warning,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
@@ -445,7 +445,7 @@ describe('AbsenceController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/faltas/${createdAbsence.id}`)
+      .patch(`/v1/funcionarios/advertencias/${createdWarning.id}`)
       .send(updateData)
       .expect(400);
 
@@ -456,10 +456,10 @@ describe('AbsenceController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/faltas/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    const createdAbsence = await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/advertencias/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
+    const warningRepository = dataSource.getRepository(Warning);
+    const createdWarning = await warningRepository.save({
+      ...warning,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
@@ -470,7 +470,7 @@ describe('AbsenceController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/faltas/${createdAbsence.id}`)
+      .patch(`/v1/funcionarios/advertencias/${createdWarning.id}`)
       .send(updateData)
       .expect(400);
 
@@ -481,10 +481,10 @@ describe('AbsenceController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/faltas/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    const createdAbsence = await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/advertencias/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
+    const warningRepository = dataSource.getRepository(Warning);
+    const createdWarning = await warningRepository.save({
+      ...warning,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
@@ -495,7 +495,7 @@ describe('AbsenceController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/faltas/${createdAbsence.id}`)
+      .patch(`/v1/funcionarios/advertencias/${createdWarning.id}`)
       .send(updateData)
       .expect(404);
 
@@ -506,9 +506,9 @@ describe('AbsenceController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (PATCH) - Deve retornar erro ao atualizar uma falta com um ID inválido', async () => {
+  it('/v1/funcionarios/advertencias/:id (PATCH) - Deve retornar erro ao atualizar uma advertência com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/funcionarios/faltas/abc')
+      .patch('/v1/funcionarios/advertencias/abc')
       .send({
         data: '2025-02-11',
         atualizadoPor: 1,
@@ -522,9 +522,9 @@ describe('AbsenceController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (PATCH) - Deve retornar erro ao atualizar uma falta inexistente', async () => {
+  it('/v1/funcionarios/advertencias/:id (PATCH) - Deve retornar erro ao atualizar uma advertência inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/funcionarios/faltas/9999')
+      .patch('/v1/funcionarios/advertencias/9999')
       .send({
         data: '2025-02-11',
         atualizadoPor: 1,
@@ -533,44 +533,44 @@ describe('AbsenceController (E2E)', () => {
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Falta não encontrada.',
+      message: 'Advertência não encontrada.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (DELETE) - Deve excluir uma falta', async () => {
-    const absenceRepository = dataSource.getRepository(Absence);
-    const createdAbsence = await absenceRepository.save({
-      ...absence,
+  it('/v1/funcionarios/advertencias/:id (DELETE) - Deve excluir uma advertência', async () => {
+    const warningRepository = dataSource.getRepository(Warning);
+    const createdWarning = await warningRepository.save({
+      ...warning,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
-    const deleteAbsenceDto: BaseDeleteDto = {
+    const deleteWarningDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/faltas/${createdAbsence.id}`)
-      .send(deleteAbsenceDto)
+      .delete(`/v1/funcionarios/advertencias/${createdWarning.id}`)
+      .send(deleteWarningDto)
       .expect(200);
 
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Falta id: #${createdAbsence.id} excluída com sucesso.`,
+      message: `Advertência id: #${createdWarning.id} excluída com sucesso.`,
     });
 
-    const deleteAbsence = await absenceRepository.findOneBy({
-      id: createdAbsence.id,
+    const deletedWarning = await warningRepository.findOneBy({
+      id: createdWarning.id,
     });
 
-    expect(deleteAbsence.status).toBe('E');
+    expect(deletedWarning.status).toBe('E');
   });
 
-  it('/v1/funcionarios/faltas/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
+  it('/v1/funcionarios/advertencias/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/faltas/1`)
+      .delete(`/v1/funcionarios/advertencias/1`)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -580,14 +580,14 @@ describe('AbsenceController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/faltas/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
-    const deleteAbsenceDto = {
+  it('/v1/funcionarios/advertencias/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
+    const deleteWarningDto = {
       excluidoPor: 'Teste',
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/faltas/1`)
-      .send(deleteAbsenceDto)
+      .delete(`/v1/funcionarios/advertencias/1`)
+      .send(deleteWarningDto)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -597,14 +597,14 @@ describe('AbsenceController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/faltas/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
-    const deleteAbsenceDto: BaseDeleteDto = {
+  it('/v1/funcionarios/advertencias/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
+    const deleteWarningDto: BaseDeleteDto = {
       excluidoPor: 999,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/faltas/${createdEmployee.id}`)
-      .send(deleteAbsenceDto)
+      .delete(`/v1/funcionarios/advertencias/${createdEmployee.id}`)
+      .send(deleteWarningDto)
       .expect(404);
 
     expect(response.body).toEqual({
@@ -614,14 +614,14 @@ describe('AbsenceController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (DELETE) - Deve retornar erro ao excluir uma falta com um ID inválido', async () => {
-    const deleteAbsenceDto: BaseDeleteDto = {
+  it('/v1/funcionarios/advertencias/:id (DELETE) - Deve retornar erro ao excluir uma advertência com um ID inválido', async () => {
+    const deleteWarningDto: BaseDeleteDto = {
       excluidoPor: 1,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/funcionarios/faltas/abc')
-      .send(deleteAbsenceDto)
+      .delete('/v1/funcionarios/advertencias/abc')
+      .send(deleteWarningDto)
       .expect(400);
 
     expect(response.body).toEqual({
@@ -631,19 +631,19 @@ describe('AbsenceController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/faltas/:id (DELETE) - Deve retornar erro ao excluir uma falta inexistente', async () => {
-    const deleteAbsenceDto: BaseDeleteDto = {
+  it('/v1/funcionarios/advertencias/:id (DELETE) - Deve retornar erro ao excluir uma advertência inexistente', async () => {
+    const deleteWarningDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/funcionarios/faltas/9999')
-      .send(deleteAbsenceDto)
+      .delete('/v1/funcionarios/advertencias/9999')
+      .send(deleteWarningDto)
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Falta não encontrada.',
+      message: 'Advertência não encontrada.',
       error: 'Not Found',
     });
   });

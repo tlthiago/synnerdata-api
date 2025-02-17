@@ -7,7 +7,7 @@ import { Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { WarningResponseDto } from './dto/warning-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -36,16 +36,18 @@ export class WarningsService {
   }
 
   async findAll(employeeId: number) {
-    await this.employeesService.findOne(employeeId);
+    const employee = await this.employeesService.findOne(employeeId);
 
     const warnings = await this.warningRepository.find({
       where: {
-        funcionario: { id: employeeId },
+        funcionario: { id: employee.id },
         status: 'A',
       },
     });
 
-    return plainToInstance(WarningResponseDto, warnings);
+    return plainToInstance(WarningResponseDto, warnings, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
@@ -56,7 +58,13 @@ export class WarningsService {
       },
     });
 
-    return plainToInstance(WarningResponseDto, warning);
+    if (!warning) {
+      throw new NotFoundException('Advertência não encontrada.');
+    }
+
+    return plainToInstance(WarningResponseDto, warning, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async update(id: number, updateWarningDto: UpdateWarningDto) {
@@ -73,7 +81,7 @@ export class WarningsService {
       throw new NotFoundException('Advertência não encontrada.');
     }
 
-    return `A advertência #${id} foi atualizada.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deleteWarningDto: BaseDeleteDto) {
@@ -88,6 +96,6 @@ export class WarningsService {
       throw new NotFoundException('Advertência não encontrada.');
     }
 
-    return `A advertência #${id} foi excluída.`;
+    return { id, status: 'E' };
   }
 }

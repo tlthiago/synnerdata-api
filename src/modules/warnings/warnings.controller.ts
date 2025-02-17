@@ -20,8 +20,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { WarningResponseDto } from './dto/warning-response.dto';
 
 @Controller('v1/funcionarios')
@@ -66,12 +66,15 @@ export class WarningsController {
     @Param('funcionarioId', ParseIntPipe) employeeId: number,
     @Body() createWarningDto: CreateWarningDto,
   ) {
-    const id = await this.warningsService.create(employeeId, createWarningDto);
+    const warningId = await this.warningsService.create(
+      employeeId,
+      createWarningDto,
+    );
 
     return {
       succeeded: true,
       data: null,
-      message: `Advertência cadastrada com sucesso, id: #${id}.`,
+      message: `Advertência cadastrada com sucesso, id: #${warningId}.`,
     };
   }
 
@@ -158,12 +161,12 @@ export class WarningsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateWarningDto: UpdateWarningDto,
   ) {
-    await this.warningsService.update(id, updateWarningDto);
+    const warning = await this.warningsService.update(id, updateWarningDto);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Advertência id: #${id} atualizada com sucesso.`,
+      data: warning,
+      message: `Advertência id: #${warning.id} atualizada com sucesso.`,
     };
   }
 
