@@ -20,8 +20,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { LaborActionResponseDto } from './dto/labor-action-response.dto';
 
 @Controller('v1/funcionarios')
@@ -66,7 +66,7 @@ export class LaborActionsController {
     @Param('funcionarioId', ParseIntPipe) employeeId: number,
     @Body() createLaborActionDto: CreateLaborActionDto,
   ) {
-    const id = await this.laborActionsService.create(
+    const laborActionId = await this.laborActionsService.create(
       employeeId,
       createLaborActionDto,
     );
@@ -74,7 +74,7 @@ export class LaborActionsController {
     return {
       succeeded: true,
       data: null,
-      message: `Ação trabalhista cadastrada com sucesso, id: #${id}.`,
+      message: `Ação trabalhista cadastrada com sucesso, id: #${laborActionId}.`,
     };
   }
 
@@ -163,12 +163,15 @@ export class LaborActionsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateLaborActionDto: UpdateLaborActionDto,
   ) {
-    await this.laborActionsService.update(id, updateLaborActionDto);
+    const laborAction = await this.laborActionsService.update(
+      id,
+      updateLaborActionDto,
+    );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Ação trabalhista id: #${id} atualizada com sucesso.`,
+      data: laborAction,
+      message: `Ação trabalhista id: #${laborAction.id} atualizada com sucesso.`,
     };
   }
 

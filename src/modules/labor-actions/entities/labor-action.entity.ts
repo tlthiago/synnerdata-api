@@ -20,10 +20,10 @@ export class LaborAction extends BaseEntity {
   reclamado: string;
 
   @Column({ name: 'advogado_reclamante', type: 'varchar', nullable: true })
-  advogadoReclamante: string;
+  advogadoReclamante?: string;
 
   @Column({ name: 'advogado_reclamado', type: 'varchar', nullable: true })
-  advogadoReclamado: string;
+  advogadoReclamado?: string;
 
   @Column({ name: 'descricao', type: 'varchar' })
   descricao: string;
@@ -35,19 +35,19 @@ export class LaborAction extends BaseEntity {
     scale: 2,
     nullable: true,
   })
-  valorCausa: number;
+  valorCausa?: number;
 
   @Column({ name: 'andamento', type: 'varchar', nullable: true })
-  andamento: string;
+  andamento?: string;
 
   @Column({ name: 'decisao', type: 'varchar', nullable: true })
-  decisao: string;
+  decisao?: string;
 
   @Column({ name: 'data_conclusao', type: 'date', nullable: true })
-  dataConclusao: Date;
+  dataConclusao?: Date;
 
   @Column({ name: 'recursos', type: 'varchar', nullable: true })
-  recursos: string;
+  recursos?: string;
 
   @Column({
     name: 'custas_despesas',
@@ -56,7 +56,7 @@ export class LaborAction extends BaseEntity {
     scale: 2,
     nullable: true,
   })
-  custasDespesas: number;
+  custasDespesas?: number;
 
   @Column({ name: 'data_conhecimento', type: 'date' })
   dataConhecimento: Date;

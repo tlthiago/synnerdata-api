@@ -7,7 +7,7 @@ import { Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { LaborActionResponseDto } from './dto/labor-action-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -38,27 +38,35 @@ export class LaborActionsService {
   }
 
   async findAll(employeeId: number) {
-    await this.employeesService.findOne(employeeId);
+    const employee = await this.employeesService.findOne(employeeId);
 
-    const laboractions = await this.laborActionRepository.find({
+    const laborActions = await this.laborActionRepository.find({
       where: {
-        funcionario: { id: employeeId },
+        funcionario: { id: employee.id },
         status: 'A',
       },
     });
 
-    return plainToInstance(LaborActionResponseDto, laboractions);
+    return plainToInstance(LaborActionResponseDto, laborActions, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
-    const laboraction = await this.laborActionRepository.findOne({
+    const laborAction = await this.laborActionRepository.findOne({
       where: {
         id,
         status: 'A',
       },
     });
 
-    return plainToInstance(LaborActionResponseDto, laboraction);
+    if (!laborAction) {
+      throw new NotFoundException('Ação trabalhista não encontrada.');
+    }
+
+    return plainToInstance(LaborActionResponseDto, laborAction, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async update(id: number, updateLaborActionDto: UpdateLaborActionDto) {
@@ -75,7 +83,7 @@ export class LaborActionsService {
       throw new NotFoundException('Ação trabalhista não encontrada.');
     }
 
-    return `A ação trabalhista #${id} foi atualizada.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deleteLaborActionDto: BaseDeleteDto) {
@@ -92,6 +100,6 @@ export class LaborActionsService {
       throw new NotFoundException('Ação trabalhista não encontrada.');
     }
 
-    return `A ação trabalhista #${id} foi excluída.`;
+    return { id, status: 'E' };
   }
 }
