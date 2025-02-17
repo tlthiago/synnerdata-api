@@ -37,16 +37,19 @@ import {
   RegimeContratacao,
   Sexo,
 } from '../employees/enums/employees.enum';
-import { CpfAnalysisModule } from './cpf-analysis.module';
+import { AccidentsModule } from './accidents.module';
 
-describe('CpfAnalysisController (E2E)', () => {
+describe('AccidentsController (E2E)', () => {
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
   let createdUser: User;
   let createdEmployee: Employee;
-  const cpfAnalysis = {
+  const accident = {
     descricao: 'Teste de descrição',
+    data: '2025-02-16',
+    natureza: 'Teste de natureza',
+    medidasTomadas: 'Teste de medidas',
     criadoPor: 1,
   };
 
@@ -82,7 +85,7 @@ describe('CpfAnalysisController (E2E)', () => {
             Vacation,
           ],
         }),
-        CpfAnalysisModule,
+        AccidentsModule,
       ],
     })
       .overrideGuard(JwtAuthGuard)
@@ -207,27 +210,27 @@ describe('CpfAnalysisController (E2E)', () => {
 
   afterEach(async () => {
     if (dataSource.isInitialized) {
-      await dataSource.query('DELETE FROM "analise_de_cpf" CASCADE;');
+      await dataSource.query('DELETE FROM "acidentes" CASCADE;');
     }
   });
 
-  it('/v1/funcionarios/:funcionarioId/analises-de-cpf (POST) - Deve cadastrar uma análise de cpf', async () => {
+  it('/v1/funcionarios/:funcionarioId/acidentes (POST) - Deve cadastrar um acidente', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/analises-de-cpf`)
-      .send(cpfAnalysis)
+      .post(`/v1/funcionarios/${createdEmployee.id}/acidentes`)
+      .send(accident)
       .expect(201);
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Análise de CPF cadastrada com sucesso, id: #1.`,
+      message: `Acidente cadastrado com sucesso, id: #1.`,
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/analises-de-cpf (POST) - Deve retornar erro ao criar uma análise de cpf sem informações obrigatórias', async () => {
+  it('/v1/funcionarios/:funcionarioId/acidentes (POST) - Deve retornar erro ao criar um acidente sem informações obrigatórias', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/analises-de-cpf`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/acidentes`)
       .send({})
       .expect(400);
 
@@ -235,29 +238,29 @@ describe('CpfAnalysisController (E2E)', () => {
     expect(Array.isArray(response.body.message)).toBe(true);
     expect(response.body.message).toEqual(
       expect.arrayContaining([
-        'descricao should not be empty',
+        'data should not be empty',
         'criadoPor should not be empty',
       ]),
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/analises-de-cpf (POST) - Deve retornar erro ao criar uma análise de cpf com tipo de dado inválido', async () => {
+  it('/v1/funcionarios/:funcionarioId/acidentes (POST) - Deve retornar erro ao criar um acidente com tipo de dado inválido', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/analises-de-cpf`)
-      .send({ ...cpfAnalysis, descricao: 123 })
+      .post(`/v1/funcionarios/${createdEmployee.id}/acidentes`)
+      .send({ ...accident, data: 123 })
       .expect(400);
 
     expect(response.body).toHaveProperty('message');
     expect(response.body.message).toEqual(
-      expect.arrayContaining(['descricao must be a string']),
+      expect.arrayContaining(['data must be a valid ISO 8601 date string']),
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/analises-de-cpf (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
+  it('/v1/funcionarios/:funcionarioId/acidentes (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/999/analises-de-cpf`)
+      .post(`/v1/funcionarios/999/acidentes`)
       .send({
-        ...cpfAnalysis,
+        ...accident,
         criadoPor: createdUser.id,
       })
       .expect(404);
@@ -269,11 +272,11 @@ describe('CpfAnalysisController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/analises-de-cpf (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
+  it('/v1/funcionarios/:funcionarioId/acidentes (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/analises-de-cpf`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/acidentes`)
       .send({
-        ...cpfAnalysis,
+        ...accident,
         criadoPor: 'Teste',
       })
       .expect(400);
@@ -285,11 +288,11 @@ describe('CpfAnalysisController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/analises-de-cpf (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
+  it('/v1/funcionarios/:funcionarioId/acidentes (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/analises-de-cpf`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/acidentes`)
       .send({
-        ...cpfAnalysis,
+        ...accident,
         criadoPor: 999,
       })
       .expect(404);
@@ -301,55 +304,57 @@ describe('CpfAnalysisController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/analises-de-cpf (GET) - Deve listar todas as demissões de um funcionário', async () => {
-    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
-    await cpfAnalysisRepository.save({
-      ...cpfAnalysis,
+  it('/v1/funcionarios/:funcionarioId/acidentes (GET) - Deve listar todos os acidentes de um funcionário', async () => {
+    const accidentRepository = dataSource.getRepository(Accident);
+    await accidentRepository.save({
+      ...accident,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/funcionarios/${createdEmployee.id}/analises-de-cpf`)
+      .get(`/v1/funcionarios/${createdEmployee.id}/acidentes`)
       .expect(200);
 
     expect(response.body).toBeInstanceOf(Array);
     expect(response.body.length).toBeGreaterThan(0);
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (GET) - Deve retonar uma análise de cpf específica', async () => {
-    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
-    const createdCpfAnalysis = await cpfAnalysisRepository.save({
-      ...cpfAnalysis,
+  it('/v1/funcionarios/acidentes/:id (GET) - Deve retonar um acidente específico', async () => {
+    const accidentRepository = dataSource.getRepository(Accident);
+    const createdAccident = await accidentRepository.save({
+      ...accident,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/funcionarios/analises-de-cpf/${createdCpfAnalysis.id}`)
+      .get(`/v1/funcionarios/acidentes/${createdAccident.id}`)
       .expect(200);
 
     expect(response.body).toMatchObject({
-      id: createdCpfAnalysis.id,
-      descricao: createdCpfAnalysis.descricao,
+      id: createdAccident.id,
+      data: new Intl.DateTimeFormat('pt-BR', {
+        dateStyle: 'short',
+      }).format(new Date(createdAccident.data)),
     });
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (GET) - Deve retornar erro ao buscar uma análise de cpf inexistente', async () => {
+  it('/v1/funcionarios/acidentes/:id (GET) - Deve retornar erro ao buscar um acidente inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/funcionarios/analises-de-cpf/999')
+      .get('/v1/funcionarios/acidentes/999')
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Análise de CPF não encontrada.',
+      message: 'Acidente não encontrado.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (GET) - Deve retornar erro ao buscar uma análise de cpf com um ID inválido', async () => {
+  it('/v1/funcionarios/acidentes/:id (GET) - Deve retornar erro ao buscar um acidente com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/funcionarios/analises-de-cpf/abc')
+      .get('/v1/funcionarios/acidentes/abc')
       .expect(400);
 
     expect(response.body).toEqual({
@@ -359,21 +364,21 @@ describe('CpfAnalysisController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (PATCH) - Deve atualizar os dados de uma análise de cpf', async () => {
-    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
-    const createdCpfAnalysis = await cpfAnalysisRepository.save({
-      ...cpfAnalysis,
+  it('/v1/funcionarios/acidentes/:id (PATCH) - Deve atualizar os dados de um acidente', async () => {
+    const accidentRepository = dataSource.getRepository(Accident);
+    const createdAccident = await accidentRepository.save({
+      ...accident,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      descricao: 'Descrição atualizada.',
+      data: new Date('2025-02-20T00:00:00-03:00'),
       atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/analises-de-cpf/${createdCpfAnalysis.id}`)
+      .patch(`/v1/funcionarios/acidentes/${createdAccident.id}`)
       .send(updateData)
       .expect(200);
 
@@ -381,57 +386,59 @@ describe('CpfAnalysisController (E2E)', () => {
       succeeded: true,
       data: {
         id: expect.any(Number),
-        descricao: updateData.descricao,
+        data: expect.any(String),
         atualizadoPor: expect.any(String),
       },
-      message: `Análise de CPF id: #${createdCpfAnalysis.id} atualizada com sucesso.`,
+      message: `Acidente id: #${createdAccident.id} atualizado com sucesso.`,
     });
 
-    const updatedCpfAnalysis = await cpfAnalysisRepository.findOneBy({
-      id: createdCpfAnalysis.id,
+    const updatedAccident = await accidentRepository.findOneBy({
+      id: createdAccident.id,
     });
 
-    expect(updatedCpfAnalysis.descricao).toBe(updateData.descricao);
+    expect(new Date(updatedAccident.data).toISOString().split('T')[0]).toBe(
+      new Date(updateData.data).toISOString().split('T')[0],
+    );
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (PATCH) - Deve retornar um erro ao atualizar um análise de cpf com tipo de dado inválido', async () => {
-    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
-    const createdCpfAnalysis = await cpfAnalysisRepository.save({
-      ...cpfAnalysis,
+  it('/v1/funcionarios/acidentes/:id (PATCH) - Deve retornar um erro ao atualizar um acidente com tipo de dado inválido', async () => {
+    const accidentRepository = dataSource.getRepository(Accident);
+    const createdAccident = await accidentRepository.save({
+      ...accident,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      descricao: 123,
+      data: 123,
       atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/analises-de-cpf/${createdCpfAnalysis.id}`)
+      .patch(`/v1/funcionarios/acidentes/${createdAccident.id}`)
       .send(updateData)
       .expect(400);
 
     expect(response.body).toHaveProperty('message');
     expect(response.body.message).toEqual(
-      expect.arrayContaining(['descricao must be a string']),
+      expect.arrayContaining(['data must be a valid ISO 8601 date string']),
     );
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
-    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
-    const createdCpfAnalysis = await cpfAnalysisRepository.save({
-      ...cpfAnalysis,
+  it('/v1/funcionarios/acidentes/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
+    const accidentRepository = dataSource.getRepository(Accident);
+    const createdAccident = await accidentRepository.save({
+      ...accident,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      descricao: 'Descrição teste',
+      data: '2025-02-11',
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/analises-de-cpf/${createdCpfAnalysis.id}`)
+      .patch(`/v1/funcionarios/acidentes/${createdAccident.id}`)
       .send(updateData)
       .expect(400);
 
@@ -442,10 +449,10 @@ describe('CpfAnalysisController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
-    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
-    const createdCpfAnalysis = await cpfAnalysisRepository.save({
-      ...cpfAnalysis,
+  it('/v1/funcionarios/acidentes/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
+    const accidentRepository = dataSource.getRepository(Accident);
+    const createdAccident = await accidentRepository.save({
+      ...accident,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
@@ -456,7 +463,7 @@ describe('CpfAnalysisController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/analises-de-cpf/${createdCpfAnalysis.id}`)
+      .patch(`/v1/funcionarios/acidentes/${createdAccident.id}`)
       .send(updateData)
       .expect(400);
 
@@ -467,10 +474,10 @@ describe('CpfAnalysisController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
-    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
-    const createdCpfAnalysis = await cpfAnalysisRepository.save({
-      ...cpfAnalysis,
+  it('/v1/funcionarios/acidentes/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
+    const accidentRepository = dataSource.getRepository(Accident);
+    const createdAccident = await accidentRepository.save({
+      ...accident,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
@@ -481,7 +488,7 @@ describe('CpfAnalysisController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/analises-de-cpf/${createdCpfAnalysis.id}`)
+      .patch(`/v1/funcionarios/acidentes/${createdAccident.id}`)
       .send(updateData)
       .expect(404);
 
@@ -492,9 +499,9 @@ describe('CpfAnalysisController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (PATCH) - Deve retornar erro ao atualizar uma análise de cpf com um ID inválido', async () => {
+  it('/v1/funcionarios/acidentes/:id (PATCH) - Deve retornar erro ao atualizar um acidente com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/funcionarios/analises-de-cpf/abc')
+      .patch('/v1/funcionarios/acidentes/abc')
       .send({
         data: '2025-02-11',
         atualizadoPor: 1,
@@ -508,9 +515,9 @@ describe('CpfAnalysisController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (PATCH) - Deve retornar erro ao atualizar uma análise de cpf inexistente', async () => {
+  it('/v1/funcionarios/acidentes/:id (PATCH) - Deve retornar erro ao atualizar um acidente inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/funcionarios/analises-de-cpf/9999')
+      .patch('/v1/funcionarios/acidentes/9999')
       .send({
         data: '2025-02-11',
         atualizadoPor: 1,
@@ -519,44 +526,44 @@ describe('CpfAnalysisController (E2E)', () => {
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Análise de CPF não encontrada.',
+      message: 'Acidente não encontrado.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (DELETE) - Deve excluir uma análise de cpf', async () => {
-    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
-    const createdCpfAnalysis = await cpfAnalysisRepository.save({
-      ...cpfAnalysis,
+  it('/v1/funcionarios/acidentes/:id (DELETE) - Deve excluir um acidente', async () => {
+    const accidentRepository = dataSource.getRepository(Accident);
+    const createdAccident = await accidentRepository.save({
+      ...accident,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
-    const deleteCpfAnalysisDto: BaseDeleteDto = {
+    const deleteAccidentDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/analises-de-cpf/${createdCpfAnalysis.id}`)
-      .send(deleteCpfAnalysisDto)
+      .delete(`/v1/funcionarios/acidentes/${createdAccident.id}`)
+      .send(deleteAccidentDto)
       .expect(200);
 
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Análise de CPF id: #${createdCpfAnalysis.id} excluída com sucesso.`,
+      message: `Acidente id: #${createdAccident.id} excluído com sucesso.`,
     });
 
-    const deletedCpfAnalysis = await cpfAnalysisRepository.findOneBy({
-      id: createdCpfAnalysis.id,
+    const deletedAccident = await accidentRepository.findOneBy({
+      id: createdAccident.id,
     });
 
-    expect(deletedCpfAnalysis.status).toBe('E');
+    expect(deletedAccident.status).toBe('E');
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
+  it('/v1/funcionarios/acidentes/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/analises-de-cpf/1`)
+      .delete(`/v1/funcionarios/acidentes/1`)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -566,14 +573,14 @@ describe('CpfAnalysisController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
-    const deleteCpfAnalysisDto = {
+  it('/v1/funcionarios/acidentes/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
+    const deleteAccidentDto = {
       excluidoPor: 'Teste',
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/analises-de-cpf/1`)
-      .send(deleteCpfAnalysisDto)
+      .delete(`/v1/funcionarios/acidentes/1`)
+      .send(deleteAccidentDto)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -583,14 +590,14 @@ describe('CpfAnalysisController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
-    const deleteCpfAnalysisDto: BaseDeleteDto = {
+  it('/v1/funcionarios/acidentes/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
+    const deleteAccidentDto: BaseDeleteDto = {
       excluidoPor: 999,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/analises-de-cpf/${createdEmployee.id}`)
-      .send(deleteCpfAnalysisDto)
+      .delete(`/v1/funcionarios/acidentes/${createdEmployee.id}`)
+      .send(deleteAccidentDto)
       .expect(404);
 
     expect(response.body).toEqual({
@@ -600,14 +607,14 @@ describe('CpfAnalysisController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (DELETE) - Deve retornar erro ao excluir uma análise de cpf com um ID inválido', async () => {
-    const deleteCpfAnalysisDto: BaseDeleteDto = {
+  it('/v1/funcionarios/acidentes/:id (DELETE) - Deve retornar erro ao excluir um acidente com um ID inválido', async () => {
+    const deleteAccidentDto: BaseDeleteDto = {
       excluidoPor: 1,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/funcionarios/analises-de-cpf/abc')
-      .send(deleteCpfAnalysisDto)
+      .delete('/v1/funcionarios/acidentes/abc')
+      .send(deleteAccidentDto)
       .expect(400);
 
     expect(response.body).toEqual({
@@ -617,19 +624,19 @@ describe('CpfAnalysisController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/analises-de-cpf/:id (DELETE) - Deve retornar erro ao excluir uma análise de cpf inexistente', async () => {
-    const deleteCpfAnalysisDto: BaseDeleteDto = {
+  it('/v1/funcionarios/acidentes/:id (DELETE) - Deve retornar erro ao excluir um acidente inexistente', async () => {
+    const deleteAccidentDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/funcionarios/analises-de-cpf/9999')
-      .send(deleteCpfAnalysisDto)
+      .delete('/v1/funcionarios/acidentes/9999')
+      .send(deleteAccidentDto)
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Análise de CPF não encontrada.',
+      message: 'Acidente não encontrado.',
       error: 'Not Found',
     });
   });

@@ -20,8 +20,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { AccidentResponseDto } from './dto/accidents-response.dto';
 
 @Controller('v1/funcionarios')
@@ -160,12 +160,12 @@ export class AccidentsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateAccidentDto: UpdateAccidentDto,
   ) {
-    await this.accidentsService.update(id, updateAccidentDto);
+    const accident = await this.accidentsService.update(id, updateAccidentDto);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Acidente id: #${id} atualizada com sucesso.`,
+      data: accident,
+      message: `Acidente id: #${accident.id} atualizado com sucesso.`,
     };
   }
 

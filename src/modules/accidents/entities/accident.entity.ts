@@ -13,8 +13,8 @@ export class Accident extends BaseEntity {
   @Column({ name: 'natureza', type: 'varchar', length: 255 })
   natureza: string;
 
-  @Column({ name: 'cat', type: 'varchar', length: 15 })
-  cat: string;
+  @Column({ name: 'cat', type: 'varchar', length: 15, nullable: true })
+  cat?: string;
 
   @Column({ name: 'medidasTomadas', type: 'varchar', length: 255 })
   medidasTomadas: string;

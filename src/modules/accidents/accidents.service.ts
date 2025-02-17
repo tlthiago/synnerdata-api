@@ -7,7 +7,7 @@ import { Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { AccidentResponseDto } from './dto/accidents-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -36,16 +36,18 @@ export class AccidentsService {
   }
 
   async findAll(employeeId: number) {
-    await this.employeesService.findOne(employeeId);
+    const employee = await this.employeesService.findOne(employeeId);
 
     const accidents = await this.accidentRepository.find({
       where: {
-        funcionario: { id: employeeId },
+        funcionario: { id: employee.id },
         status: 'A',
       },
     });
 
-    return plainToInstance(AccidentResponseDto, accidents);
+    return plainToInstance(AccidentResponseDto, accidents, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
@@ -56,7 +58,13 @@ export class AccidentsService {
       },
     });
 
-    return plainToInstance(AccidentResponseDto, accident);
+    if (!accident) {
+      throw new NotFoundException('Acidente não encontrado.');
+    }
+
+    return plainToInstance(AccidentResponseDto, accident, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async update(id: number, updateAccidentDto: UpdateAccidentDto) {
@@ -73,7 +81,7 @@ export class AccidentsService {
       throw new NotFoundException('Acidente não encontrado.');
     }
 
-    return `O acidente #${id} foi atualizado.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deleteAccidentDto: BaseDeleteDto) {
@@ -88,6 +96,6 @@ export class AccidentsService {
       throw new NotFoundException('Acidente não encontrado.');
     }
 
-    return `O acidente #${id} foi excluído.`;
+    return { id, status: 'E' };
   }
 }
