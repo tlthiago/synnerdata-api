@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateVacationDto } from './dto/create-vacation.dto';
 import { UpdateVacationDto } from './dto/update-vacation.dto';
 import { Vacation } from './entities/vacation.entity';
@@ -7,7 +11,7 @@ import { Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { VacationResponseDto } from './dto/vacation-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -22,10 +26,22 @@ export class VacationsService {
   async create(employeeId: number, createVacationDto: CreateVacationDto) {
     const employee = await this.employeesService.findOne(employeeId);
 
+    const { dataInicio, dataFim } = createVacationDto;
+
+    const dataInicioDate = new Date(dataInicio);
+    const dataFimDate = new Date(dataFim);
+
+    if (dataFimDate <= dataInicioDate) {
+      throw new BadRequestException(
+        'A data fim deve ser posterior à data início.',
+      );
+    }
+
     const user = await this.usersService.findOne(createVacationDto.criadoPor);
 
     const vacation = this.vacationRepository.create({
-      ...createVacationDto,
+      dataInicio: dataInicioDate,
+      dataFim: dataFimDate,
       funcionario: employee,
       criadoPor: user,
     });
@@ -36,16 +52,18 @@ export class VacationsService {
   }
 
   async findAll(employeeId: number) {
-    await this.employeesService.findOne(employeeId);
+    const employee = await this.employeesService.findOne(employeeId);
 
     const vacations = await this.vacationRepository.find({
       where: {
-        funcionario: { id: employeeId },
+        funcionario: { id: employee.id },
         status: 'A',
       },
     });
 
-    return plainToInstance(VacationResponseDto, vacations);
+    return plainToInstance(VacationResponseDto, vacations, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
@@ -56,10 +74,27 @@ export class VacationsService {
       },
     });
 
-    return plainToInstance(VacationResponseDto, vacation);
+    if (!vacation) {
+      throw new NotFoundException('Férias não encontrada.');
+    }
+
+    return plainToInstance(VacationResponseDto, vacation, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async update(id: number, updateVacationDto: UpdateVacationDto) {
+    const { dataInicio, dataFim } = updateVacationDto;
+
+    const dataInicioDate = new Date(dataInicio);
+    const dataFimDate = new Date(dataFim);
+
+    if (dataFimDate <= dataInicioDate) {
+      throw new BadRequestException(
+        'A data fim deve ser posterior à data início.',
+      );
+    }
+
     const user = await this.usersService.findOne(
       updateVacationDto.atualizadoPor,
     );
@@ -73,7 +108,7 @@ export class VacationsService {
       throw new NotFoundException('Férias não encontrada.');
     }
 
-    return `A férias #${id} foi atualizada.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deleteVacationDto: BaseDeleteDto) {
@@ -88,6 +123,6 @@ export class VacationsService {
       throw new NotFoundException('Férias não encontrada.');
     }
 
-    return `A férias #${id} foi excluída.`;
+    return { id, status: 'E' };
   }
 }

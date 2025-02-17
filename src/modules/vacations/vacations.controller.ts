@@ -20,8 +20,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { VacationResponseDto } from './dto/vacation-response.dto';
 
 @Controller('v1/funcionarios')
@@ -66,7 +66,7 @@ export class VacationsController {
     @Param('funcionarioId', ParseIntPipe) employeeId: number,
     @Body() createVacationDto: CreateVacationDto,
   ) {
-    const id = await this.vacationsService.create(
+    const vacationId = await this.vacationsService.create(
       employeeId,
       createVacationDto,
     );
@@ -74,7 +74,7 @@ export class VacationsController {
     return {
       succeeded: true,
       data: null,
-      message: `Férias cadastrada com sucesso, id: #${id}.`,
+      message: `Férias cadastrada com sucesso, id: #${vacationId}.`,
     };
   }
 
@@ -160,12 +160,12 @@ export class VacationsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateVacationDto: UpdateVacationDto,
   ) {
-    await this.vacationsService.update(id, updateVacationDto);
+    const vacation = await this.vacationsService.update(id, updateVacationDto);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Férias id: #${id} atualizada com sucesso.`,
+      data: vacation,
+      message: `Férias id: #${vacation.id} atualizada com sucesso.`,
     };
   }
 
