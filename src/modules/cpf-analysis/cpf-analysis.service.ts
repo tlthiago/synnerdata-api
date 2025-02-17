@@ -7,7 +7,7 @@ import { Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { CpfAnalysisResponseDto } from './dto/cpf-analysis-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -38,16 +38,18 @@ export class CpfAnalysisService {
   }
 
   async findAll(employeeId: number) {
-    await this.employeesService.findOne(employeeId);
+    const employee = await this.employeesService.findOne(employeeId);
 
     const cpfAnalysis = await this.cpfAnalysisRepository.find({
       where: {
-        funcionario: { id: employeeId },
+        funcionario: { id: employee.id },
         status: 'A',
       },
     });
 
-    return plainToInstance(CpfAnalysisResponseDto, cpfAnalysis);
+    return plainToInstance(CpfAnalysisResponseDto, cpfAnalysis, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
@@ -58,7 +60,13 @@ export class CpfAnalysisService {
       },
     });
 
-    return plainToInstance(CpfAnalysisResponseDto, cpfAnalysis);
+    if (!cpfAnalysis) {
+      throw new NotFoundException('Análise de CPF não encontrada.');
+    }
+
+    return plainToInstance(CpfAnalysisResponseDto, cpfAnalysis, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async update(id: number, updateCpfAnalysisDto: UpdateCpfAnalysisDto) {
@@ -75,7 +83,7 @@ export class CpfAnalysisService {
       throw new NotFoundException('Análise de CPF não encontrada.');
     }
 
-    return `A análise de CPF #${id} foi atualizada.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deleteCpfAnalysisDto: BaseDeleteDto) {
@@ -92,6 +100,6 @@ export class CpfAnalysisService {
       throw new NotFoundException('Análise de CPF não encontrada.');
     }
 
-    return `A análise de CPF #${id} foi excluída.`;
+    return { id, status: 'E' };
   }
 }

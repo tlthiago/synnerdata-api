@@ -37,20 +37,16 @@ import {
   RegimeContratacao,
   Sexo,
 } from '../employees/enums/employees.enum';
-import { TerminationsModule } from './terminations.module';
+import { CpfAnalysisModule } from './cpf-analysis.module';
 
-describe('TerminationsController (E2E)', () => {
+describe('CpfAnalysisController (E2E)', () => {
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
   let createdUser: User;
   let createdEmployee: Employee;
-  const termination = {
-    data: '2025-02-16',
-    motivoInterno: 'Motivo teste',
-    motivoTrabalhista: 'Motivo teste',
-    acaoTrabalhista: '123456789',
-    formaDemissao: 'Teste de forma',
+  const cpfAnalysis = {
+    descricao: 'Teste de descrição',
     criadoPor: 1,
   };
 
@@ -86,7 +82,7 @@ describe('TerminationsController (E2E)', () => {
             Vacation,
           ],
         }),
-        TerminationsModule,
+        CpfAnalysisModule,
       ],
     })
       .overrideGuard(JwtAuthGuard)
@@ -211,34 +207,27 @@ describe('TerminationsController (E2E)', () => {
 
   afterEach(async () => {
     if (dataSource.isInitialized) {
-      await dataSource.query('DELETE FROM "demissoes" CASCADE;');
+      await dataSource.query('DELETE FROM "analise_de_cpf" CASCADE;');
     }
   });
 
-  it('/v1/funcionarios/:funcionarioId/demissoes (POST) - Deve cadastrar uma demissão', async () => {
+  it('/v1/funcionarios/:funcionarioId/analises-de-cpf (POST) - Deve cadastrar uma análise de cpf', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/demissoes`)
-      .send(termination)
+      .post(`/v1/funcionarios/${createdEmployee.id}/analises-de-cpf`)
+      .send(cpfAnalysis)
       .expect(201);
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Demissão cadastrada com sucesso, id: #1.`,
+      message: `Análise de CPF cadastrada com sucesso, id: #1.`,
     });
-
-    const employeeRepository = dataSource.getRepository(Employee);
-    const updatedEmployee = await employeeRepository.findOne({
-      where: { id: createdEmployee.id },
-    });
-
-    expect(updatedEmployee.statusFuncionario).toBe('DEMITIDO');
   });
 
-  it('/v1/funcionarios/:funcionarioId/demissoes (POST) - Deve retornar erro ao criar uma demissão sem informações obrigatórias', async () => {
+  it('/v1/funcionarios/:funcionarioId/analises-de-cpf (POST) - Deve retornar erro ao criar uma análise de cpf sem informações obrigatórias', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/demissoes`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/analises-de-cpf`)
       .send({})
       .expect(400);
 
@@ -246,29 +235,29 @@ describe('TerminationsController (E2E)', () => {
     expect(Array.isArray(response.body.message)).toBe(true);
     expect(response.body.message).toEqual(
       expect.arrayContaining([
-        'data should not be empty',
+        'descricao should not be empty',
         'criadoPor should not be empty',
       ]),
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/demissoes (POST) - Deve retornar erro ao criar uma demissão com tipo de dado inválido', async () => {
+  it('/v1/funcionarios/:funcionarioId/analises-de-cpf (POST) - Deve retornar erro ao criar uma análise de cpf com tipo de dado inválido', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/demissoes`)
-      .send({ ...termination, data: 123 })
+      .post(`/v1/funcionarios/${createdEmployee.id}/analises-de-cpf`)
+      .send({ ...cpfAnalysis, descricao: 123 })
       .expect(400);
 
     expect(response.body).toHaveProperty('message');
     expect(response.body.message).toEqual(
-      expect.arrayContaining(['data must be a valid ISO 8601 date string']),
+      expect.arrayContaining(['descricao must be a string']),
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/demissoes (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
+  it('/v1/funcionarios/:funcionarioId/analises-de-cpf (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/999/demissoes`)
+      .post(`/v1/funcionarios/999/analises-de-cpf`)
       .send({
-        ...termination,
+        ...cpfAnalysis,
         criadoPor: createdUser.id,
       })
       .expect(404);
@@ -280,11 +269,11 @@ describe('TerminationsController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/demissoes (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
+  it('/v1/funcionarios/:funcionarioId/analises-de-cpf (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/demissoes`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/analises-de-cpf`)
       .send({
-        ...termination,
+        ...cpfAnalysis,
         criadoPor: 'Teste',
       })
       .expect(400);
@@ -296,11 +285,11 @@ describe('TerminationsController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/demissoes (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
+  it('/v1/funcionarios/:funcionarioId/analises-de-cpf (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/demissoes`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/analises-de-cpf`)
       .send({
-        ...termination,
+        ...cpfAnalysis,
         criadoPor: 999,
       })
       .expect(404);
@@ -312,57 +301,55 @@ describe('TerminationsController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/demissoes (GET) - Deve listar todas as demissões de um funcionário', async () => {
-    const terminationRepository = dataSource.getRepository(Termination);
-    await terminationRepository.save({
-      ...termination,
+  it('/v1/funcionarios/:funcionarioId/analises-de-cpf (GET) - Deve listar todas as demissões de um funcionário', async () => {
+    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
+    await cpfAnalysisRepository.save({
+      ...cpfAnalysis,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/funcionarios/${createdEmployee.id}/demissoes`)
+      .get(`/v1/funcionarios/${createdEmployee.id}/analises-de-cpf`)
       .expect(200);
 
     expect(response.body).toBeInstanceOf(Array);
     expect(response.body.length).toBeGreaterThan(0);
   });
 
-  it('/v1/funcionarios/demissoes/:id (GET) - Deve retonar uma demissão específica', async () => {
-    const terminationRepository = dataSource.getRepository(Termination);
-    const createdTermination = await terminationRepository.save({
-      ...termination,
+  it('/v1/funcionarios/analises-de-cpf/:id (GET) - Deve retonar uma análise de cpf específica', async () => {
+    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
+    const createdCpfAnalysis = await cpfAnalysisRepository.save({
+      ...cpfAnalysis,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/funcionarios/demissoes/${createdTermination.id}`)
+      .get(`/v1/funcionarios/analises-de-cpf/${createdCpfAnalysis.id}`)
       .expect(200);
 
     expect(response.body).toMatchObject({
-      id: createdTermination.id,
-      data: new Intl.DateTimeFormat('pt-BR', {
-        dateStyle: 'short',
-      }).format(new Date(createdTermination.data)),
+      id: createdCpfAnalysis.id,
+      descricao: createdCpfAnalysis.descricao,
     });
   });
 
-  it('/v1/funcionarios/demissoes/:id (GET) - Deve retornar erro ao buscar uma demissão inexistente', async () => {
+  it('/v1/funcionarios/analises-de-cpf/:id (GET) - Deve retornar erro ao buscar uma análise de cpf inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/funcionarios/demissoes/999')
+      .get('/v1/funcionarios/analises-de-cpf/999')
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Demissão não encontrada.',
+      message: 'Análise de CPF não encontrada.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/funcionarios/demissoes/:id (GET) - Deve retornar erro ao buscar uma demissão com um ID inválido', async () => {
+  it('/v1/funcionarios/analises-de-cpf/:id (GET) - Deve retornar erro ao buscar uma análise de cpf com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/funcionarios/demissoes/abc')
+      .get('/v1/funcionarios/analises-de-cpf/abc')
       .expect(400);
 
     expect(response.body).toEqual({
@@ -372,21 +359,21 @@ describe('TerminationsController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/demissoes/:id (PATCH) - Deve atualizar os dados de uma demissão', async () => {
-    const terminationRepository = dataSource.getRepository(Termination);
-    const createdTermination = await terminationRepository.save({
-      ...termination,
+  it('/v1/funcionarios/analises-de-cpf/:id (PATCH) - Deve atualizar os dados de uma análise de cpf', async () => {
+    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
+    const createdCpfAnalysis = await cpfAnalysisRepository.save({
+      ...cpfAnalysis,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      data: new Date('2025-02-20T00:00:00-03:00'),
+      descricao: 'Descrição atualizada.',
       atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/demissoes/${createdTermination.id}`)
+      .patch(`/v1/funcionarios/analises-de-cpf/${createdCpfAnalysis.id}`)
       .send(updateData)
       .expect(200);
 
@@ -394,59 +381,57 @@ describe('TerminationsController (E2E)', () => {
       succeeded: true,
       data: {
         id: expect.any(Number),
-        data: expect.any(String),
+        descricao: updateData.descricao,
         atualizadoPor: expect.any(String),
       },
-      message: `Demissão id: #${createdTermination.id} atualizada com sucesso.`,
+      message: `Análise de CPF id: #${createdCpfAnalysis.id} atualizada com sucesso.`,
     });
 
-    const updatedTermination = await terminationRepository.findOneBy({
-      id: createdTermination.id,
+    const updatedCpfAnalysis = await cpfAnalysisRepository.findOneBy({
+      id: createdCpfAnalysis.id,
     });
 
-    expect(new Date(updatedTermination.data).toISOString().split('T')[0]).toBe(
-      new Date(updateData.data).toISOString().split('T')[0],
-    );
+    expect(updatedCpfAnalysis.descricao).toBe(updateData.descricao);
   });
 
-  it('/v1/funcionarios/demissoes/:id (PATCH) - Deve retornar um erro ao atualizar um demissão com tipo de dado inválido', async () => {
-    const terminationRepository = dataSource.getRepository(Termination);
-    const createdTermination = await terminationRepository.save({
-      ...termination,
+  it('/v1/funcionarios/analises-de-cpf/:id (PATCH) - Deve retornar um erro ao atualizar um análise de cpf com tipo de dado inválido', async () => {
+    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
+    const createdCpfAnalysis = await cpfAnalysisRepository.save({
+      ...cpfAnalysis,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      data: 123,
+      descricao: 123,
       atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/demissoes/${createdTermination.id}`)
+      .patch(`/v1/funcionarios/analises-de-cpf/${createdCpfAnalysis.id}`)
       .send(updateData)
       .expect(400);
 
     expect(response.body).toHaveProperty('message');
     expect(response.body.message).toEqual(
-      expect.arrayContaining(['data must be a valid ISO 8601 date string']),
+      expect.arrayContaining(['descricao must be a string']),
     );
   });
 
-  it('/v1/funcionarios/demissoes/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
-    const terminationRepository = dataSource.getRepository(Termination);
-    const createdTermination = await terminationRepository.save({
-      ...termination,
+  it('/v1/funcionarios/analises-de-cpf/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
+    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
+    const createdCpfAnalysis = await cpfAnalysisRepository.save({
+      ...cpfAnalysis,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
     const updateData = {
-      data: '2025-02-11',
+      descricao: 'Descrição teste',
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/demissoes/${createdTermination.id}`)
+      .patch(`/v1/funcionarios/analises-de-cpf/${createdCpfAnalysis.id}`)
       .send(updateData)
       .expect(400);
 
@@ -457,10 +442,10 @@ describe('TerminationsController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/demissoes/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
-    const terminationRepository = dataSource.getRepository(Termination);
-    const createdTermination = await terminationRepository.save({
-      ...termination,
+  it('/v1/funcionarios/analises-de-cpf/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
+    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
+    const createdCpfAnalysis = await cpfAnalysisRepository.save({
+      ...cpfAnalysis,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
@@ -471,7 +456,7 @@ describe('TerminationsController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/demissoes/${createdTermination.id}`)
+      .patch(`/v1/funcionarios/analises-de-cpf/${createdCpfAnalysis.id}`)
       .send(updateData)
       .expect(400);
 
@@ -482,10 +467,10 @@ describe('TerminationsController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/demissoes/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
-    const terminationRepository = dataSource.getRepository(Termination);
-    const createdTermination = await terminationRepository.save({
-      ...termination,
+  it('/v1/funcionarios/analises-de-cpf/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
+    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
+    const createdCpfAnalysis = await cpfAnalysisRepository.save({
+      ...cpfAnalysis,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
@@ -496,7 +481,7 @@ describe('TerminationsController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/demissoes/${createdTermination.id}`)
+      .patch(`/v1/funcionarios/analises-de-cpf/${createdCpfAnalysis.id}`)
       .send(updateData)
       .expect(404);
 
@@ -507,9 +492,9 @@ describe('TerminationsController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/demissoes/:id (PATCH) - Deve retornar erro ao atualizar uma demissão com um ID inválido', async () => {
+  it('/v1/funcionarios/analises-de-cpf/:id (PATCH) - Deve retornar erro ao atualizar uma análise de cpf com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/funcionarios/demissoes/abc')
+      .patch('/v1/funcionarios/analises-de-cpf/abc')
       .send({
         data: '2025-02-11',
         atualizadoPor: 1,
@@ -523,9 +508,9 @@ describe('TerminationsController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/demissoes/:id (PATCH) - Deve retornar erro ao atualizar uma demissão inexistente', async () => {
+  it('/v1/funcionarios/analises-de-cpf/:id (PATCH) - Deve retornar erro ao atualizar uma análise de cpf inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/funcionarios/demissoes/9999')
+      .patch('/v1/funcionarios/analises-de-cpf/9999')
       .send({
         data: '2025-02-11',
         atualizadoPor: 1,
@@ -534,39 +519,39 @@ describe('TerminationsController (E2E)', () => {
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Demissão não encontrada.',
+      message: 'Análise de CPF não encontrada.',
       error: 'Not Found',
     });
   });
 
-  it('/v1/funcionarios/demissoes/:id (DELETE) - Deve excluir uma demissão', async () => {
-    const terminationRepository = dataSource.getRepository(Termination);
-    const createdTermination = await terminationRepository.save({
-      ...termination,
+  it('/v1/funcionarios/analises-de-cpf/:id (DELETE) - Deve excluir uma análise de cpf', async () => {
+    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
+    const createdCpfAnalysis = await cpfAnalysisRepository.save({
+      ...cpfAnalysis,
       funcionario: createdEmployee,
       criadoPor: createdUser,
     });
 
-    const deleteTerminationDto: BaseDeleteDto = {
+    const deleteCpfAnalysisDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/demissoes/${createdTermination.id}`)
-      .send(deleteTerminationDto)
+      .delete(`/v1/funcionarios/analises-de-cpf/${createdCpfAnalysis.id}`)
+      .send(deleteCpfAnalysisDto)
       .expect(200);
 
     expect(response.body).toEqual({
       succeeded: true,
       data: null,
-      message: `Demissão id: #${createdTermination.id} excluída com sucesso.`,
+      message: `Análise de CPF id: #${createdCpfAnalysis.id} excluída com sucesso.`,
     });
 
-    const deletedTermination = await terminationRepository.findOneBy({
-      id: createdTermination.id,
+    const deletedCpfAnalysis = await cpfAnalysisRepository.findOneBy({
+      id: createdCpfAnalysis.id,
     });
 
-    expect(deletedTermination.status).toBe('E');
+    expect(deletedCpfAnalysis.status).toBe('E');
 
     const employeeRepository = dataSource.getRepository(Employee);
     const updatedEmployee = await employeeRepository.findOne({
@@ -576,9 +561,9 @@ describe('TerminationsController (E2E)', () => {
     expect(updatedEmployee.statusFuncionario).toBe('ATIVO');
   });
 
-  it('/v1/funcionarios/demissoes/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
+  it('/v1/funcionarios/analises-de-cpf/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/demissoes/1`)
+      .delete(`/v1/funcionarios/analises-de-cpf/1`)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -588,14 +573,14 @@ describe('TerminationsController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/demissoes/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
-    const deleteTerminationDto = {
+  it('/v1/funcionarios/analises-de-cpf/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
+    const deleteCpfAnalysisDto = {
       excluidoPor: 'Teste',
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/demissoes/1`)
-      .send(deleteTerminationDto)
+      .delete(`/v1/funcionarios/analises-de-cpf/1`)
+      .send(deleteCpfAnalysisDto)
       .expect(400);
 
     expect(response.body.message).toEqual(
@@ -605,14 +590,14 @@ describe('TerminationsController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/demissoes/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
-    const deleteTerminationDto: BaseDeleteDto = {
+  it('/v1/funcionarios/analises-de-cpf/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
+    const deleteCpfAnalysisDto: BaseDeleteDto = {
       excluidoPor: 999,
     };
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/demissoes/${createdEmployee.id}`)
-      .send(deleteTerminationDto)
+      .delete(`/v1/funcionarios/analises-de-cpf/${createdEmployee.id}`)
+      .send(deleteCpfAnalysisDto)
       .expect(404);
 
     expect(response.body).toEqual({
@@ -622,14 +607,14 @@ describe('TerminationsController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/demissoes/:id (DELETE) - Deve retornar erro ao excluir uma demissão com um ID inválido', async () => {
-    const deleteTerminationDto: BaseDeleteDto = {
+  it('/v1/funcionarios/analises-de-cpf/:id (DELETE) - Deve retornar erro ao excluir uma análise de cpf com um ID inválido', async () => {
+    const deleteCpfAnalysisDto: BaseDeleteDto = {
       excluidoPor: 1,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/funcionarios/demissoes/abc')
-      .send(deleteTerminationDto)
+      .delete('/v1/funcionarios/analises-de-cpf/abc')
+      .send(deleteCpfAnalysisDto)
       .expect(400);
 
     expect(response.body).toEqual({
@@ -639,19 +624,19 @@ describe('TerminationsController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/demissoes/:id (DELETE) - Deve retornar erro ao excluir uma demissão inexistente', async () => {
-    const deleteTerminationDto: BaseDeleteDto = {
+  it('/v1/funcionarios/analises-de-cpf/:id (DELETE) - Deve retornar erro ao excluir uma análise de cpf inexistente', async () => {
+    const deleteCpfAnalysisDto: BaseDeleteDto = {
       excluidoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
-      .delete('/v1/funcionarios/demissoes/9999')
-      .send(deleteTerminationDto)
+      .delete('/v1/funcionarios/analises-de-cpf/9999')
+      .send(deleteCpfAnalysisDto)
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Demissão não encontrada.',
+      message: 'Análise de CPF não encontrada.',
       error: 'Not Found',
     });
   });

@@ -76,7 +76,9 @@ export class TerminationsService {
       throw new NotFoundException('Demissão não encontrada.');
     }
 
-    return plainToInstance(TerminationResponseDto, termination);
+    return plainToInstance(TerminationResponseDto, termination, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findEmployeeByTermination(id: number) {
