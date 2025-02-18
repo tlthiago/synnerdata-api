@@ -7,9 +7,16 @@ export class UpdateEmployeesProjectDto extends PartialType(
 ) {
   @ApiProperty({
     description:
-      'Usuário responsável pela atualização do cadastro do funcionário em um projeto.',
+      'Usuário responsável pela atualização do funcionário no projeto.',
   })
-  @IsNotEmpty()
-  @IsNumber()
+  @IsNotEmpty({
+    message: 'O usuário responsável pela atualização deve ser informado.',
+  })
+  @IsNumber(
+    {},
+    {
+      message: 'O identificador do usuário deve ser um número.',
+    },
+  )
   atualizadoPor: number;
 }

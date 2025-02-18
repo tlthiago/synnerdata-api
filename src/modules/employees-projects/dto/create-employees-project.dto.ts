@@ -1,11 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsString,
   IsNotEmpty,
   IsNumber,
-  Length,
   IsArray,
   ArrayMinSize,
+  IsDateString,
 } from 'class-validator';
 
 export class CreateEmployeesProjectDto {
@@ -16,9 +15,8 @@ export class CreateEmployeesProjectDto {
   funcionarios: number[];
 
   @ApiProperty({ description: 'Data de ingresso no projeto.' })
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
-  @Length(1, 255)
   dataInicio: string;
 
   @ApiProperty({

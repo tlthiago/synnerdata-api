@@ -19,7 +19,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { EmployeeProjectsResponseDto } from './dto/employee-projects-response.dto';
 
 @Controller('v1/funcionarios')
@@ -69,7 +69,7 @@ export class EmployeesProjectsController {
     @Param('id', ParseIntPipe) projectId: number,
     @Body() createEmployeesProjectDto: CreateEmployeesProjectDto,
   ) {
-    const id = await this.employeesProjectsService.create(
+    const employeesProjectsId = await this.employeesProjectsService.create(
       projectId,
       createEmployeesProjectDto,
     );
@@ -77,7 +77,7 @@ export class EmployeesProjectsController {
     return {
       succeeded: true,
       data: null,
-      message: `Funcionário(s) cadastrado(s) com sucesso no projeto, id: #${id}.`,
+      message: `Funcionário(s) cadastrado(s) com sucesso no projeto, id: #${employeesProjectsId}.`,
     };
   }
 
