@@ -127,6 +127,8 @@ export class EmployeesProjectsService {
         updateEmployeeProjectDto.funcionarios,
       );
 
+      console.log(newEmployees);
+
       const addedEmployees = newEmployees.filter(
         (newEmployee) =>
           !currentEmployees.some((employee) => employee.id === newEmployee.id),

@@ -48,6 +48,7 @@ describe('LaborActionsController (E2E)', () => {
   let dataSource: DataSource;
   let createdUser: User;
   let createdEmployee: Employee;
+  let createdEmployee1: Employee;
   let createdProject: Project;
   const employeesProject = {
     funcionarios: [1],
@@ -210,12 +211,60 @@ describe('LaborActionsController (E2E)', () => {
     });
     createdEmployee = await employeeRepository.save(employee);
 
+    const employee1 = employeeRepository.create({
+      nome: 'Funcionário Teste',
+      carteiraIdentidade: 'MG-18.821.128',
+      cpf: '13420162526',
+      sexo: Sexo.MASCULINO,
+      dataNascimento: '1996-10-15',
+      estadoCivil: EstadoCivil.SOLTEIRO,
+      naturalidade: 'Belo Horizonte',
+      nacionalidade: 'Brasileiro',
+      altura: 1.73,
+      peso: 73.3,
+      nomePai: 'Nome do Pai',
+      nomeMae: 'Nome da Mãe',
+      email: 'email@teste.com.br',
+      pis: '12345678910',
+      ctpsNumero: '1234567',
+      ctpsSerie: '1234',
+      certificadoReservista: '12345678910203',
+      regimeContratacao: RegimeContratacao.CLT,
+      dataAdmissao: '2025-02-12',
+      salario: 3799,
+      dataUltimoASO: '2025-02-12',
+      funcao: createdRole,
+      setor: createdDepartment,
+      vencimentoExperiencia1: '2025-02-12',
+      vencimentoExperiencia2: '2025-05-12',
+      dataExameDemissional: '2025-05-12',
+      grauInstrucao: GrauInstrucao.SUPERIOR,
+      necessidadesEspeciais: false,
+      filhos: false,
+      celular: '31991897926',
+      gestor: 'Gestor Teste',
+      cbo: createdCbo,
+      rua: 'Rua Teste',
+      numero: '1000',
+      bairro: 'Bela Vista',
+      cidade: 'São Paulo',
+      estado: 'SP',
+      cep: '01000-000',
+      quantidadeOnibus: 1,
+      cargaHoraria: 60,
+      escala: Escala.SEIS_UM,
+      empresa: createdCompany,
+      criadoPor: createdUser,
+    });
+    createdEmployee1 = await employeeRepository.save(employee1);
+
     const project = projectRepository.create({
       nome: 'Projeto Teste',
       descricao: 'Descrição Teste',
       dataInicio: '2025-01-29',
       cno: '123456734032',
       criadoPor: createdUser,
+      funcionarios: [createdEmployee],
     });
     createdProject = await projectRepository.save(project);
   }, 50000);
@@ -392,42 +441,43 @@ describe('LaborActionsController (E2E)', () => {
     });
   });
 
-  // it('/v1/funcionarios/projetos/:id (PATCH) - Deve atualizar os funcionários em um projeto', async () => {
-  //   const projectRepository = dataSource.getRepository(Project);
-  //   const createdProject1 = await projectRepository.save({
-  //     ...createdProject,
-  //     funcionarios: [createdEmployee],
-  //     criadoPor: createdUser,
-  //   });
+  it('/v1/funcionarios/projetos/:id (PATCH) - Deve atualizar os funcionários em um projeto', async () => {
+    const updateData = {
+      funcionarios: [createdEmployee1.id],
+      dataInicio: '2025-02-18',
+      atualizadoPor: createdUser.id,
+    };
 
-  //   const updateData = {
-  //     dataAjuizamento: new Date('2025-02-20T00:00:00-03:00'),
-  //     atualizadoPor: createdUser.id,
-  //   };
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/funcionarios/projetos/${createdProject.id}`)
+      .send(updateData)
+      .expect(200);
 
-  //   const response = await request(app.getHttpServer())
-  //     .patch(`/v1/funcionarios/projetos/${createdProject1.id}`)
-  //     .send(updateData)
-  //     .expect(200);
+    console.log(response.body);
 
-  //   expect(response.body).toMatchObject({
-  //     succeeded: true,
-  //     data: {
-  //       id: expect.any(Number),
-  //       dataAjuizamento: expect.any(String),
-  //       atualizadoPor: expect.any(String),
-  //     },
-  //     message: `Ação trabalhista id: #${createdLaborAction.id} atualizada com sucesso.`,
-  //   });
+    expect(response.body).toMatchObject({
+      succeeded: true,
+      data: null,
+      message: `Funcionário(s) do projeto id: #${createdProject.id} atualizado(s) com sucesso.`,
+    });
 
-  //   const updatedLaborAction = await laborActionRepository.findOneBy({
-  //     id: createdLaborAction.id,
-  //   });
+    const logsRepository = dataSource.getRepository(EmployeeProjectLogs);
+    const logs = await logsRepository.find({
+      where: {
+        projeto: { id: createdProject.id },
+        funcionario: { id: createdEmployee.id },
+      },
+    });
 
-  //   expect(
-  //     new Date(updatedLaborAction.dataAjuizamento).toISOString().split('T')[0],
-  //   ).toBe(new Date(updateData.dataAjuizamento).toISOString().split('T')[0]);
-  // });
+    console.log(logs);
+
+    // expect(logs.length).toBe(1);
+    // expect(logs[0]).toMatchObject({
+    //   acao: EmployeeProjectAction.ADICIONOU,
+    //   descricao: `O funcionário ${createdEmployee.id} foi adicionado no projeto ${createdProject.id}`,
+    //   criadoPor: createdUser.id,
+    // });
+  });
 
   // it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar um erro ao atualizar um funcionário em projeto com tipo de dado inválido', async () => {
   //   const laborActionRepository = dataSource.getRepository(LaborAction);
