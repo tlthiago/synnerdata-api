@@ -453,8 +453,6 @@ describe('LaborActionsController (E2E)', () => {
       .send(updateData)
       .expect(200);
 
-    console.log(response.body);
-
     expect(response.body).toMatchObject({
       succeeded: true,
       data: null,
@@ -465,151 +463,146 @@ describe('LaborActionsController (E2E)', () => {
     const logs = await logsRepository.find({
       where: {
         projeto: { id: createdProject.id },
-        funcionario: { id: createdEmployee.id },
       },
     });
 
-    console.log(logs);
-
-    // expect(logs.length).toBe(1);
-    // expect(logs[0]).toMatchObject({
-    //   acao: EmployeeProjectAction.ADICIONOU,
-    //   descricao: `O funcionário ${createdEmployee.id} foi adicionado no projeto ${createdProject.id}`,
-    //   criadoPor: createdUser.id,
-    // });
+    expect(logs.length).toBe(2);
+    expect(logs[0]).toMatchObject({
+      acao: EmployeeProjectAction.REMOVEU,
+      descricao: `O funcionário ${createdEmployee.id} foi removido do projeto ${createdProject.id}`,
+      criadoPor: createdUser.id,
+    });
+    expect(logs[1]).toMatchObject({
+      acao: EmployeeProjectAction.ADICIONOU,
+      descricao: `O funcionário ${createdEmployee1.id} foi adicionado no projeto ${createdProject.id}`,
+      criadoPor: createdUser.id,
+    });
   });
 
-  // it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar um erro ao atualizar um funcionário em projeto com tipo de dado inválido', async () => {
-  //   const laborActionRepository = dataSource.getRepository(LaborAction);
-  //   const createdLaborAction = await laborActionRepository.save({
-  //     ...laborAction,
-  //     funcionario: createdEmployee,
-  //     criadoPor: createdUser,
-  //   });
+  it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar um erro ao atualizar um funcionário em projeto com tipo de dado inválido', async () => {
+    const updateData = {
+      funcionarios: 1,
+      dataInicio: '2025-02-18',
+      atualizadoPor: createdUser.id,
+    };
 
-  //   const updateData = {
-  //     dataAjuizamento: 123,
-  //     atualizadoPor: createdUser.id,
-  //   };
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/funcionarios/projetos/${createdProject.id}`)
+      .send(updateData)
+      .expect(400);
 
-  //   const response = await request(app.getHttpServer())
-  //     .patch(`/v1/funcionarios/acoes-trabalhistas/${createdLaborAction.id}`)
-  //     .send(updateData)
-  //     .expect(400);
+    expect(response.body).toHaveProperty('message');
+    expect(response.body.message).toEqual(
+      expect.arrayContaining(['funcionarios must be an array']),
+    );
+  });
 
-  //   expect(response.body).toHaveProperty('message');
-  //   expect(response.body.message).toEqual(
-  //     expect.arrayContaining([
-  //       'dataAjuizamento must be a valid ISO 8601 date string',
-  //     ]),
-  //   );
-  // });
+  it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro caso o ID do funcionário não exista', async () => {
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/funcionarios/projetos/${createdProject.id}`)
+      .send({
+        funcionarios: [999],
+        dataInicio: '2025-02-18',
+        atualizadoPor: 999,
+      })
+      .expect(404);
 
-  // it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
-  //   const laborActionRepository = dataSource.getRepository(LaborAction);
-  //   const createdLaborAction = await laborActionRepository.save({
-  //     ...laborAction,
-  //     funcionario: createdEmployee,
-  //     criadoPor: createdUser,
-  //   });
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Funcionário(s) não encontrado(s).',
+      error: 'Not Found',
+    });
+  });
 
-  //   const updateData = {
-  //     dataAjuizamento: '2025-02-11',
-  //   };
+  it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
+    const updateData = {
+      funcionarios: [createdEmployee1.id],
+      dataInicio: '2025-02-18',
+    };
 
-  //   const response = await request(app.getHttpServer())
-  //     .patch(`/v1/funcionarios/acoes-trabalhistas/${createdLaborAction.id}`)
-  //     .send(updateData)
-  //     .expect(400);
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/funcionarios/projetos/${createdProject.id}`)
+      .send(updateData)
+      .expect(400);
 
-  //   expect(response.body.message).toEqual(
-  //     expect.arrayContaining([
-  //       'O usuário responsável pela atualização deve ser informado.',
-  //     ]),
-  //   );
-  // });
+    expect(response.body.message).toEqual(
+      expect.arrayContaining([
+        'O usuário responsável pela atualização deve ser informado.',
+      ]),
+    );
+  });
 
-  // it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
-  //   const laborActionRepository = dataSource.getRepository(LaborAction);
-  //   const createdLaborAction = await laborActionRepository.save({
-  //     ...laborAction,
-  //     funcionario: createdEmployee,
-  //     criadoPor: createdUser,
-  //   });
+  it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
+    const updateData = {
+      funcionarios: [createdEmployee1.id],
+      dataInicio: '2025-02-18',
+      atualizadoPor: 'Teste',
+    };
 
-  //   const updateData = {
-  //     dataAjuizamento: '2025-02-11',
-  //     atualizadoPor: 'Teste',
-  //   };
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/funcionarios/projetos/${createdProject.id}`)
+      .send(updateData)
+      .expect(400);
 
-  //   const response = await request(app.getHttpServer())
-  //     .patch(`/v1/funcionarios/acoes-trabalhistas/${createdLaborAction.id}`)
-  //     .send(updateData)
-  //     .expect(400);
+    expect(response.body.message).toEqual(
+      expect.arrayContaining([
+        'O identificador do usuário deve ser um número.',
+      ]),
+    );
+  });
 
-  //   expect(response.body.message).toEqual(
-  //     expect.arrayContaining([
-  //       'O identificador do usuário deve ser um número.',
-  //     ]),
-  //   );
-  // });
+  it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
+    const updateData = {
+      funcionarios: [createdEmployee1.id],
+      dataInicio: '2025-02-18',
+      atualizadoPor: 999,
+    };
 
-  // it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
-  //   const laborActionRepository = dataSource.getRepository(LaborAction);
-  //   const createdLaborAction = await laborActionRepository.save({
-  //     ...laborAction,
-  //     funcionario: createdEmployee,
-  //     criadoPor: createdUser,
-  //   });
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/funcionarios/projetos/${createdProject.id}`)
+      .send(updateData)
+      .expect(404);
 
-  //   const updateData = {
-  //     dataAjuizamento: '2025-02-11',
-  //     atualizadoPor: 999,
-  //   };
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Usuário não encontrado.',
+      error: 'Not Found',
+    });
+  });
 
-  //   const response = await request(app.getHttpServer())
-  //     .patch(`/v1/funcionarios/acoes-trabalhistas/${createdLaborAction.id}`)
-  //     .send(updateData)
-  //     .expect(404);
+  it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro ao atualizar um funcionário em projeto com um ID inválido', async () => {
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/funcionarios/projetos/teste`)
+      .send({
+        funcionarios: [createdEmployee1.id],
+        dataInicio: '2025-02-18',
+        atualizadoPor: 999,
+      })
+      .expect(400);
 
-  //   expect(response.body).toEqual({
-  //     statusCode: 404,
-  //     message: 'Usuário não encontrado.',
-  //     error: 'Not Found',
-  //   });
-  // });
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: 'Validation failed (numeric string is expected)',
+      error: 'Bad Request',
+    });
+  });
 
-  // it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro ao atualizar um funcionário em projeto com um ID inválido', async () => {
-  //   const response = await request(app.getHttpServer())
-  //     .patch('/v1/funcionarios/acoes-trabalhistas/abc')
-  //     .send({
-  //       dataAjuizamento: '2025-02-11',
-  //       atualizadoPor: 1,
-  //     })
-  //     .expect(400);
+  it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro ao atualizar um funcionário em projeto inexistente', async () => {
+    const response = await request(app.getHttpServer())
+      .patch('/v1/funcionarios/projetos/9999')
+      .send({
+        funcionarios: [createdEmployee1.id],
+        dataInicio: '2025-02-18',
+        atualizadoPor: 999,
+      })
+      .expect(404);
 
-  //   expect(response.body).toEqual({
-  //     statusCode: 400,
-  //     message: 'Validation failed (numeric string is expected)',
-  //     error: 'Bad Request',
-  //   });
-  // });
-
-  // it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro ao atualizar um funcionário em projeto inexistente', async () => {
-  //   const response = await request(app.getHttpServer())
-  //     .patch('/v1/funcionarios/acoes-trabalhistas/9999')
-  //     .send({
-  //       dataAjuizamento: '2025-02-11',
-  //       atualizadoPor: 1,
-  //     })
-  //     .expect(404);
-
-  //   expect(response.body).toEqual({
-  //     statusCode: 404,
-  //     message: 'Ação trabalhista não encontrada.',
-  //     error: 'Not Found',
-  //   });
-  // });
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Projeto não encontrado.',
+      error: 'Not Found',
+    });
+  });
 
   afterAll(async () => {
     await app.close();
