@@ -8,7 +8,14 @@ export class UpdateLaborActionDto extends PartialType(
   @ApiProperty({
     description: 'Usuário responsável pela atualização da ação trabalhista.',
   })
-  @IsNotEmpty()
-  @IsNumber()
+  @IsNotEmpty({
+    message: 'O usuário responsável pela atualização deve ser informado.',
+  })
+  @IsNumber(
+    {},
+    {
+      message: 'O identificador do usuário deve ser um número.',
+    },
+  )
   atualizadoPor: number;
 }

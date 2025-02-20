@@ -8,10 +8,10 @@ export class Promotion extends BaseEntity {
   @ManyToOne(() => Role, (role) => role.promocoes)
   funcao: Role;
 
-  @Column({ name: 'salario', type: 'timestamptz' })
+  @Column({ name: 'salario', type: 'numeric', precision: 10, scale: 2 })
   salario: number;
 
-  @Column({ name: 'data', type: 'timestamptz' })
+  @Column({ name: 'data', type: 'date' })
   data: Date;
 
   @ManyToOne(() => Employee, (employee) => employee.atestados)

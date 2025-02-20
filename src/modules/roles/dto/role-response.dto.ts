@@ -1,24 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseResponseDto } from '../../../common/utils/dto/base-response.dto';
+import { Expose } from 'class-transformer';
 
-class EpiResponseDto {
+export class RoleEpiResponseDto {
   @ApiProperty({ description: 'ID do EPI' })
+  @Expose()
   id: number;
 
   @ApiProperty({ description: 'Nome do EPI' })
+  @Expose()
   nome: string;
-
-  @ApiProperty({ description: 'Descrição do EPI' })
-  descricao: string;
-
-  @ApiProperty({ description: 'Equipamentos do EPI' })
-  equipamentos: string;
 }
 
 export class RoleResponseDto extends BaseResponseDto {
   @ApiProperty({ description: 'Nome' })
+  @Expose()
   nome: string;
 
-  @ApiProperty({ description: 'Epis da função.', type: [EpiResponseDto] })
-  epis: EpiResponseDto[];
+  @ApiProperty({ description: 'Epis da função.', type: [RoleEpiResponseDto] })
+  @Expose()
+  epis: RoleEpiResponseDto[];
 }

@@ -20,9 +20,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RoleResponseDto } from './dto/role-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Funções')
@@ -157,12 +157,12 @@ export class RolesController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateRoleDto: UpdateRoleDto,
   ) {
-    await this.rolesService.update(id, updateRoleDto);
+    const role = await this.rolesService.update(id, updateRoleDto);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Função id: #${id} atualizada com sucesso.`,
+      data: role,
+      message: `Função id: #${role.id} atualizada com sucesso.`,
     };
   }
 

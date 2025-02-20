@@ -1,54 +1,54 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { BaseResponseDto } from '../../../common/utils/dto/base-response.dto';
+import { Expose, Transform } from 'class-transformer';
 
-export class BranchResponseDto {
-  @ApiProperty({ description: 'ID da filial.' })
-  id: number;
-
+export class BranchResponseDto extends BaseResponseDto {
   @ApiProperty({ description: 'Nome.' })
+  @Expose()
   nome: string;
 
   @ApiProperty({ description: 'CNPJ.' })
+  @Expose()
   cnpj: string;
 
   @ApiProperty({ description: 'Rua' })
+  @Expose()
   rua: string;
 
   @ApiProperty({ description: 'Número.' })
+  @Expose()
   numero: string;
 
   @ApiProperty({ description: 'Complemento.' })
+  @Expose()
   complemento: string;
 
   @ApiProperty({ description: 'Bairro.' })
+  @Expose()
   bairro: string;
 
   @ApiProperty({ description: 'Cidade.' })
+  @Expose()
   cidade: string;
 
   @ApiProperty({ description: 'Estado.' })
+  @Expose()
   estado: string;
 
   @ApiProperty({ description: 'CEP.' })
+  @Expose()
   cep: string;
 
   @ApiProperty({ description: 'Data da Fundação.' })
-  dataFundacao: Date;
+  @Expose()
+  @Transform(({ value }) =>
+    new Intl.DateTimeFormat('pt-BR', {
+      dateStyle: 'short',
+    }).format(new Date(value)),
+  )
+  dataFundacao: string;
 
   @ApiProperty({ description: 'Telefone.' })
+  @Expose()
   telefone: string;
-
-  @ApiProperty({ description: 'Status.' })
-  status: string;
-
-  @ApiProperty({ description: 'Criado por.' })
-  criadoPor: string;
-
-  @ApiProperty({ description: 'Criado em.' })
-  criadoEm: string;
-
-  @ApiProperty({ description: 'Atualizado por.' })
-  atualizadoPor: string;
-
-  @ApiProperty({ description: 'Atualizado em.' })
-  atualizadoEm: string;
 }

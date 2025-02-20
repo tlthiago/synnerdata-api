@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { AuthModule } from './auth.module';
 import {
   PostgreSqlContainer,
@@ -36,10 +36,15 @@ describe('AuthController (e2e) - Sign-Up', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+      }),
+    );
     await app.init();
 
     dataSource = app.get(DataSource);
-  }, 20000);
+  }, 50000);
 
   afterEach(async () => {
     if (dataSource.isInitialized) {

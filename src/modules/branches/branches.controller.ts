@@ -20,8 +20,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { BranchResponseDto } from './dto/branch-response.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Filiais')
@@ -65,12 +66,15 @@ export class BranchesController {
     @Param('empresaId', ParseIntPipe) companyId: number,
     @Body() createBranchDto: CreateBranchDto,
   ) {
-    const id = await this.branchesService.create(companyId, createBranchDto);
+    const branchId = await this.branchesService.create(
+      companyId,
+      createBranchDto,
+    );
 
     return {
       succeeded: true,
       data: null,
-      message: `Filial cadastrada com sucesso, id: #${id}.`,
+      message: `Filial cadastrada com sucesso, id: #${branchId}.`,
     };
   }
 
@@ -156,12 +160,12 @@ export class BranchesController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateBranchDto: UpdateBranchDto,
   ) {
-    await this.branchesService.update(id, updateBranchDto);
+    const branch = await this.branchesService.update(id, updateBranchDto);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Filial id: #${id} atualizada com sucesso.`,
+      data: branch,
+      message: `Filial id: #${branch.id} atualizada com sucesso.`,
     };
   }
 
@@ -194,8 +198,11 @@ export class BranchesController {
     },
   })
   @UseGuards(JwtAuthGuard)
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    await this.branchesService.remove(id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() deleteBranchDto: BaseDeleteDto,
+  ) {
+    await this.branchesService.remove(id, deleteBranchDto);
 
     return {
       succeeded: true,

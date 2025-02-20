@@ -1,17 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, Length } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  Length,
+  IsDateString,
+} from 'class-validator';
 
 export class CreateMedicalCertificateDto {
   @ApiProperty({ description: 'Data início do atestado.' })
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
-  @Length(1, 255)
   dataInicio: string;
 
   @ApiProperty({ description: 'Data final do atestado.' })
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
-  @Length(1, 255)
   dataFim: string;
 
   @ApiProperty({ description: 'Motivo do atestado.' })

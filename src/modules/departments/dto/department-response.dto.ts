@@ -1,24 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { BaseResponseDto } from '../../../common/utils/dto/base-response.dto';
+import { Expose } from 'class-transformer';
 
-export class DepartmentResponseDto {
-  @ApiProperty({ description: 'ID' })
-  id: number;
-
+export class DepartmentResponseDto extends BaseResponseDto {
   @ApiProperty({ description: 'Nome' })
+  @Expose()
   nome: string;
-
-  @ApiProperty({ description: 'Status' })
-  status: string;
-
-  @ApiProperty({ description: 'Criado por' })
-  criadoPor: string;
-
-  @ApiProperty({ description: 'Criado em' })
-  criadoEm: string;
-
-  @ApiProperty({ description: 'Atualizado por' })
-  atualizadoPor: string;
-
-  @ApiProperty({ description: 'Atualizado em' })
-  atualizadoEm: string;
 }

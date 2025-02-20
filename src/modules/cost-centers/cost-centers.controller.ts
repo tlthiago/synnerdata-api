@@ -20,9 +20,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CostCenterResponseDto } from './dto/cost-center-response.dto';
-import { DeleteCostCenterDto } from './dto/delete-cost-center.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Centros de custo')
@@ -66,7 +66,7 @@ export class CostCentersController {
     @Param('empresaId', ParseIntPipe) companyId: number,
     @Body() createCostCenterDto: CreateCostCenterDto,
   ) {
-    const id = await this.costCentersService.create(
+    const costCenterId = await this.costCentersService.create(
       companyId,
       createCostCenterDto,
     );
@@ -74,7 +74,7 @@ export class CostCentersController {
     return {
       succeeded: true,
       data: null,
-      message: `Centro de custo cadastrado com sucesso, id: #${id}.`,
+      message: `Centro de custo cadastrado com sucesso, id: #${costCenterId}.`,
     };
   }
 
@@ -161,11 +161,14 @@ export class CostCentersController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCostCenterDto: UpdateCostCenterDto,
   ) {
-    await this.costCentersService.update(id, updateCostCenterDto);
+    const costCenter = await this.costCentersService.update(
+      id,
+      updateCostCenterDto,
+    );
 
     return {
       succeeded: true,
-      data: null,
+      data: costCenter,
       message: `Centro de custo id: #${id} atualizado com sucesso.`,
     };
   }
@@ -184,7 +187,7 @@ export class CostCentersController {
   })
   @ApiBody({
     description: 'Dados necessários para atualizar os dados do centro de custo',
-    type: DeleteCostCenterDto,
+    type: BaseDeleteDto,
   })
   @ApiResponse({
     status: 200,
@@ -205,7 +208,7 @@ export class CostCentersController {
   @UseGuards(JwtAuthGuard)
   async remove(
     @Param('id', ParseIntPipe) id: number,
-    @Body() deleteCostCenterDto: DeleteCostCenterDto,
+    @Body() deleteCostCenterDto: BaseDeleteDto,
   ) {
     await this.costCentersService.remove(id, deleteCostCenterDto);
 

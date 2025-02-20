@@ -6,6 +6,7 @@ import {
   IsNumber,
   Length,
   Matches,
+  IsDateString,
 } from 'class-validator';
 
 export class CreateBranchDto {
@@ -68,9 +69,9 @@ export class CreateBranchDto {
   cep: string;
 
   @ApiProperty({ description: 'Data da Fundação.' })
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
-  dataFundacao: Date;
+  dataFundacao: string;
 
   @ApiProperty({ description: 'Telefone.' })
   @IsString()

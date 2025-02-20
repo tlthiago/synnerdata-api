@@ -1,13 +1,4 @@
-import {
-  Column,
-  Entity,
-  ManyToMany,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-} from 'typeorm';
+import { Column, Entity, ManyToMany, OneToMany, ManyToOne } from 'typeorm';
 import { Absence } from '../../../modules/absence/entities/absence.entity';
 import { MedicalCertificate } from '../../../modules/medical-certificate/entities/medical-certificate.entity';
 import { Promotion } from '../../../modules/promotion/entities/promotion.entity';
@@ -20,125 +11,211 @@ import { EpiDelivery } from '../../../modules/epi-delivery/entities/epi-delivery
 import { Vacation } from '../../../modules/vacations/entities/vacation.entity';
 import { Project } from '../../../modules/projects/entities/project.entity';
 import { Company } from '../../../modules/companies/entities/company.entity';
-import { GrauInstrucao, RegimeContratacao } from '../dto/create-employee.dto';
+import { BaseEntity } from '../../../config/database/entities/base.entity';
+import { Role } from '../../../modules/roles/entities/role.entity';
+import { Department } from '../../../modules/departments/entities/department.entity';
+import { CostCenter } from '../../../modules/cost-centers/entities/cost-center.entity';
+import { Cbo } from '../../../modules/cbos/entities/cbo.entity';
+import {
+  RegimeContratacao,
+  GrauInstrucao,
+  Sexo,
+  EstadoCivil,
+  Escala,
+  StatusFuncionario,
+} from '../enums/employees.enum';
 
-@Entity('funcionario')
-export class Employee {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column({ type: 'varchar', length: 255, nullable: false })
+@Entity('funcionarios')
+export class Employee extends BaseEntity {
+  @Column({ name: 'nome', type: 'varchar', length: 255 })
   nome: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
-  funcao: string;
+  @Column({ name: 'carteira_identidade', type: 'varchar', length: 14 })
+  carteiraIdentidade: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
-  setor: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: false })
-  razao: string;
-
-  @Column({ type: 'varchar', length: 18, nullable: false })
-  cnpjContratacao: string;
-
-  @Column({ type: 'enum', enum: RegimeContratacao, nullable: false })
-  regimeContratacao: RegimeContratacao;
-
-  @Column({ type: 'date', nullable: true })
-  dataAdmissao?: Date;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false })
-  salario: number;
-
-  @Column({ type: 'varchar', length: 50, nullable: false })
-  ctpsSerie: string;
-
-  @Column({ type: 'varchar', length: 11, nullable: false })
+  @Column({ name: 'cpf', type: 'varchar', length: 11, unique: true })
   cpf: string;
 
-  @Column({ type: 'date', nullable: true })
-  dataUltimoASO?: Date;
+  @Column({ name: 'sexo', type: 'enum', enum: Sexo })
+  sexo: Sexo;
 
-  @Column({ type: 'date', nullable: true })
-  dataExameDemissional?: Date;
-
-  @Column({ type: 'date', nullable: false })
-  vencimentoPrazo1Experiencia: Date;
-
-  @Column({ type: 'date', nullable: false })
-  vencimentoPrazo2Experiencia: Date;
-
-  @Column({ type: 'varchar', length: 255, nullable: false })
-  centroCusto: string;
-
-  @Column({ type: 'enum', enum: GrauInstrucao, nullable: false })
-  grauInstrucao: GrauInstrucao;
-
-  @Column({ type: 'boolean', nullable: false })
-  necessidadesEspeciais: boolean;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  tipoDeficiencia?: string;
-
-  @Column({ type: 'varchar', length: 10, nullable: false })
-  sexo: string;
-
-  @Column({ type: 'date', nullable: false })
+  @Column({ name: 'data_nascimento', type: 'date' })
   dataNascimento: Date;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
-  estadoCivil: string;
+  @Column({ name: 'estado_civil', type: 'enum', enum: EstadoCivil })
+  estadoCivil: EstadoCivil;
 
-  @Column({ type: 'boolean', nullable: false })
-  processoJudicial: boolean;
+  @Column({ name: 'naturalidade', type: 'varchar', length: 100 })
+  naturalidade: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
-  gestor: string;
+  @Column({ name: 'nacionalidade', type: 'varchar', length: 100 })
+  nacionalidade: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
-  cbo: string;
+  @Column({ name: 'altura', type: 'decimal', precision: 4, scale: 2 })
+  altura: number;
 
-  @Column({ type: 'varchar', length: 10, nullable: false })
-  cep: string;
+  @Column({ name: 'peso', type: 'decimal', precision: 6, scale: 2 })
+  peso: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
-  rua: string;
+  @Column({ name: 'nome_pai', type: 'varchar', length: 100 })
+  nomePai: string;
 
-  @Column({ type: 'varchar', length: 10, nullable: false })
-  numero: string;
+  @Column({ name: 'nome_mae', type: 'varchar', length: 100 })
+  nomeMae: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  complemento?: string;
+  @Column({ name: 'email', type: 'varchar', length: 100 })
+  email: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: false })
-  bairro: string;
+  @Column({ name: 'pis', type: 'varchar', length: 11 })
+  pis: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: false })
-  cidade: string;
+  @Column({ name: 'ctps_numero', type: 'varchar', length: 7 })
+  ctpsNumero: string;
 
-  @Column({ type: 'varchar', length: 2, nullable: false })
-  estado: string;
+  @Column({ name: 'ctps_serie', type: 'varchar', length: 4 })
+  ctpsSerie: string;
 
-  @Column({ type: 'int', nullable: false })
-  criadoPor: number;
+  @Column({ name: 'certificado_reservista', type: 'varchar', length: 14 })
+  certificadoReservista: string;
 
-  @CreateDateColumn()
-  criadoEm: Date;
+  @Column({ name: 'regime_contratacao', type: 'enum', enum: RegimeContratacao })
+  regimeContratacao: RegimeContratacao;
 
-  @UpdateDateColumn()
-  atualizadoEm: Date;
+  @Column({ name: 'data_admissao', type: 'date' })
+  dataAdmissao: Date;
 
-  @Column({ name: 'atualizado_por', type: 'integer', nullable: true })
-  atualizadoPor?: number;
+  @Column({ name: 'salario', type: 'decimal', precision: 10, scale: 2 })
+  salario: number;
+
+  @Column({ name: 'data_ultimo_aso', type: 'date', nullable: true })
+  dataUltimoASO?: Date;
+
+  @ManyToOne(() => Role, { nullable: false, eager: true })
+  funcao: Role;
+
+  @ManyToOne(() => Department, { nullable: false, eager: true })
+  setor: Department;
 
   @Column({
-    name: 'status',
-    type: 'enum',
-    enum: ['A', 'D', 'F', 'AF', 'FP'],
-    default: 'A',
+    name: 'vencimento_experiencia_1',
+    type: 'date',
+    nullable: true,
   })
-  status: string;
+  vencimentoExperiencia1?: Date;
+
+  @Column({
+    name: 'vencimento_experiencia_2',
+    type: 'date',
+    nullable: true,
+  })
+  vencimentoExperiencia2?: Date;
+
+  @Column({
+    name: 'data_exame_demissional',
+    type: 'date',
+    nullable: true,
+  })
+  dataExameDemissional?: Date;
+
+  @ManyToOne(() => CostCenter, { nullable: true, eager: true })
+  centroCusto?: CostCenter;
+
+  @Column({ name: 'grau_instrucao', type: 'enum', enum: GrauInstrucao })
+  grauInstrucao: GrauInstrucao;
+
+  @Column({ name: 'necessidades_especiais', type: 'boolean' })
+  necessidadesEspeciais: boolean;
+
+  @Column({
+    name: 'tipo_deficiencia',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  tipoDeficiencia?: string;
+
+  @Column({ name: 'filhos', type: 'boolean' })
+  filhos: boolean;
+
+  @Column({ name: 'quantidade_filhos', type: 'int', nullable: true })
+  quantidadeFilhos?: number;
+
+  @Column({ name: 'telefone', type: 'varchar', length: 20, nullable: true })
+  telefone?: string;
+
+  @Column({ name: 'celular', type: 'varchar', length: 20 })
+  celular: string;
+
+  @Column({ name: 'gestor', type: 'varchar', length: 255 })
+  gestor: string;
+
+  @ManyToOne(() => Cbo, { nullable: false, eager: true })
+  cbo: Cbo;
+
+  @Column({ name: 'rua', type: 'varchar', length: 255 })
+  rua: string;
+
+  @Column({ name: 'numero', type: 'varchar', length: 10 })
+  numero: string;
+
+  @Column({ name: 'complemento', type: 'varchar', length: 100, nullable: true })
+  complemento?: string;
+
+  @Column({ name: 'bairro', type: 'varchar', length: 100 })
+  bairro: string;
+
+  @Column({ name: 'cidade', type: 'varchar', length: 100 })
+  cidade: string;
+
+  @Column({ name: 'estado', type: 'varchar', length: 2 })
+  estado: string;
+
+  @Column({ name: 'cep', type: 'varchar', length: 10 })
+  cep: string;
+
+  @Column({
+    name: 'latitude',
+    type: 'decimal',
+    precision: 9,
+    scale: 6,
+    nullable: true,
+  })
+  latitude?: number;
+
+  @Column({
+    name: 'longitude',
+    type: 'decimal',
+    precision: 9,
+    scale: 6,
+    nullable: true,
+  })
+  longitude?: number;
+
+  @Column({ name: 'quantidade_onibus', type: 'int' })
+  quantidadeOnibus: number;
+
+  @Column({
+    name: 'carga_horaria',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+  })
+  cargaHoraria: number;
+
+  @Column({
+    name: 'escala',
+    type: 'enum',
+    enum: Escala,
+  })
+  escala: Escala;
+
+  @Column({
+    name: 'status_funcionario',
+    type: 'enum',
+    enum: StatusFuncionario,
+    default: StatusFuncionario.ATIVO,
+  })
+  statusFuncionario: StatusFuncionario;
 
   @OneToMany(() => Absence, (absence) => absence.funcionario)
   faltas: Absence[];

@@ -1,0 +1,258 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { BaseResponseDto } from '../../../common/utils/dto/base-response.dto';
+import { Expose, Transform, Type } from 'class-transformer';
+import {
+  Escala,
+  EstadoCivil,
+  GrauInstrucao,
+  RegimeContratacao,
+  Sexo,
+  StatusFuncionario,
+} from '../enums/employees.enum';
+import { RoleResponseDto } from '../../../modules/roles/dto/role-response.dto';
+import { DepartmentResponseDto } from '../../../modules/departments/dto/department-response.dto';
+import { CostCenterResponseDto } from '../../../modules/cost-centers/dto/cost-center-response.dto';
+import { CboResponseDto } from '../../../modules/cbos/dto/cbo-response.dto';
+
+export class EmployeeResponseDto extends BaseResponseDto {
+  @ApiProperty({ description: 'Nome' })
+  @Expose()
+  nome: string;
+
+  @ApiProperty({ description: 'Carteira de identidade' })
+  @Expose()
+  carteiraIdentidade: string;
+
+  @ApiProperty({ description: 'CPF' })
+  @Expose()
+  cpf: string;
+
+  @ApiProperty({ description: 'Sexo', enum: Sexo })
+  @Expose()
+  sexo: Sexo;
+
+  @ApiProperty({ description: 'Data de Nascimento' })
+  @Expose()
+  @Transform(({ value }) =>
+    new Intl.DateTimeFormat('pt-BR', {
+      dateStyle: 'short',
+    }).format(new Date(value)),
+  )
+  dataNascimento: string;
+
+  @ApiProperty({ description: 'Estado civil', enum: EstadoCivil })
+  @Expose()
+  estadoCivil: EstadoCivil;
+
+  @ApiProperty({ description: 'Naturalidade' })
+  @Expose()
+  naturalidade: string;
+
+  @ApiProperty({ description: 'Nacionalidade' })
+  @Expose()
+  nacionalidade: string;
+
+  @ApiProperty({ description: 'Altura' })
+  @Expose()
+  altura: number;
+
+  @ApiProperty({ description: 'Peso' })
+  @Expose()
+  peso: number;
+
+  @ApiProperty({ description: 'Nome do Pai' })
+  @Expose()
+  nomePai: string;
+
+  @ApiProperty({ description: 'Nome da Mãe' })
+  @Expose()
+  nomeMae: string;
+
+  @ApiProperty({ description: 'Email' })
+  @Expose()
+  email: string;
+
+  @ApiProperty({ description: 'Pis' })
+  @Expose()
+  pis: string;
+
+  @ApiProperty({ description: 'Número da CTPS' })
+  @Expose()
+  ctpsNumero: string;
+
+  @ApiProperty({ description: 'Série da CTPS' })
+  @Expose()
+  ctpsSerie: string;
+
+  @ApiProperty({ description: 'Certificado de Reservista' })
+  @Expose()
+  certificadoReservista: string;
+
+  @ApiProperty({
+    description: 'Regime de Contratação',
+    enum: RegimeContratacao,
+  })
+  @Expose()
+  regimeContratacao: RegimeContratacao;
+
+  @ApiProperty({ description: 'Data da Fundação' })
+  @Expose()
+  @Transform(({ value }) =>
+    new Intl.DateTimeFormat('pt-BR', {
+      dateStyle: 'short',
+    }).format(new Date(value)),
+  )
+  dataAdmissao: string;
+
+  @ApiProperty({ description: 'Salário' })
+  @Expose()
+  salario: number;
+
+  @ApiProperty({ description: 'Data do último ASO' })
+  @Expose()
+  @Transform(({ value }) =>
+    new Intl.DateTimeFormat('pt-BR', {
+      dateStyle: 'short',
+    }).format(new Date(value)),
+  )
+  dataUltimoASO: string;
+
+  @ApiProperty({ description: 'Função' })
+  @Expose()
+  @Type(() => RoleResponseDto)
+  @Transform(({ value }) => value?.nome)
+  funcao: RoleResponseDto;
+
+  @ApiProperty({ description: 'Setor' })
+  @Expose()
+  @Type(() => DepartmentResponseDto)
+  @Transform(({ value }) => value?.nome)
+  setor: DepartmentResponseDto;
+
+  @ApiProperty({
+    description: 'Data do vencimento do 1º período de experiência',
+  })
+  @Expose()
+  @Transform(({ value }) =>
+    new Intl.DateTimeFormat('pt-BR', {
+      dateStyle: 'short',
+    }).format(new Date(value)),
+  )
+  vencimentoExperiencia1: string;
+
+  @ApiProperty({
+    description: 'Data do vencimento do 2º período de experiência',
+  })
+  @Expose()
+  @Transform(({ value }) =>
+    new Intl.DateTimeFormat('pt-BR', {
+      dateStyle: 'short',
+    }).format(new Date(value)),
+  )
+  vencimentoExperiencia2: string;
+
+  @ApiProperty({ description: 'Data do exame demissional' })
+  @Expose()
+  @Transform(({ value }) =>
+    new Intl.DateTimeFormat('pt-BR', {
+      dateStyle: 'short',
+    }).format(new Date(value)),
+  )
+  dataExameDemissional: string;
+
+  @ApiProperty({ description: 'Centro de Custo' })
+  @Expose()
+  @Type(() => CostCenterResponseDto)
+  @Transform(({ value }) => value?.nome)
+  centroCusto: CostCenterResponseDto;
+
+  @ApiProperty({ description: 'Grau de Instrução', enum: GrauInstrucao })
+  @Expose()
+  grauInstrucao: GrauInstrucao;
+
+  @ApiProperty({ description: 'Possui necessidades Especiais?' })
+  @Expose()
+  necessidadesEspeciais: boolean;
+
+  @ApiProperty({ description: 'Deficiência' })
+  @Expose()
+  tipoDeficiencia: string;
+
+  @ApiProperty({ description: 'Possui filhos?' })
+  @Expose()
+  filhos: boolean;
+
+  @ApiProperty({ description: 'Quantidade de filhos' })
+  @Expose()
+  quantidadeFilhos: number;
+
+  @ApiProperty({ description: 'Telefone' })
+  @Expose()
+  telefone: string;
+
+  @ApiProperty({ description: 'Celular' })
+  @Expose()
+  celular: string;
+
+  @ApiProperty({ description: 'Gestor' })
+  @Expose()
+  gestor: string;
+
+  @ApiProperty({ description: 'Cbo' })
+  @Expose()
+  @Type(() => CboResponseDto)
+  @Transform(({ value }) => value?.nome)
+  cbo: CboResponseDto;
+
+  @ApiProperty({ description: 'Rua' })
+  @Expose()
+  rua: string;
+
+  @ApiProperty({ description: 'Número' })
+  @Expose()
+  numero: string;
+
+  @ApiProperty({ description: 'Complemento' })
+  @Expose()
+  complemento: string;
+
+  @ApiProperty({ description: 'Bairro' })
+  @Expose()
+  bairro: string;
+
+  @ApiProperty({ description: 'Cidade' })
+  @Expose()
+  cidade: string;
+
+  @ApiProperty({ description: 'Estado' })
+  @Expose()
+  estado: string;
+
+  @ApiProperty({ description: 'CEP' })
+  @Expose()
+  cep: string;
+
+  @ApiProperty({ description: 'Latitude' })
+  @Expose()
+  latitude: number;
+
+  @ApiProperty({ description: 'Longitude' })
+  @Expose()
+  longitude: number;
+
+  @ApiProperty({ description: 'Quantidade de ônibus' })
+  @Expose()
+  quantidadeOnibus: number;
+
+  @ApiProperty({ description: 'Carga horária mensal' })
+  @Expose()
+  cargaHoraria: number;
+
+  @ApiProperty({ description: 'Escala de trabalho', enum: Escala })
+  @Expose()
+  escala: Escala;
+
+  @ApiProperty({ description: 'Escala de trabalho', enum: StatusFuncionario })
+  @Expose()
+  status: StatusFuncionario;
+}

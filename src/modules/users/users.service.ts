@@ -10,6 +10,7 @@ import { UsersResponseDto } from './dto/user-response.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class UsersService {
@@ -19,13 +20,24 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    const user = this.usersRepository.create(createUserDto);
+    let createdBy = null;
+
+    if (createUserDto.criadoPor) {
+      createdBy = await this.findOne(createUserDto.criadoPor);
+    }
+
+    const user = this.usersRepository.create({
+      ...createUserDto,
+      criadoPor: createdBy,
+    });
     return await this.usersRepository.save(user);
   }
 
   async findAll(): Promise<UsersResponseDto[]> {
-    return await this.usersRepository.find({
-      select: ['id', 'nome', 'email', 'funcao'],
+    const users = await this.usersRepository.find();
+
+    return plainToInstance(UsersResponseDto, users, {
+      excludeExtraneousValues: true,
     });
   }
 
@@ -34,7 +46,22 @@ export class UsersService {
       where: {
         id,
       },
-      select: ['id', 'nome', 'email', 'funcao'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    return plainToInstance(UsersResponseDto, user, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async findById(id: number): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: {
+        id,
+      },
     });
 
     if (!user) {
@@ -53,22 +80,17 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    if (!updateUserDto.atualizadoPor) {
-      throw new BadRequestException(
-        'O usuário responsável pela atualização deve ser informado.',
-      );
-    }
-
-    const user = await this.usersRepository.findOne({
+    const updatedBy = await this.usersRepository.findOne({
       where: { id: updateUserDto.atualizadoPor },
     });
 
-    if (!user) {
+    if (!updatedBy) {
       throw new NotFoundException('Usuário não encontrado.');
     }
 
     const result = await this.usersRepository.update(id, {
       ...updateUserDto,
+      atualizadoPor: updatedBy.id,
     });
 
     if (result.affected === 0) {

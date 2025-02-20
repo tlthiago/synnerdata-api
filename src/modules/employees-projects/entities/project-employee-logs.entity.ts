@@ -26,7 +26,7 @@ export class EmployeeProjectLogs {
 
   @CreateDateColumn({
     name: 'data_inicio',
-    type: 'timestamptz',
+    type: 'date',
   })
   dataInicio: Date;
 

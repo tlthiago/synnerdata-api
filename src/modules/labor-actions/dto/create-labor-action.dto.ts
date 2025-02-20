@@ -5,6 +5,7 @@ import {
   IsNumber,
   Length,
   IsOptional,
+  IsDateString,
 } from 'class-validator';
 
 export class CreateLaborActionDto {
@@ -21,9 +22,8 @@ export class CreateLaborActionDto {
   tribunal: string;
 
   @ApiProperty({ description: 'Data do ajuizamento.' })
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
-  @Length(1, 255)
   dataAjuizamento: string;
 
   @ApiProperty({ description: 'Nome do reclamante.' })
@@ -74,9 +74,8 @@ export class CreateLaborActionDto {
   decisao?: string;
 
   @ApiProperty({ description: 'Data de conclusão.' })
-  @IsString()
+  @IsDateString()
   @IsOptional()
-  @Length(1, 255)
   dataConclusao?: string;
 
   @ApiProperty({ description: 'Recursos interpostos.' })
@@ -88,13 +87,11 @@ export class CreateLaborActionDto {
   @ApiProperty({ description: 'Custas e despesas.' })
   @IsNumber()
   @IsOptional()
-  @Length(1, 255)
   custasDespesas?: number;
 
   @ApiProperty({ description: 'Data do conhecimento.' })
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
-  @Length(1, 255)
   dataConhecimento: string;
 
   @ApiProperty({

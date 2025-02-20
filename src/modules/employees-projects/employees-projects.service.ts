@@ -10,7 +10,11 @@ import { DataSource, Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { Project } from '../projects/entities/project.entity';
 import { plainToInstance } from 'class-transformer';
-import { EmployeeProjectsResponseDto } from './dto/employee-projects-response.dto';
+import {
+  EmployeeProjectsResponseDto,
+  EmployeesProjectResponseDto,
+} from './dto/employee-projects-response.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class EmployeesProjectsService {
@@ -18,6 +22,7 @@ export class EmployeesProjectsService {
     @InjectRepository(Project)
     private readonly projectRepository: Repository<Project>,
     private readonly employeesService: EmployeesService,
+    private readonly usersService: UsersService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -46,13 +51,17 @@ export class EmployeesProjectsService {
       project.funcionarios = employees;
       await queryRunner.manager.save(project);
 
+      const user = await this.usersService.findOne(
+        createEmployeesProjectDto.criadoPor,
+      );
+
       const logs = employees.map((employee) => ({
         projeto: project,
         funcionario: employee,
         dataInicio: createEmployeesProjectDto.dataInicio,
         acao: EmployeeProjectAction.ADICIONOU,
         descricao: `O funcionário ${employee.id} foi adicionado no projeto ${project.id}`,
-        criadoPor: createEmployeesProjectDto.criadoPor,
+        criadoPor: user.id,
       }));
 
       await queryRunner.manager.save(EmployeeProjectLogs, logs);
@@ -71,11 +80,31 @@ export class EmployeesProjectsService {
     const employee = await this.employeesService.findOne(employeeId);
 
     const projects = await this.projectRepository.find({
-      where: { funcionarios: { id: employee.id }, status: 'A' },
+      where: {
+        funcionarios: { id: employee.id },
+        status: 'A',
+      },
       relations: ['funcionarios'],
     });
 
-    return plainToInstance(EmployeeProjectsResponseDto, projects);
+    const projectsWithTransformedEmployees = projects.map((project) => ({
+      ...project,
+      funcionarios: plainToInstance(
+        EmployeesProjectResponseDto,
+        project.funcionarios,
+        {
+          excludeExtraneousValues: true,
+        },
+      ),
+    }));
+
+    return plainToInstance(
+      EmployeeProjectsResponseDto,
+      projectsWithTransformedEmployees,
+      {
+        excludeExtraneousValues: true,
+      },
+    );
   }
 
   async update(
@@ -114,13 +143,17 @@ export class EmployeesProjectsService {
       project.funcionarios = newEmployees;
       await queryRunner.manager.save(project);
 
+      const user = await this.usersService.findOne(
+        updateEmployeeProjectDto.atualizadoPor,
+      );
+
       const removedEmployeesLogs = removedEmployees.map((employee) => ({
         projeto: project,
         funcionario: employee,
         dataInicio: updateEmployeeProjectDto.dataInicio,
         acao: EmployeeProjectAction.REMOVEU,
         descricao: `O funcionário ${employee.id} foi removido do projeto ${project.id}`,
-        criadoPor: updateEmployeeProjectDto.atualizadoPor,
+        criadoPor: user.id,
       }));
 
       await queryRunner.manager.save(EmployeeProjectLogs, removedEmployeesLogs);
@@ -131,7 +164,7 @@ export class EmployeesProjectsService {
         dataInicio: updateEmployeeProjectDto.dataInicio,
         acao: EmployeeProjectAction.ADICIONOU,
         descricao: `O funcionário ${employee.id} foi adicionado no projeto ${project.id}`,
-        criadoPor: updateEmployeeProjectDto.atualizadoPor,
+        criadoPor: user.id,
       }));
 
       await queryRunner.manager.save(EmployeeProjectLogs, addedEmployeesLogs);

@@ -20,8 +20,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { CpfAnalysisResponseDto } from './dto/cpf-analysis-response.dto';
 
 @Controller('v1/funcionarios')
@@ -66,7 +66,7 @@ export class CpfAnalysisController {
     @Param('funcionarioId', ParseIntPipe) employeeId: number,
     @Body() createCpfAnalysisDto: CreateCpfAnalysisDto,
   ) {
-    const id = await this.cpfAnalysisService.create(
+    const cpfAnalysisId = await this.cpfAnalysisService.create(
       employeeId,
       createCpfAnalysisDto,
     );
@@ -74,7 +74,7 @@ export class CpfAnalysisController {
     return {
       succeeded: true,
       data: null,
-      message: `Análise de CPF cadastrada com sucesso, id: #${id}.`,
+      message: `Análise de CPF cadastrada com sucesso, id: #${cpfAnalysisId}.`,
     };
   }
 
@@ -161,12 +161,15 @@ export class CpfAnalysisController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCpfAnalysisDto: UpdateCpfAnalysisDto,
   ) {
-    await this.cpfAnalysisService.update(id, updateCpfAnalysisDto);
+    const cpfAnalysis = await this.cpfAnalysisService.update(
+      id,
+      updateCpfAnalysisDto,
+    );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Análise de CPF id: #${id} atualizada com sucesso.`,
+      data: cpfAnalysis,
+      message: `Análise de CPF id: #${cpfAnalysis.id} atualizada com sucesso.`,
     };
   }
 

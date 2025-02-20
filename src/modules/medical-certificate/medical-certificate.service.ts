@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateMedicalCertificateDto } from './dto/create-medical-certificate.dto';
 import { UpdateMedicalCertificateDto } from './dto/update-medical-certificate.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,7 +11,8 @@ import { Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { MedicalCertificateResponseDto } from './dto/medical-certificate-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class MedicalCertificateService {
@@ -15,6 +20,7 @@ export class MedicalCertificateService {
     @InjectRepository(MedicalCertificate)
     private readonly medicalCertificateRepository: Repository<MedicalCertificate>,
     private readonly employeesService: EmployeesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(
@@ -23,65 +29,113 @@ export class MedicalCertificateService {
   ) {
     const employee = await this.employeesService.findOne(employeeId);
 
-    const medicalcertificate = this.medicalCertificateRepository.create({
-      ...createMedicalCertificateDto,
+    const { dataInicio, dataFim, ...rest } = createMedicalCertificateDto;
+
+    const dataInicioDate = new Date(dataInicio);
+    const dataFimDate = new Date(dataFim);
+
+    if (dataFimDate <= dataInicioDate) {
+      throw new BadRequestException(
+        'A data fim deve ser posterior à data início.',
+      );
+    }
+
+    const user = await this.usersService.findOne(
+      createMedicalCertificateDto.criadoPor,
+    );
+
+    const medicalCertificate = this.medicalCertificateRepository.create({
+      ...rest,
+      dataInicio: dataInicioDate,
+      dataFim: dataFimDate,
       funcionario: employee,
+      criadoPor: user,
     });
 
-    await this.medicalCertificateRepository.save(medicalcertificate);
+    await this.medicalCertificateRepository.save(medicalCertificate);
 
-    return medicalcertificate.id;
+    return medicalCertificate.id;
   }
 
   async findAll(employeeId: number) {
-    await this.employeesService.findOne(employeeId);
+    const employee = await this.employeesService.findOne(employeeId);
 
-    const medicalcertificates = await this.medicalCertificateRepository.find({
+    const medicalCertificates = await this.medicalCertificateRepository.find({
       where: {
-        funcionario: { id: employeeId },
+        funcionario: { id: employee.id },
         status: 'A',
       },
     });
 
-    return plainToInstance(MedicalCertificateResponseDto, medicalcertificates);
+    return plainToInstance(MedicalCertificateResponseDto, medicalCertificates, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
-    const medicalcertificate = await this.medicalCertificateRepository.findOne({
+    const medicalCertificate = await this.medicalCertificateRepository.findOne({
       where: {
         id,
         status: 'A',
       },
     });
 
-    return plainToInstance(MedicalCertificateResponseDto, medicalcertificate);
+    if (!medicalCertificate) {
+      throw new NotFoundException('Atestado não encontrado.');
+    }
+
+    return plainToInstance(MedicalCertificateResponseDto, medicalCertificate, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async update(
     id: number,
     updateMedicalCertificateDto: UpdateMedicalCertificateDto,
   ) {
+    const { dataInicio, dataFim, ...rest } = updateMedicalCertificateDto;
+
+    const dataInicioDate = new Date(dataInicio);
+    const dataFimDate = new Date(dataFim);
+
+    if (dataFimDate <= dataInicioDate) {
+      throw new BadRequestException(
+        'A data fim deve ser posterior à data início.',
+      );
+    }
+
+    const user = await this.usersService.findOne(
+      updateMedicalCertificateDto.atualizadoPor,
+    );
+
     const result = await this.medicalCertificateRepository.update(id, {
-      ...updateMedicalCertificateDto,
+      ...rest,
+      dataInicio: dataInicioDate,
+      dataFim: dataFimDate,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
       throw new NotFoundException('Atestado não encontrado.');
     }
 
-    return `O atestado #${id} foi atualizado.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deleteMedicalCertificateDto: BaseDeleteDto) {
+    const user = await this.usersService.findOne(
+      deleteMedicalCertificateDto.excluidoPor,
+    );
+
     const result = await this.medicalCertificateRepository.update(id, {
       status: 'E',
-      atualizadoPor: deleteMedicalCertificateDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
       throw new NotFoundException('Atestado não encontrado.');
     }
 
-    return `O atestado #${id} foi excluído.`;
+    return { id, status: 'E' };
   }
 }

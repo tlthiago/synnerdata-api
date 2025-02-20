@@ -5,7 +5,7 @@ import { Epi } from '../../../modules/epis/entities/epi.entity';
 
 @Entity('entregas_de_epis')
 export class EpiDelivery extends BaseEntity {
-  @Column({ name: 'data', type: 'timestamptz' })
+  @Column({ name: 'data', type: 'date' })
   data: Date;
 
   @ManyToMany(() => Epi, (epi) => epi.entregasDeEpis, { cascade: true })

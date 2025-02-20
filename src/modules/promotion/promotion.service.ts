@@ -9,6 +9,7 @@ import { plainToInstance } from 'class-transformer';
 import { PromotionResponseDto } from './dto/promotion-response.dto';
 import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
 import { RolesService } from '../roles/roles.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class PromotionService {
@@ -17,18 +18,21 @@ export class PromotionService {
     private readonly promotionRepository: Repository<Promotion>,
     private readonly employeesService: EmployeesService,
     private readonly roleService: RolesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(employeeId: number, createPromotionDto: CreatePromotionDto) {
     const employee = await this.employeesService.findOne(employeeId);
-    const role = await this.roleService.findRoleById(
-      createPromotionDto.funcaoId,
-    );
+
+    const role = await this.roleService.findById(createPromotionDto.funcaoId);
+
+    const user = await this.usersService.findOne(createPromotionDto.criadoPor);
 
     const promotion = this.promotionRepository.create({
       ...createPromotionDto,
       funcao: role,
       funcionario: employee,
+      criadoPor: user,
     });
 
     await this.promotionRepository.save(promotion);
@@ -37,16 +41,18 @@ export class PromotionService {
   }
 
   async findAll(employeeId: number) {
-    await this.employeesService.findOne(employeeId);
+    const employee = await this.employeesService.findOne(employeeId);
 
     const promotions = await this.promotionRepository.find({
       where: {
-        funcionario: { id: employeeId },
+        funcionario: { id: employee.id },
         status: 'A',
       },
     });
 
-    return plainToInstance(PromotionResponseDto, promotions);
+    return plainToInstance(PromotionResponseDto, promotions, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
@@ -57,36 +63,49 @@ export class PromotionService {
       },
     });
 
-    return plainToInstance(PromotionResponseDto, promotion);
+    if (!promotion) {
+      throw new NotFoundException('Promoção não encontrada.');
+    }
+
+    return plainToInstance(PromotionResponseDto, promotion, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async update(id: number, updatePromotionDto: UpdatePromotionDto) {
-    const role = await this.roleService.findRoleById(
-      updatePromotionDto.funcaoId,
+    const role = await this.roleService.findById(updatePromotionDto.funcaoId);
+
+    const user = await this.usersService.findOne(
+      updatePromotionDto.atualizadoPor,
     );
 
     const result = await this.promotionRepository.update(id, {
       ...updatePromotionDto,
       funcao: role,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
       throw new NotFoundException('Promoção não encontrada.');
     }
 
-    return `A promoção #${id} foi atualizada.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deletePromotionDto: BaseDeleteDto) {
+    const user = await this.usersService.findOne(
+      deletePromotionDto.excluidoPor,
+    );
+
     const result = await this.promotionRepository.update(id, {
       status: 'E',
-      atualizadoPor: deletePromotionDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
       throw new NotFoundException('Promoção não encontrada.');
     }
 
-    return `A promoção #${id} foi excluída.`;
+    return { id, status: 'E' };
   }
 }

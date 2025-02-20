@@ -20,9 +20,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CboResponseDto } from './dto/cbo-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Cbos')
@@ -66,12 +66,12 @@ export class CbosController {
     @Param('empresaId', ParseIntPipe) companyId: number,
     @Body() createCboDto: CreateCboDto,
   ) {
-    const id = await this.cbosService.create(companyId, createCboDto);
+    const cboId = await this.cbosService.create(companyId, createCboDto);
 
     return {
       succeeded: true,
       data: null,
-      message: `Cbo cadastrado com sucesso, id: #${id}.`,
+      message: `Cbo cadastrado com sucesso, id: #${cboId}.`,
     };
   }
 
@@ -157,12 +157,12 @@ export class CbosController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCboDto: UpdateCboDto,
   ) {
-    await this.cbosService.update(id, updateCboDto);
+    const cbo = await this.cbosService.update(id, updateCboDto);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Cbo id: #${id} atualizado com sucesso.`,
+      data: cbo,
+      message: `Cbo id: #${cbo.id} atualizado com sucesso.`,
     };
   }
 

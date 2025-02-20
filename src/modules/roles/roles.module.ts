@@ -6,12 +6,14 @@ import { Role } from './entities/role.entity';
 import { CompaniesModule } from '../companies/companies.module';
 import { EpisModule } from '../epis/epis.module';
 import { RoleEpiLogs } from './entities/role-epi-logs.entity';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Role, RoleEpiLogs]),
     CompaniesModule,
     EpisModule,
+    UsersModule,
   ],
   controllers: [RolesController],
   providers: [RolesService],

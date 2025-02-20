@@ -6,9 +6,16 @@ export class UpdateVacationDto extends PartialType(
   OmitType(CreateVacationDto, ['criadoPor'] as const),
 ) {
   @ApiProperty({
-    description: 'Usuário responsável pela atualização das férias.',
+    description: 'Usuário responsável pela atualização da férias.',
   })
-  @IsNotEmpty()
-  @IsNumber()
+  @IsNotEmpty({
+    message: 'O usuário responsável pela atualização deve ser informado.',
+  })
+  @IsNumber(
+    {},
+    {
+      message: 'O identificador do usuário deve ser um número.',
+    },
+  )
   atualizadoPor: number;
 }

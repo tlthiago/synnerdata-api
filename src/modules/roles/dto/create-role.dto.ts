@@ -5,7 +5,6 @@ import {
   IsNumber,
   Length,
   IsArray,
-  ArrayMinSize,
   IsOptional,
 } from 'class-validator';
 
@@ -19,8 +18,10 @@ export class CreateRoleDto {
   @ApiProperty({ description: 'Epis da função.', type: [Number] })
   @IsOptional()
   @IsArray()
-  @IsNumber({}, { each: true })
-  @ArrayMinSize(1)
+  @IsNumber(
+    {},
+    { each: true, message: 'O identificador do(s) epi(s) deve ser um número' },
+  )
   epis: number[];
 
   @ApiProperty({

@@ -6,166 +6,265 @@ import {
   Matches,
   Length,
   IsNumber,
-  // IsDate,
   IsBoolean,
+  IsLatitude,
+  IsLongitude,
+  IsPhoneNumber,
+  IsEmail,
+  IsDateString,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-
-export enum Status {
-  ATIVO = 'Ativo',
-  DEMITIDO = 'Demitido',
-  AFASTADO = 'Afastado',
-  EM_FERIAS = 'Em Férias',
-  FERIAs_PROGRAMADA = 'Férias Programada',
-}
-
-export enum RegimeContratacao {
-  CLT = 'CLT',
-  PJ = 'PJ',
-}
-
-export enum GrauInstrucao {
-  FUNDAMENTAL = 'Fundamental',
-  MEDIO = 'Médio',
-  SUPERIOR = 'Superior',
-  POS_GRADUACAO = 'Pós-Graduação',
-  MESTRADO = 'Mestrado',
-  DOUTORADO = 'Doutorado',
-}
+import {
+  RegimeContratacao,
+  GrauInstrucao,
+  Sexo,
+  EstadoCivil,
+  Escala,
+} from '../enums/employees.enum';
 
 export class CreateEmployeeDto {
-  @ApiProperty({ description: 'Nome completo do funcionário' })
+  @ApiProperty({ description: 'Nome completo', type: 'string' })
   @IsString()
   @IsNotEmpty()
   nome: string;
 
-  @ApiProperty({ description: 'Status do funcionário (Ativo, Demitido, etc.)' })
-  @IsEnum(Status)
-  @IsNotEmpty()
-  status: Status;
-
-  @ApiProperty({ description: 'Função do funcionário' })
-  @IsString()
-  @IsNotEmpty()
-  funcao: string;
-
-  @ApiProperty({ description: 'Setor em que o funcionário trabalha' })
-  @IsString()
-  @IsNotEmpty()
-  setor: string;
-
-  @ApiProperty({ description: 'Razão social da empresa contratante' })
-  @IsString()
-  @IsNotEmpty()
-  razao: string;
-
-  @ApiProperty({ description: 'CNPJ da empresa de contratação' })
-  @IsString()
-  @IsNotEmpty()
-  cnpjContratacao: string;
-
-  @ApiProperty({ description: 'Regime de contratação (CLT ou PJ)' })
-  @IsEnum(RegimeContratacao)
-  @IsNotEmpty()
-  regimeContratacao: RegimeContratacao;
-
   @ApiProperty({
-    description: 'Data de admissão do funcionário',
-    required: false,
+    description: 'Número da carteira de identidade',
+    type: 'string',
   })
-  // @IsDate()
-  @IsOptional()
-  dataAdmissao?: string;
-
-  @ApiProperty({ description: 'Salário do funcionário' })
-  @IsNumber()
-  @IsNotEmpty()
-  salario: number;
-
-  @ApiProperty({ description: 'Número da CTPS e série' })
   @IsString()
   @IsNotEmpty()
-  ctpsSerie: string;
+  carteiraIdentidade: string;
 
-  @ApiProperty({ description: 'CPF do funcionário' })
+  @ApiProperty({ description: 'CPF', type: 'string' })
   @IsString()
   @IsNotEmpty()
   cpf: string;
 
-  @ApiProperty({ description: 'Data do último ASO', required: false })
-  // @IsDate()
+  @ApiProperty({ description: 'Sexo', enum: Sexo })
+  @IsEnum(Sexo)
+  @IsNotEmpty()
+  sexo: Sexo;
+
+  @ApiProperty({ description: 'Data de nascimento', type: 'string' })
+  @IsDateString()
+  @IsNotEmpty()
+  dataNascimento: string;
+
+  @ApiProperty({ description: 'Estado civil', enum: EstadoCivil })
+  @IsEnum(EstadoCivil)
+  @IsNotEmpty()
+  estadoCivil: EstadoCivil;
+
+  @ApiProperty({ description: 'Naturalidade', type: 'string' })
+  @IsString()
+  @IsNotEmpty()
+  naturalidade: string;
+
+  @ApiProperty({ description: 'Nacionalidade', type: 'string' })
+  @IsString()
+  @IsNotEmpty()
+  nacionalidade: string;
+
+  @ApiProperty({ description: 'Altura', type: 'number' })
+  @IsNumber()
+  @IsNotEmpty()
+  altura: number;
+
+  @ApiProperty({ description: 'Peso', type: 'number' })
+  @IsNumber()
+  @IsNotEmpty()
+  peso: number;
+
+  @ApiProperty({ description: 'Nome do Pai', type: 'string' })
+  @IsString()
+  @IsNotEmpty()
+  nomePai: string;
+
+  @ApiProperty({ description: 'Nome da mãe', type: 'string' })
+  @IsString()
+  @IsNotEmpty()
+  nomeMae: string;
+
+  @ApiProperty({ description: 'E-mail do funcionário', type: 'string' })
+  @IsString()
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ description: 'Número da PIS', type: 'string' })
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 11)
+  pis: string;
+
+  @ApiProperty({ description: 'Número da CTPS', type: 'string' })
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 7)
+  ctpsNumero: string;
+
+  @ApiProperty({ description: 'Série da CTPS', type: 'string' })
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 4)
+  ctpsSerie: string;
+
+  @ApiProperty({
+    description: 'Número do Certificado de Reservista',
+    type: 'string',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 14)
+  certificadoReservista: string;
+
+  @ApiProperty({
+    description: 'Regime de contratação',
+    enum: RegimeContratacao,
+  })
+  @IsEnum(RegimeContratacao)
+  @IsNotEmpty()
+  regimeContratacao: RegimeContratacao;
+
+  @ApiProperty({ description: 'Data de admissão', type: 'string' })
+  @IsDateString()
+  @IsNotEmpty()
+  dataAdmissao: string;
+
+  @ApiProperty({ description: 'Salário do funcionário', type: 'number' })
+  @IsNumber()
+  @IsNotEmpty()
+  salario: number;
+
+  @ApiProperty({ description: 'Data do último ASO', type: 'string' })
+  @IsDateString()
   @IsOptional()
   dataUltimoASO?: string;
 
-  @ApiProperty({ description: 'Data do exame demissional', required: false })
-  // @IsDate()
+  @ApiProperty({ description: 'Função', type: 'number' })
+  @IsNumber()
+  @IsNotEmpty()
+  funcao: number;
+
+  @ApiProperty({ description: 'Setor', type: 'number' })
+  @IsNumber()
+  @IsNotEmpty()
+  setor: number;
+
+  @ApiProperty({
+    description: 'Data do vencimento do 1º período de experiência',
+    type: 'string',
+  })
+  @IsDateString()
+  @IsOptional()
+  vencimentoExperiencia1?: string;
+
+  @ApiProperty({
+    description: 'Data do vencimento do 2º período de experiência',
+    type: 'string',
+  })
+  @IsDateString()
+  @IsOptional()
+  vencimentoExperiencia2?: string;
+
+  @ApiProperty({ description: 'Data do exame demissional', type: 'string' })
+  @IsDateString()
   @IsOptional()
   dataExameDemissional?: string;
 
-  @ApiProperty({ description: 'Vencimento do primeiro prazo de experiência' })
-  // @IsDate()
-  @IsNotEmpty()
-  vencimentoPrazo1Experiencia: string;
+  @ApiProperty({ description: 'Centro de custo', type: 'number' })
+  @IsNumber()
+  @IsOptional()
+  centroCusto?: number;
 
-  @ApiProperty({ description: 'Vencimento do segundo prazo de experiência' })
-  // @IsDate()
-  @IsNotEmpty()
-  vencimentoPrazo2Experiencia: string;
-
-  @ApiProperty({ description: 'Centro de custo' })
-  @IsString()
-  @IsNotEmpty()
-  centroCusto: string;
-
-  @ApiProperty({ description: 'Grau de instrução do funcionário' })
+  @ApiProperty({ description: 'Grau de instrução', enum: GrauInstrucao })
   @IsEnum(GrauInstrucao)
   @IsNotEmpty()
   grauInstrucao: GrauInstrucao;
 
-  @ApiProperty({ description: 'Se o funcionário tem necessidades especiais' })
+  @ApiProperty({
+    description: 'Possui necessidades especiais?',
+    type: 'boolean',
+  })
   @IsBoolean()
   @IsNotEmpty()
   necessidadesEspeciais: boolean;
 
-  @ApiProperty({
-    description: 'Tipo de deficiência (caso aplicável)',
-    required: false,
-  })
+  @ApiProperty({ description: 'Deficiência', type: 'string' })
   @IsString()
   @IsOptional()
   tipoDeficiencia?: string;
 
-  @ApiProperty({ description: 'Sexo do funcionário' })
-  @IsString()
-  @IsNotEmpty()
-  sexo: string;
-
-  @ApiProperty({ description: 'Data de nascimento' })
-  // @IsDate()
-  @IsNotEmpty()
-  dataNascimento: string;
-
-  @ApiProperty({ description: 'Estado civil' })
-  @IsString()
-  @IsNotEmpty()
-  estadoCivil: string;
-
-  @ApiProperty({ description: 'Se o funcionário tem processos judiciais' })
+  @ApiProperty({ description: 'Possui filhos?', type: 'boolean' })
   @IsBoolean()
   @IsNotEmpty()
-  processoJudicial: boolean;
+  filhos: boolean;
 
-  @ApiProperty({ description: 'Nome do gestor responsável' })
+  @ApiProperty({ description: 'Quantidade de filhos', type: 'number' })
+  @IsNumber()
+  @IsOptional()
+  quantidadeFilhos?: number;
+
+  @ApiProperty({ description: 'Telefone residencial', type: 'string' })
+  @IsString()
+  @IsOptional()
+  @IsPhoneNumber('BR')
+  telefone?: string;
+
+  @ApiProperty({ description: 'Telefone celular', type: 'string' })
+  @IsString()
+  @IsNotEmpty()
+  @IsPhoneNumber('BR')
+  celular: string;
+
+  @ApiProperty({ description: 'Gestor', type: 'string' })
   @IsString()
   @IsNotEmpty()
   gestor: string;
 
-  @ApiProperty({ description: 'CBO (Código Brasileiro de Ocupações)' })
+  @ApiProperty({ description: 'Cbo', type: 'number' })
+  @IsNumber()
+  @IsNotEmpty()
+  cbo: number;
+
+  @ApiProperty({ description: 'Rua', type: 'string' })
   @IsString()
   @IsNotEmpty()
-  cbo: string;
+  @Length(1, 255)
+  rua: string;
 
-  @ApiProperty({ description: 'CEP' })
+  @ApiProperty({ description: 'Número.', type: 'string' })
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 10)
+  numero: string;
+
+  @ApiProperty({ description: 'Complemento.', type: 'string' })
+  @IsString()
+  @IsOptional()
+  @Length(1, 100)
+  complemento?: string;
+
+  @ApiProperty({ description: 'Bairro.', type: 'string' })
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 100)
+  bairro: string;
+
+  @ApiProperty({ description: 'Cidade.', type: 'string' })
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 100)
+  cidade: string;
+
+  @ApiProperty({ description: 'Estado.', type: 'string' })
+  @IsString()
+  @IsNotEmpty()
+  @Length(2, 2)
+  estado: string;
+
+  @ApiProperty({ description: 'CEP.', type: 'string' })
   @IsString()
   @IsNotEmpty()
   @Length(8, 10)
@@ -174,44 +273,42 @@ export class CreateEmployeeDto {
   })
   cep: string;
 
-  @ApiProperty({ description: 'Rua' })
-  @IsString()
-  @IsNotEmpty()
-  @Length(1, 255)
-  rua: string;
-
-  @ApiProperty({ description: 'Número' })
-  @IsString()
-  @IsNotEmpty()
-  @Length(1, 10)
-  numero: string;
-
-  @ApiProperty({ description: 'Complemento' })
-  @IsString()
+  @ApiProperty({
+    description: 'Latitude do endereço',
+    type: 'number',
+    example: -19.9166813,
+  })
+  @IsLatitude()
   @IsOptional()
-  @Length(1, 100)
-  complemento?: string;
-
-  @ApiProperty({ description: 'Bairro' })
-  @IsString()
-  @IsNotEmpty()
-  @Length(1, 100)
-  bairro: string;
-
-  @ApiProperty({ description: 'Cidade' })
-  @IsString()
-  @IsNotEmpty()
-  @Length(1, 100)
-  cidade: string;
-
-  @ApiProperty({ description: 'Estado' })
-  @IsString()
-  @IsNotEmpty()
-  @Length(2, 2)
-  estado: string;
+  latitude?: number;
 
   @ApiProperty({
-    description: 'Usuário responsável pela criação da Funncionário.',
+    description: 'Longitude do endereço',
+    type: 'number',
+    example: -43.9344931,
+  })
+  @IsLongitude()
+  @IsOptional()
+  longitude?: number;
+
+  @ApiProperty({ description: 'Quantidade de ônibus', type: 'number' })
+  @IsNumber()
+  @IsOptional()
+  quantidadeOnibus: number;
+
+  @ApiProperty({ description: 'Carga horária semanal', type: 'number' })
+  @IsNumber()
+  @IsNotEmpty()
+  cargaHoraria: number;
+
+  @ApiProperty({ description: 'Escala de trabalho', enum: Escala })
+  @IsEnum(Escala)
+  @IsNotEmpty()
+  escala: Escala;
+
+  @ApiProperty({
+    description: 'Usuário responsável pelo cadastro do funcionário.',
+    type: 'number',
   })
   @IsNotEmpty()
   @IsNumber()

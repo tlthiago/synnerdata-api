@@ -7,7 +7,8 @@ import { Repository } from 'typeorm';
 import { CompaniesService } from '../companies/companies.service';
 import { plainToInstance } from 'class-transformer';
 import { ProjectResponseDto } from './dto/project-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class ProjectsService {
@@ -15,14 +16,18 @@ export class ProjectsService {
     @InjectRepository(Project)
     private readonly projectRepository: Repository<Project>,
     private readonly companiesService: CompaniesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(companyId: number, createProjectDto: CreateProjectDto) {
     const company = await this.companiesService.findOne(companyId);
 
+    const user = await this.usersService.findOne(createProjectDto.criadoPor);
+
     const project = this.projectRepository.create({
       ...createProjectDto,
       empresa: company,
+      criadoPor: user,
     });
 
     await this.projectRepository.save(project);
@@ -31,16 +36,18 @@ export class ProjectsService {
   }
 
   async findAll(companyId: number) {
-    await this.companiesService.findOne(companyId);
+    const company = await this.companiesService.findOne(companyId);
 
     const projects = await this.projectRepository.find({
       where: {
-        empresa: { id: companyId },
+        empresa: { id: company.id },
         status: 'A',
       },
     });
 
-    return plainToInstance(ProjectResponseDto, projects);
+    return plainToInstance(ProjectResponseDto, projects, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
@@ -51,31 +58,44 @@ export class ProjectsService {
       },
     });
 
-    return plainToInstance(ProjectResponseDto, project);
+    if (!project) {
+      throw new NotFoundException('Projeto não encontrado.');
+    }
+
+    return plainToInstance(ProjectResponseDto, project, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async update(id: number, updateProjectDto: UpdateProjectDto) {
+    const user = await this.usersService.findOne(
+      updateProjectDto.atualizadoPor,
+    );
+
     const result = await this.projectRepository.update(id, {
       ...updateProjectDto,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
       throw new NotFoundException('Projeto não encontrado.');
     }
 
-    return `O projeto #${id} foi atualizado.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deleteProjectDto: BaseDeleteDto) {
+    const user = await this.usersService.findOne(deleteProjectDto.excluidoPor);
+
     const result = await this.projectRepository.update(id, {
       status: 'E',
-      atualizadoPor: deleteProjectDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
       throw new NotFoundException('Projeto não encontrado.');
     }
 
-    return `O projeto #${id} foi excluído.`;
+    return { id, status: 'E' };
   }
 }

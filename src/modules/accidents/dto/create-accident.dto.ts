@@ -5,6 +5,7 @@ import {
   IsNumber,
   Length,
   IsOptional,
+  IsDateString,
 } from 'class-validator';
 
 export class CreateAccidentDto {
@@ -15,9 +16,8 @@ export class CreateAccidentDto {
   descricao: string;
 
   @ApiProperty({ description: 'Data do acidente.' })
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
-  @Length(1, 255)
   data: string;
 
   @ApiProperty({ description: 'Natureza do acidente.' })

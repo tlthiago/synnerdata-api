@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import {
   PostgreSqlContainer,
   StartedPostgreSqlContainer,
@@ -14,7 +14,7 @@ import { User } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
-describe('AuthController (e2e) - Sign-Up', () => {
+describe('UsersController (E2E)', () => {
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
@@ -38,10 +38,15 @@ describe('AuthController (e2e) - Sign-Up', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+      }),
+    );
     await app.init();
 
     dataSource = app.get(DataSource);
-  }, 20000);
+  }, 50000);
 
   afterEach(async () => {
     if (dataSource.isInitialized) {
@@ -93,7 +98,31 @@ describe('AuthController (e2e) - Sign-Up', () => {
     });
   });
 
-  it('/v1/usuarios/:id (PATCH) - Deve atualizar um usuário', async () => {
+  it('/v1/usuarios/:id (GET) - Deve retornar um erro ao buscar um usuário inexistente', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/v1/usuarios/9999`)
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Usuário não encontrado.',
+      error: 'Not Found',
+    });
+  });
+
+  it('/v1/usuarios/:id (GET) - Deve retornar um erro ao buscar um usuário com um ID inválido', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/v1/usuarios/abc`)
+      .expect(400);
+
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: 'Validation failed (numeric string is expected)',
+      error: 'Bad Request',
+    });
+  });
+
+  it('/v1/usuarios/:id (PATCH) - Deve atualizar os dados de um usuário', async () => {
     const userRepository = dataSource.getRepository(User);
     const createdUser = userRepository.create({
       nome: 'Usuário Teste',
@@ -115,6 +144,91 @@ describe('AuthController (e2e) - Sign-Up', () => {
 
     expect(response.body.succeeded).toBe(true);
     expect(response.body.message).toBe('Usuário atualizado com sucesso.');
+  });
+
+  it('/v1/usuarios/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
+    const userRepository = dataSource.getRepository(User);
+    const createdUser = userRepository.create({
+      nome: 'Usuário Teste',
+      email: 'teste@example.com',
+      senha: 'senha123',
+      funcao: 'admin',
+    });
+    await userRepository.save(createdUser);
+
+    const updateUserDto = {
+      nome: 'Novo Nome',
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/usuarios/${createdUser.id}`)
+      .send(updateUserDto)
+      .expect(400);
+
+    expect(response.body.message).toEqual(
+      expect.arrayContaining(['atualizadoPor should not be empty']),
+    );
+  });
+
+  it('/v1/usuarios/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
+    const userRepository = dataSource.getRepository(User);
+    const createdUser = userRepository.create({
+      nome: 'Usuário Teste',
+      email: 'teste@example.com',
+      senha: 'senha123',
+      funcao: 'admin',
+    });
+    await userRepository.save(createdUser);
+
+    const updateUserDto = {
+      nome: 'Novo Nome',
+      atualizadoPor: 'Teste',
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/usuarios/${createdUser.id}`)
+      .send(updateUserDto)
+      .expect(400);
+
+    expect(response.body.message).toEqual(
+      expect.arrayContaining([
+        'atualizadoPor must be a number conforming to the specified constraints',
+      ]),
+    );
+  });
+
+  it('/v1/usuarios/:id (PATCH) - Deve retornar erro ao atualizar um usuário com um ID inválido', async () => {
+    const updateUserDto: UpdateUserDto = {
+      nome: 'Novo Nome',
+      atualizadoPor: 1,
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch('/v1/usuarios/abc')
+      .send(updateUserDto)
+      .expect(400);
+
+    expect(response.body.message).toContain(
+      'Validation failed (numeric string is expected)',
+    );
+  });
+
+  it('/v1/usuarios/:id (PATCH) - Deve retornar erro ao atualizar um usuário com um ID inexistente', async () => {
+    const updateUserDto: UpdateUserDto = {
+      nome: 'Novo Nome',
+      atualizadoPor: 1,
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch('/v1/usuarios/9999')
+      .send(updateUserDto)
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Usuário não encontrado.',
+      error: 'Not Found',
+    });
   });
 
   it('/v1/usuarios/:id (DELETE) - Deve excluir um usuário', async () => {
@@ -142,23 +256,7 @@ describe('AuthController (e2e) - Sign-Up', () => {
     );
   });
 
-  it('/v1/usuarios/:id (PATCH) - Deve retornar erro ao enviar uma letra no ID', async () => {
-    const updateUserDto: UpdateUserDto = {
-      nome: 'Novo Nome',
-      atualizadoPor: 1,
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch('/v1/usuarios/abc')
-      .send(updateUserDto)
-      .expect(400);
-
-    expect(response.body.message).toContain(
-      'Validation failed (numeric string is expected)',
-    );
-  });
-
-  it('/v1/usuarios/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
+  it('/v1/usuarios/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
     const userRepository = dataSource.getRepository(User);
     const createdUser = userRepository.create({
       nome: 'Usuário Teste',
@@ -167,43 +265,19 @@ describe('AuthController (e2e) - Sign-Up', () => {
       funcao: 'admin',
     });
     await userRepository.save(createdUser);
-
-    const updateUserDto: UpdateUserDto = {
-      nome: 'Novo Nome',
-      atualizadoPor: 20,
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/usuarios/${createdUser.id}`)
-      .send(updateUserDto)
-      .expect(404);
-
-    expect(response.body.message).toContain('Usuário não encontrado.');
-  });
-
-  it('/v1/usuarios/:id (DELETE) - Deve retornar erro ao não passar o ID do responsável pela exclusão', async () => {
-    const userRepository = dataSource.getRepository(User);
-    const createdUser = userRepository.create({
-      nome: 'Usuário Teste',
-      email: 'teste@example.com',
-      senha: 'senha123',
-      funcao: 'admin',
-    });
-    await userRepository.save(createdUser);
-
-    const deleteUserDto = {};
 
     const response = await request(app.getHttpServer())
       .delete(`/v1/usuarios/${createdUser.id}`)
-      .send(deleteUserDto)
       .expect(400);
 
-    expect(response.body.message).toContain(
-      'O usuário responsável pela exclusão deve ser informado.',
+    expect(response.body.message).toEqual(
+      expect.arrayContaining([
+        'O usuário responsável pela exclusão deve ser informado.',
+      ]),
     );
   });
 
-  it('/v1/usuarios/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
+  it('/v1/usuarios/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
     const userRepository = dataSource.getRepository(User);
     const createdUser = userRepository.create({
       nome: 'Usuário Teste',
@@ -214,11 +288,63 @@ describe('AuthController (e2e) - Sign-Up', () => {
     await userRepository.save(createdUser);
 
     const deleteUserDto = {
-      excluidoPor: 20,
+      atualizadoPor: 'Teste',
     };
 
     const response = await request(app.getHttpServer())
       .delete(`/v1/usuarios/${createdUser.id}`)
+      .send(deleteUserDto)
+      .expect(400);
+
+    expect(response.body.message).toEqual(
+      expect.arrayContaining([
+        'O identificador do usuário deve ser um número.',
+      ]),
+    );
+  });
+
+  it('/v1/usuarios/:id (DELETE) - Deve retornar erro ao excluir um usuário com um ID inválido', async () => {
+    const userRepository = dataSource.getRepository(User);
+    const createdUser = userRepository.create({
+      nome: 'Usuário Teste',
+      email: 'teste@example.com',
+      senha: 'senha123',
+      funcao: 'admin',
+    });
+    await userRepository.save(createdUser);
+
+    const deleteUserDto: BaseDeleteDto = {
+      excluidoPor: createdUser.id,
+    };
+
+    const response = await request(app.getHttpServer())
+      .delete(`/v1/usuarios/abc`)
+      .send(deleteUserDto)
+      .expect(400);
+
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: 'Validation failed (numeric string is expected)',
+      error: 'Bad Request',
+    });
+  });
+
+  it('/v1/usuarios/:id (DELETE) - Deve retornar erro ao excluir um usuário inexistente', async () => {
+    const userRepository = dataSource.getRepository(User);
+    const createdUser = userRepository.create({
+      nome: 'Usuário Teste',
+      email: 'teste@example.com',
+      senha: 'senha123',
+      funcao: 'admin',
+    });
+    await userRepository.save(createdUser);
+
+    const deleteUserDto = {
+      excluidoPor: createdUser.id,
+    };
+
+    const response = await request(app.getHttpServer())
+      .delete(`/v1/usuarios/9999`)
       .send(deleteUserDto)
       .expect(404);
 

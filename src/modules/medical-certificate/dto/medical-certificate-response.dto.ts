@@ -1,9 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseResponseDto } from '../../../common/utils/dto/base-response.dto';
-import { Transform } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 
 export class MedicalCertificateResponseDto extends BaseResponseDto {
   @ApiProperty({ description: 'Data inicial do atestado.' })
+  @Expose()
   @Transform(({ value }) =>
     new Intl.DateTimeFormat('pt-BR', {
       dateStyle: 'short',
@@ -12,6 +13,7 @@ export class MedicalCertificateResponseDto extends BaseResponseDto {
   dataInicio: string;
 
   @ApiProperty({ description: 'Data final do atestado.' })
+  @Expose()
   @Transform(({ value }) =>
     new Intl.DateTimeFormat('pt-BR', {
       dateStyle: 'short',
@@ -20,5 +22,6 @@ export class MedicalCertificateResponseDto extends BaseResponseDto {
   dataFim: string;
 
   @ApiProperty({ description: 'Motivo do atestado.' })
+  @Expose()
   motivo: string;
 }

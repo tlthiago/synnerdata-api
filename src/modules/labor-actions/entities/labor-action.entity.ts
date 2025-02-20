@@ -4,49 +4,61 @@ import { Employee } from '../../../modules/employees/entities/employee.entity';
 
 @Entity('acoes_trabalhistas')
 export class LaborAction extends BaseEntity {
-  @Column({ name: 'numero_processo' })
+  @Column({ name: 'numero_processo', type: 'varchar' })
   numeroProcesso: string;
 
-  @Column({ name: 'tribunal' })
+  @Column({ name: 'tribunal', type: 'varchar' })
   tribunal: string;
 
-  @Column({ name: 'data_ajuizamento', type: 'timestamptz' })
+  @Column({ name: 'data_ajuizamento', type: 'date' })
   dataAjuizamento: Date;
 
-  @Column({ name: 'reclamante' })
+  @Column({ name: 'reclamante', type: 'varchar' })
   reclamante: string;
 
-  @Column({ name: 'reclamado' })
+  @Column({ name: 'reclamado', type: 'varchar' })
   reclamado: string;
 
-  @Column({ name: 'advogado_reclamante', nullable: true })
-  advogadoReclamante: string;
+  @Column({ name: 'advogado_reclamante', type: 'varchar', nullable: true })
+  advogadoReclamante?: string;
 
-  @Column({ name: 'advogado_reclamado', nullable: true })
-  advogadoReclamado: string;
+  @Column({ name: 'advogado_reclamado', type: 'varchar', nullable: true })
+  advogadoReclamado?: string;
 
-  @Column({ name: 'descricao', type: 'text' })
+  @Column({ name: 'descricao', type: 'varchar' })
   descricao: string;
 
-  @Column({ name: 'valor_causa', type: 'numeric', nullable: true })
-  valorCausa: number;
+  @Column({
+    name: 'valor_causa',
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+  })
+  valorCausa?: number;
 
-  @Column({ name: 'andamento', nullable: true })
-  andamento: string;
+  @Column({ name: 'andamento', type: 'varchar', nullable: true })
+  andamento?: string;
 
-  @Column({ name: 'decisao', type: 'text', nullable: true })
-  decisao: string;
+  @Column({ name: 'decisao', type: 'varchar', nullable: true })
+  decisao?: string;
 
-  @Column({ name: 'data_conclusao', type: 'timestamptz', nullable: true })
-  dataConclusao: Date;
+  @Column({ name: 'data_conclusao', type: 'date', nullable: true })
+  dataConclusao?: Date;
 
-  @Column({ name: 'recursos', type: 'text', nullable: true })
-  recursos: string;
+  @Column({ name: 'recursos', type: 'varchar', nullable: true })
+  recursos?: string;
 
-  @Column({ name: 'custas_despesas', type: 'numeric', nullable: true })
-  custasDespesas: number;
+  @Column({
+    name: 'custas_despesas',
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+  })
+  custasDespesas?: number;
 
-  @Column({ name: 'data_conhecimento', type: 'timestamptz' })
+  @Column({ name: 'data_conhecimento', type: 'date' })
   dataConhecimento: Date;
 
   @ManyToOne(() => Employee, (employee) => employee.acoesTrabalhistas)

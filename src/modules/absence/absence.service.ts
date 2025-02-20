@@ -8,6 +8,7 @@ import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { AbsenceResponseDto } from './dto/absence-response.dto';
 import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AbsenceService {
@@ -15,14 +16,18 @@ export class AbsenceService {
     @InjectRepository(Absence)
     private readonly absenceRepository: Repository<Absence>,
     private readonly employeesService: EmployeesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(employeeId: number, createAbsenceDto: CreateAbsenceDto) {
     const employee = await this.employeesService.findOne(employeeId);
 
+    const user = await this.usersService.findOne(createAbsenceDto.criadoPor);
+
     const absence = this.absenceRepository.create({
       ...createAbsenceDto,
       funcionario: employee,
+      criadoPor: user,
     });
 
     await this.absenceRepository.save(absence);
@@ -31,16 +36,18 @@ export class AbsenceService {
   }
 
   async findAll(employeeId: number) {
-    await this.employeesService.findOne(employeeId);
+    const employee = await this.employeesService.findOne(employeeId);
 
     const absences = await this.absenceRepository.find({
       where: {
-        funcionario: { id: employeeId },
+        funcionario: { id: employee.id },
         status: 'A',
       },
     });
 
-    return plainToInstance(AbsenceResponseDto, absences);
+    return plainToInstance(AbsenceResponseDto, absences, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number) {
@@ -51,31 +58,44 @@ export class AbsenceService {
       },
     });
 
-    return plainToInstance(AbsenceResponseDto, absence);
+    if (!absence) {
+      throw new NotFoundException('Falta não encontrada.');
+    }
+
+    return plainToInstance(AbsenceResponseDto, absence, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async update(id: number, updateAbsenceDto: UpdateAbsenceDto) {
+    const user = await this.usersService.findOne(
+      updateAbsenceDto.atualizadoPor,
+    );
+
     const result = await this.absenceRepository.update(id, {
       ...updateAbsenceDto,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
       throw new NotFoundException('Falta não encontrada.');
     }
 
-    return `A falta #${id} foi atualizada.`;
+    return this.findOne(id);
   }
 
   async remove(id: number, deleteAbsenceDto: BaseDeleteDto) {
+    const user = await this.usersService.findOne(deleteAbsenceDto.excluidoPor);
+
     const result = await this.absenceRepository.update(id, {
       status: 'E',
-      atualizadoPor: deleteAbsenceDto.excluidoPor,
+      atualizadoPor: user,
     });
 
     if (result.affected === 0) {
       throw new NotFoundException('Falta não encontrada.');
     }
 
-    return `A falta #${id} foi excluída.`;
+    return { id, status: 'E' };
   }
 }
