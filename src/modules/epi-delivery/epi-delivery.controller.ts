@@ -20,8 +20,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { EpiDeliveryResponseDto } from './dto/epi-delivery-response.dto';
 
 @Controller('v1/funcionarios')
@@ -66,7 +66,7 @@ export class EpiDeliveryController {
     @Param('funcionarioId', ParseIntPipe) employeeId: number,
     @Body() createEpiDeliveryDto: CreateEpiDeliveryDto,
   ) {
-    const id = await this.epiDeliveryService.create(
+    const epiDeliveryId = await this.epiDeliveryService.create(
       employeeId,
       createEpiDeliveryDto,
     );
@@ -74,7 +74,7 @@ export class EpiDeliveryController {
     return {
       succeeded: true,
       data: null,
-      message: `Entrega de epis cadastrada com sucesso, id: #${id}.`,
+      message: `Entrega de epis cadastrada com sucesso, id: #${epiDeliveryId}.`,
     };
   }
 
@@ -161,12 +161,15 @@ export class EpiDeliveryController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateEpiDeliveryDto: UpdateEpiDeliveryDto,
   ) {
-    await this.epiDeliveryService.update(id, updateEpiDeliveryDto);
+    const epiDelivery = await this.epiDeliveryService.update(
+      id,
+      updateEpiDeliveryDto,
+    );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Entrega de epis id: #${id} atualizada com sucesso.`,
+      data: epiDelivery,
+      message: `Entrega de epis id: #${epiDelivery.id} atualizada com sucesso.`,
     };
   }
 

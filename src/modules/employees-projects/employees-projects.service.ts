@@ -80,7 +80,10 @@ export class EmployeesProjectsService {
     const employee = await this.employeesService.findOne(employeeId);
 
     const projects = await this.projectRepository.find({
-      where: { funcionarios: { id: employee.id }, status: 'A' },
+      where: {
+        funcionarios: { id: employee.id },
+        status: 'A',
+      },
       relations: ['funcionarios'],
     });
 

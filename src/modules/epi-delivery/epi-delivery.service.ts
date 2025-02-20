@@ -7,8 +7,11 @@ import { DataSource, Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { EpisService } from '../epis/epis.service';
 import { plainToInstance } from 'class-transformer';
-import { EpiDeliveryResponseDto } from './dto/epi-delivery-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
+import {
+  EpiDeliveryResponseDto,
+  EpisResponseDto,
+} from './dto/epi-delivery-response.dto';
+import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import {
   EpiDeliveryAction,
   EpiDeliveryLogs,
@@ -37,8 +40,8 @@ export class EpiDeliveryService {
 
     const epiDelivery = this.epiDeliveryRepository.create({
       ...createEpiDeliveryDto,
-      funcionario: employee,
       epis,
+      funcionario: employee,
       criadoPor: user,
     });
 
@@ -48,17 +51,32 @@ export class EpiDeliveryService {
   }
 
   async findAll(employeeId: number) {
-    await this.employeesService.findOne(employeeId);
+    const employee = await this.employeesService.findOne(employeeId);
 
     const epiDeliveries = await this.epiDeliveryRepository.find({
       where: {
-        funcionario: { id: employeeId },
+        funcionario: { id: employee.id },
         status: 'A',
       },
       relations: ['epis'],
     });
 
-    return plainToInstance(EpiDeliveryResponseDto, epiDeliveries);
+    const epiDeliveriesWithTransformedEpis = epiDeliveries.map(
+      (epiDelivery) => ({
+        ...epiDelivery,
+        epis: plainToInstance(EpisResponseDto, epiDelivery.epis, {
+          excludeExtraneousValues: true,
+        }),
+      }),
+    );
+
+    return plainToInstance(
+      EpiDeliveryResponseDto,
+      epiDeliveriesWithTransformedEpis,
+      {
+        excludeExtraneousValues: true,
+      },
+    );
   }
 
   async findOne(id: number) {
@@ -70,29 +88,54 @@ export class EpiDeliveryService {
       relations: ['epis'],
     });
 
-    return plainToInstance(EpiDeliveryResponseDto, epiDelivery);
+    if (!epiDelivery) {
+      throw new NotFoundException('Entrega de Epi(s) não encontrada.');
+    }
+
+    return plainToInstance(
+      EpiDeliveryResponseDto,
+      {
+        ...epiDelivery,
+        epis: plainToInstance(EpisResponseDto, epiDelivery.epis, {
+          excludeExtraneousValues: true,
+        }),
+      },
+      { excludeExtraneousValues: true },
+    );
   }
 
   async update(id: number, updateEpiDeliveryDto: UpdateEpiDeliveryDto) {
-    const epiDelivery = await this.epiDeliveryRepository.findOne({
-      where: { id, status: 'A' },
-      relations: ['epis'],
-    });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    if (!epiDelivery) {
-      throw new NotFoundException('Entrega de Epi(s) não encontrada');
-    }
+    try {
+      const epiDelivery = await this.epiDeliveryRepository.findOne({
+        where: { id, status: 'A' },
+        relations: ['epis'],
+      });
 
-    let newEpis = epiDelivery.epis;
-    if (updateEpiDeliveryDto.epis) {
-      newEpis = await this.episService.findByIds(updateEpiDeliveryDto.epis);
-    }
+      if (!epiDelivery) {
+        throw new NotFoundException('Entrega de Epi(s) não encontrada.');
+      }
 
-    const removedEpis = epiDelivery.epis.filter(
-      (epi) => !newEpis.some((newEpi) => newEpi.id === epi.id),
-    );
+      const user = await this.usersService.findById(
+        updateEpiDeliveryDto.atualizadoPor,
+      );
 
-    await this.dataSource.transaction(async (manager) => {
+      let newEpis = epiDelivery.epis;
+      if (updateEpiDeliveryDto.epis) {
+        newEpis = await this.episService.findByIds(updateEpiDeliveryDto.epis);
+      }
+
+      const addedEpis = newEpis.filter(
+        (newEpi) => !epiDelivery.epis.some((epi) => epi.id === newEpi.id),
+      );
+
+      const removedEpis = epiDelivery.epis.filter(
+        (epi) => !newEpis.some((newEpi) => newEpi.id === epi.id),
+      );
+
       if (updateEpiDeliveryDto.data) {
         epiDelivery.data = new Date(updateEpiDeliveryDto.data);
       }
@@ -105,21 +148,29 @@ export class EpiDeliveryService {
         epiDelivery.entreguePor = updateEpiDeliveryDto.entreguePor;
       }
 
-      await manager.save(epiDelivery);
+      epiDelivery.epis = addedEpis;
+      epiDelivery.atualizadoPor = user;
+      await queryRunner.manager.save(epiDelivery);
 
       if (removedEpis.length > 0) {
         const logs = removedEpis.map((epi) => ({
-          epiDelivery: epiDelivery,
+          entregaDeEpi: epiDelivery,
           epi: epi,
           acao: EpiDeliveryAction.REMOVEU,
           descricao: `O usuário ${updateEpiDeliveryDto.atualizadoPor} removeu o Epi ${epi.id} da entrega ${epiDelivery.id}.`,
           criadoPor: updateEpiDeliveryDto.atualizadoPor,
         }));
-        await manager.insert(EpiDeliveryLogs, logs);
+        await queryRunner.manager.save(EpiDeliveryLogs, logs);
       }
-    });
 
-    return `A entrega de Epi(s) #${id} foi atualizado.`;
+      await queryRunner.commitTransaction();
+      return this.findOne(id);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async remove(id: number, deleteEpiDeliveryDto: BaseDeleteDto) {
@@ -136,6 +187,6 @@ export class EpiDeliveryService {
       throw new NotFoundException('Entrega de Epi(s) não encontrada.');
     }
 
-    return `A entrega de Epi(s) #${id} foi excluído.`;
+    return { id, status: 'E' };
   }
 }

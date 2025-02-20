@@ -17,7 +17,10 @@ export class CreateEpiDeliveryDto {
 
   @ApiProperty({ description: 'Epi(s) entregues.', type: [Number] })
   @IsArray()
-  @IsNumber({}, { each: true })
+  @IsNumber(
+    {},
+    { each: true, message: 'O identificador do(s) epi(s) deve ser um número' },
+  )
   @ArrayMinSize(1)
   epis: number[];
 
@@ -28,8 +31,8 @@ export class CreateEpiDeliveryDto {
   motivo: string;
 
   @ApiProperty({ description: 'Responsável pela entrega.' })
+  @IsString()
   @IsNotEmpty()
-  @IsNumber()
   entreguePor: string;
 
   @ApiProperty({
