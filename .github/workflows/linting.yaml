@@ -19,7 +19,7 @@ jobs:
         run: npm ci
 
       - name: Check linting
-        run: npm run prettier:check
+        run: npm run lint:prettier:check
 
   eslint:
     name: Eslint
@@ -37,7 +37,7 @@ jobs:
         run: npm ci
 
       - name: Check quality
-        run: npm run lint
+        run: npm run lint:eslint:check
 
   commitlint:
     name: commitlint
