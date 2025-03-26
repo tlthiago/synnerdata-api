@@ -7,7 +7,7 @@ services:
     environment:
       - .env.development.local
     ports:
-      - 3000:3000
+      - 3001:3001
     volumes:
       - .:/app
       - /app/node_modules
