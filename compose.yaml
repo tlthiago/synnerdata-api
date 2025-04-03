@@ -19,7 +19,6 @@ services:
   db:
     image: postgres:17-alpine
     container_name: postgres
-    restart: always
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -39,6 +38,13 @@ services:
       - '5050:80'
     depends_on:
       - db
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    ports:
+      - '1025:1025'
+      - '8025:8025'
 
 volumes:
   db-data:
