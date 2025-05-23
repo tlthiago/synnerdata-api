@@ -12,7 +12,6 @@ import { CompaniesService } from '../companies/companies.service';
 import { UsersService } from '../users/users.service';
 import { BranchResponseDto } from './dto/branch-response.dto';
 import { plainToInstance } from 'class-transformer';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Injectable()
 export class BranchesService {
@@ -23,10 +22,14 @@ export class BranchesService {
     private readonly usersService: UsersService,
   ) {}
 
-  async create(companyId: number, createBranchDto: CreateBranchDto) {
+  async create(
+    companyId: string,
+    createBranchDto: CreateBranchDto,
+    createdBy: string,
+  ) {
     const company = await this.companiesService.findOne(companyId);
 
-    const user = await this.usersService.findOne(createBranchDto.criadoPor);
+    const user = await this.usersService.findOne(createdBy);
 
     const companyWithSameCnpj = await this.companiesService.findByCnpj(
       createBranchDto.cnpj,
@@ -43,16 +46,18 @@ export class BranchesService {
     const branch = this.branchesRepository.create({
       ...createBranchDto,
       dataFundacao: new Date(createBranchDto.dataFundacao),
-      empresa: company,
+      empresa: { id: company.id },
       criadoPor: user,
     });
 
     await this.branchesRepository.save(branch);
 
-    return branch.id;
+    return plainToInstance(BranchResponseDto, branch, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findAll(companyId: number) {
+  async findAll(companyId: string) {
     const company = await this.companiesService.findOne(companyId);
 
     const branches = this.branchesRepository.find({
@@ -67,7 +72,7 @@ export class BranchesService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const branch = await this.branchesRepository.findOne({
       where: {
         id,
@@ -94,8 +99,12 @@ export class BranchesService {
     return !!branch;
   }
 
-  async update(id: number, updateBranchDto: UpdateBranchDto) {
-    const user = await this.usersService.findOne(updateBranchDto.atualizadoPor);
+  async update(
+    id: string,
+    updateBranchDto: UpdateBranchDto,
+    updatedBy: string,
+  ) {
+    const user = await this.usersService.findOne(updatedBy);
 
     if (updateBranchDto.cnpj) {
       const companyExists = await this.companiesService.findByCnpj(
@@ -119,21 +128,32 @@ export class BranchesService {
       throw new NotFoundException('Filial não encontrada.');
     }
 
-    return this.findOne(id);
+    const updatedBranch = await this.findOne(id);
+
+    return updatedBranch;
   }
 
-  async remove(id: number, deleteBranchDto: BaseDeleteDto) {
-    const user = await this.usersService.findOne(deleteBranchDto.excluidoPor);
+  async remove(id: string, deletedBy: string) {
+    const user = await this.usersService.findOne(deletedBy);
 
-    const result = await this.branchesRepository.update(id, {
-      status: 'E',
-      atualizadoPor: user,
-    });
+    const result = await this.branchesRepository.update(
+      { id, status: 'A' },
+      {
+        status: 'E',
+        atualizadoPor: user,
+      },
+    );
 
     if (result.affected === 0) {
-      throw new NotFoundException('Filial não encontrada.');
+      throw new NotFoundException('Filial já excluída ou não encontrado.');
     }
 
-    return { id, status: 'E' };
+    const removedBranch = await this.branchesRepository.findOne({
+      where: { id },
+    });
+
+    return plainToInstance(BranchResponseDto, removedBranch, {
+      excludeExtraneousValues: true,
+    });
   }
 }

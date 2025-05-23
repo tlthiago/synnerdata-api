@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { TerminationsService } from './terminations.service';
 import { CreateTerminationDto } from './dto/create-termination.dto';
@@ -22,7 +22,8 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { TerminationResponseDto } from './dto/termination-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/funcionarios')
 @ApiTags('Demissões')
@@ -38,7 +39,7 @@ export class TerminationsController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -63,18 +64,20 @@ export class TerminationsController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('funcionarioId', ParseIntPipe) employeeId: number,
+    @Param('funcionarioId', ParseUUIDPipe) employeeId: string,
     @Body() createTerminationDto: CreateTerminationDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const terminationId = await this.terminationsService.create(
+    const termination = await this.terminationsService.create(
       employeeId,
       createTerminationDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Demissão cadastrada com sucesso, id: #${terminationId}.`,
+      data: termination,
+      message: `Demissão cadastrada com sucesso, id: #${termination.id}.`,
     };
   }
 
@@ -88,7 +91,7 @@ export class TerminationsController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -97,7 +100,7 @@ export class TerminationsController {
     type: [TerminationResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('funcionarioId', ParseIntPipe) employeeId: number) {
+  findAll(@Param('funcionarioId', ParseUUIDPipe) employeeId: string) {
     return this.terminationsService.findAll(employeeId);
   }
 
@@ -110,7 +113,7 @@ export class TerminationsController {
   @ApiParam({
     name: 'id',
     description: 'ID da demissão.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -119,7 +122,7 @@ export class TerminationsController {
     type: TerminationResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.terminationsService.findOne(id);
   }
 
@@ -132,7 +135,7 @@ export class TerminationsController {
   @ApiParam({
     name: 'id',
     description: 'ID da demissão.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -157,12 +160,14 @@ export class TerminationsController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateTerminationDto: UpdateTerminationDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
     const termination = await this.terminationsService.update(
       id,
       updateTerminationDto,
+      user.id,
     );
 
     return {
@@ -181,12 +186,8 @@ export class TerminationsController {
   @ApiParam({
     name: 'id',
     description: 'ID da demissão.',
-    type: 'number',
+    type: 'string',
     required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para atualizar os dados da demissão',
-    type: BaseDeleteDto,
   })
   @ApiResponse({
     status: 200,
@@ -206,15 +207,15 @@ export class TerminationsController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteTerminationDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.terminationsService.remove(id, deleteTerminationDto);
+    const termination = await this.terminationsService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Demissão id: #${id} excluída com sucesso.`,
+      data: termination,
+      message: `Demissão id: #${termination.id} excluída com sucesso.`,
     };
   }
 }

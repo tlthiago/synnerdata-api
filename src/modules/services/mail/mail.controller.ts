@@ -8,6 +8,6 @@ export class MailController {
 
   @Post('send-email')
   sendEmail(@Body() sendMailDto: SendMailDto) {
-    return this.mailService.sendAccountCreationEmail(sendMailDto);
+    return this.mailService.sendActivationAccountEmail(sendMailDto);
   }
 }

@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { EpisService } from './epis.service';
 import { CreateEpiDto } from './dto/create-epi.dto';
@@ -22,7 +22,8 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { EpiResponseDto } from './dto/epi-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Epis')
@@ -38,7 +39,7 @@ export class EpisController {
   @ApiParam({
     name: 'empresaId',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -63,15 +64,16 @@ export class EpisController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('empresaId', ParseIntPipe) companyId: number,
+    @Param('empresaId', ParseUUIDPipe) companyId: string,
     @Body() createEpiDto: CreateEpiDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const epiId = await this.episService.create(companyId, createEpiDto);
+    const epi = await this.episService.create(companyId, createEpiDto, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Epi cadastrado com sucesso, id: #${epiId}.`,
+      data: epi,
+      message: `Epi cadastrado com sucesso, id: #${epi.id}.`,
     };
   }
 
@@ -85,7 +87,7 @@ export class EpisController {
   @ApiParam({
     name: 'empresaId',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -94,7 +96,7 @@ export class EpisController {
     type: [EpiResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('empresaId', ParseIntPipe) companyId: number) {
+  findAll(@Param('empresaId', ParseUUIDPipe) companyId: string) {
     return this.episService.findAll(companyId);
   }
 
@@ -107,7 +109,7 @@ export class EpisController {
   @ApiParam({
     name: 'id',
     description: 'ID do epi.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -116,7 +118,7 @@ export class EpisController {
     type: EpiResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.episService.findOne(id);
   }
 
@@ -129,7 +131,7 @@ export class EpisController {
   @ApiParam({
     name: 'id',
     description: 'ID do epi.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -154,10 +156,11 @@ export class EpisController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateEpiDto: UpdateEpiDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const epi = await this.episService.update(id, updateEpiDto);
+    const epi = await this.episService.update(id, updateEpiDto, user.id);
 
     return {
       succeeded: true,
@@ -175,12 +178,8 @@ export class EpisController {
   @ApiParam({
     name: 'id',
     description: 'ID do epi.',
-    type: 'number',
+    type: 'string',
     required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para atualizar os dados do epi',
-    type: BaseDeleteDto,
   })
   @ApiResponse({
     status: 200,
@@ -200,15 +199,15 @@ export class EpisController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteEpiDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.episService.remove(id, deleteEpiDto);
+    const epi = await this.episService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Epi id: #${id} excluído com sucesso.`,
+      data: epi,
+      message: `Epi id: #${epi.id} excluído com sucesso.`,
     };
   }
 }

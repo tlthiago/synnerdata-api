@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { DepartmentsService } from './departments.service';
 import { CreateDepartmentDto } from './dto/create-department.dto';
@@ -22,7 +22,8 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { DepartmentResponseDto } from './dto/department-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Setores')
@@ -38,7 +39,7 @@ export class DepartmentsController {
   @ApiParam({
     name: 'empresaId',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -63,18 +64,20 @@ export class DepartmentsController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('empresaId', ParseIntPipe) companyId: number,
+    @Param('empresaId', ParseUUIDPipe) companyId: string,
     @Body() createDepartmentDto: CreateDepartmentDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const departmentId = await this.departmentsService.create(
+    const department = await this.departmentsService.create(
       companyId,
       createDepartmentDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Setor cadastrado com sucesso, id: #${departmentId}.`,
+      data: department,
+      message: `Setor cadastrado com sucesso, id: #${department.id}.`,
     };
   }
 
@@ -88,7 +91,7 @@ export class DepartmentsController {
   @ApiParam({
     name: 'empresaId',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -97,7 +100,7 @@ export class DepartmentsController {
     type: [DepartmentResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('empresaId', ParseIntPipe) companyId: number) {
+  findAll(@Param('empresaId', ParseUUIDPipe) companyId: string) {
     return this.departmentsService.findAll(companyId);
   }
 
@@ -110,7 +113,7 @@ export class DepartmentsController {
   @ApiParam({
     name: 'id',
     description: 'ID do setor.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -119,7 +122,7 @@ export class DepartmentsController {
     type: DepartmentResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.departmentsService.findOne(id);
   }
 
@@ -132,7 +135,7 @@ export class DepartmentsController {
   @ApiParam({
     name: 'id',
     description: 'ID do setor.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -157,12 +160,14 @@ export class DepartmentsController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateDepartmentDto: UpdateDepartmentDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
     const department = await this.departmentsService.update(
       id,
       updateDepartmentDto,
+      user.id,
     );
 
     return {
@@ -181,7 +186,7 @@ export class DepartmentsController {
   @ApiParam({
     name: 'id',
     description: 'ID do setor.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -202,15 +207,15 @@ export class DepartmentsController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteDepartmentDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.departmentsService.remove(id, deleteDepartmentDto);
+    const department = await this.departmentsService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Setor id: #${id} excluído com sucesso.`,
+      data: department,
+      message: `Setor id: #${department.id} excluído com sucesso.`,
     };
   }
 }

@@ -15,8 +15,8 @@ export enum EpiDeliveryAction {
 
 @Entity('entregas_epis_logs')
 export class EpiDeliveryLogs {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @ManyToOne(() => EpiDelivery)
   entregaDeEpi: EpiDelivery;
@@ -30,8 +30,8 @@ export class EpiDeliveryLogs {
   @Column({ name: 'descricao', type: 'varchar' })
   descricao: string;
 
-  @Column({ name: 'criado_por', type: 'integer' })
-  criadoPor: number;
+  @Column({ name: 'criado_por', type: 'uuid' })
+  criadoPor: string;
 
   @CreateDateColumn({
     name: 'criado_em',

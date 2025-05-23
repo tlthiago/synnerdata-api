@@ -56,6 +56,10 @@ export class CompanyResponseDto extends BaseResponseDto {
   @Expose()
   telefone: string;
 
+  @ApiProperty({ description: 'Celular.' })
+  @Expose()
+  celular: string;
+
   @ApiProperty({ description: 'Faturamento.' })
   @Expose()
   faturamento: number;

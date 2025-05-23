@@ -7,20 +7,23 @@ import {
   IsUrl,
   Length,
   Matches,
+  IsEmail,
+  IsPhoneNumber,
+  IsPostalCode,
 } from 'class-validator';
 
 export class CreateCompanyDto {
-  @ApiProperty({ description: 'Nome fantasia.' })
-  @IsString()
-  @IsNotEmpty()
-  @Length(1, 255)
-  nomeFantasia: string;
-
   @ApiProperty({ description: 'Razão social.' })
   @IsString()
   @IsNotEmpty()
   @Length(1, 255)
   razaoSocial: string;
+
+  @ApiProperty({ description: 'Nome fantasia.' })
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 255)
+  nomeFantasia: string;
 
   @ApiProperty({ description: 'CNPJ.' })
   @IsString()
@@ -66,10 +69,7 @@ export class CreateCompanyDto {
   estado: string;
 
   @ApiProperty({ description: 'CEP.' })
-  @IsString()
-  @IsNotEmpty()
-  @Length(8, 10)
-  @Matches(/^\d{5}-?\d{3}$/, {
+  @IsPostalCode('BR', {
     message: 'CEP deve estar no formato 00000-000 ou 00000000',
   })
   cep: string;
@@ -79,11 +79,19 @@ export class CreateCompanyDto {
   @IsNotEmpty()
   dataFundacao: Date;
 
+  @ApiProperty({ description: 'Email' })
+  @IsEmail()
+  email: string;
+
   @ApiProperty({ description: 'Telefone.' })
+  @IsOptional()
+  @IsPhoneNumber('BR')
+  telefone?: string;
+
+  @ApiProperty({ description: 'Telefone celular', type: 'string' })
   @IsString()
-  @IsNotEmpty()
-  @Length(1, 20)
-  telefone: string;
+  @IsPhoneNumber('BR')
+  celular: string;
 
   @ApiProperty({ description: 'Faturamento.' })
   @IsNumber({ maxDecimalPlaces: 2 })
@@ -125,9 +133,4 @@ export class CreateCompanyDto {
   @IsOptional()
   @Length(1, 500)
   logoUrl?: string;
-
-  @ApiProperty({ description: 'Usuário responsável pela criação da empresa.' })
-  @IsNotEmpty()
-  @IsNumber()
-  criadoPor: number;
 }

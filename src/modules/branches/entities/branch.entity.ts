@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne } from 'typeorm';
-import { Company } from '../../../modules/companies/entities/company.entity';
 import { BaseEntity } from '../../../config/database/entities/base.entity';
+import { Company } from '../../../modules/companies/entities/company.entity';
 
 @Entity('filiais')
 export class Branch extends BaseEntity {
@@ -35,7 +35,10 @@ export class Branch extends BaseEntity {
   dataFundacao: Date;
 
   @Column({ name: 'telefone', type: 'varchar', length: 20, nullable: true })
-  telefone: string;
+  telefone?: string;
+
+  @Column({ name: 'celular', type: 'varchar', length: 20 })
+  celular: string;
 
   @ManyToOne(() => Company, (company) => company.filiais)
   empresa: Company;

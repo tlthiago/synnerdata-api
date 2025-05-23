@@ -8,15 +8,20 @@ import { TokenDto } from './dto/token.dto';
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(configService: ConfigService) {
     const publicKey = configService.get<string>('JWT_PUBLIC_KEY');
+
+    if (!publicKey) {
+      throw new Error('A JWT_PUBLIC_KEY não está definida.');
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: Buffer.from(publicKey, 'base64'),
       algorithms: ['RS256'],
-      passReqToCallback: true,
+      ignoreExpiration: false,
     });
   }
 
-  async validate(payload: TokenDto) {
-    return { userId: payload.sub };
+  validate(payload: TokenDto) {
+    return { id: payload.sub };
   }
 }

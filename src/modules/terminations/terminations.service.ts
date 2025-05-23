@@ -7,7 +7,6 @@ import { EmployeesService } from '../employees/employees.service';
 import { Repository } from 'typeorm';
 import { plainToInstance } from 'class-transformer';
 import { TerminationResponseDto } from './dto/termination-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 import { UpdateStatusDto } from '../employees/dto/update-status-employee.dto';
 import { StatusFuncionario } from '../employees/enums/employees.enum';
@@ -21,16 +20,18 @@ export class TerminationsService {
     private readonly usersService: UsersService,
   ) {}
 
-  async create(employeeId: number, createTerminationDto: CreateTerminationDto) {
+  async create(
+    employeeId: string,
+    createTerminationDto: CreateTerminationDto,
+    createdBy: string,
+  ) {
     const employee = await this.employeesService.findOne(employeeId);
 
-    const user = await this.usersService.findOne(
-      createTerminationDto.criadoPor,
-    );
+    const user = await this.usersService.findOne(createdBy);
 
     const termination = this.terminationRepository.create({
       ...createTerminationDto,
-      funcionario: employee,
+      funcionario: { id: employee.id },
       criadoPor: user,
     });
 
@@ -38,18 +39,20 @@ export class TerminationsService {
 
     const updateStatusDto: UpdateStatusDto = {
       statusFuncionario: StatusFuncionario.DEMITIDO,
-      atualizadoPor: user.id,
     };
 
     await this.employeesService.updateEmployeeStatus(
       employeeId,
       updateStatusDto,
+      user.id,
     );
 
-    return termination.id;
+    return plainToInstance(TerminationResponseDto, termination, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findAll(employeeId: number) {
+  async findAll(employeeId: string) {
     const employee = await this.employeesService.findOne(employeeId);
 
     const terminations = await this.terminationRepository.find({
@@ -64,7 +67,7 @@ export class TerminationsService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const termination = await this.terminationRepository.findOne({
       where: {
         id,
@@ -81,7 +84,7 @@ export class TerminationsService {
     });
   }
 
-  async findEmployeeByTermination(id: number) {
+  async findEmployeeByTermination(id: string) {
     const termination = await this.terminationRepository.findOne({
       where: {
         id,
@@ -98,10 +101,12 @@ export class TerminationsService {
     return employee;
   }
 
-  async update(id: number, updateTerminationDto: UpdateTerminationDto) {
-    const user = await this.usersService.findOne(
-      updateTerminationDto.atualizadoPor,
-    );
+  async update(
+    id: string,
+    updateTerminationDto: UpdateTerminationDto,
+    updatedBy: string,
+  ) {
+    const user = await this.usersService.findOne(updatedBy);
 
     const result = await this.terminationRepository.update(id, {
       ...updateTerminationDto,
@@ -112,35 +117,44 @@ export class TerminationsService {
       throw new NotFoundException('Demissão não encontrada.');
     }
 
-    return this.findOne(id);
+    const updatedTermination = await this.findOne(id);
+
+    return updatedTermination;
   }
 
-  async remove(id: number, deleteTerminationDto: BaseDeleteDto) {
-    const user = await this.usersService.findOne(
-      deleteTerminationDto.excluidoPor,
+  async remove(id: string, deletedBy: string) {
+    const user = await this.usersService.findOne(deletedBy);
+
+    const result = await this.terminationRepository.update(
+      { id, status: 'A' },
+      {
+        status: 'E',
+        atualizadoPor: user,
+      },
     );
 
-    const result = await this.terminationRepository.update(id, {
-      status: 'E',
-      atualizadoPor: user,
-    });
-
     if (result.affected === 0) {
-      throw new NotFoundException('Demissão não encontrada.');
+      throw new NotFoundException('Demissão já excluída ou não encontrada.');
     }
 
     const employee = await this.findEmployeeByTermination(id);
 
     const updateStatusDto: UpdateStatusDto = {
       statusFuncionario: StatusFuncionario.ATIVO,
-      atualizadoPor: user.id,
     };
 
     await this.employeesService.updateEmployeeStatus(
       employee.id,
       updateStatusDto,
+      user.id,
     );
 
-    return { id, status: 'E' };
+    const removedTermination = await this.terminationRepository.findOne({
+      where: { id },
+    });
+
+    return plainToInstance(TerminationResponseDto, removedTermination, {
+      excludeExtraneousValues: true,
+    });
   }
 }

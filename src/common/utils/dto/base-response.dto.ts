@@ -5,7 +5,7 @@ import { UsersResponseDto } from '../../../modules/users/dto/user-response.dto';
 export class BaseResponseDto {
   @ApiProperty({ description: 'ID' })
   @Expose()
-  id: number;
+  id: string;
 
   @ApiProperty({ description: 'Status' })
   @Expose()
@@ -20,11 +20,13 @@ export class BaseResponseDto {
   @ApiProperty({ description: 'Criado em' })
   @Expose()
   @Transform(({ value }) =>
-    new Intl.DateTimeFormat('pt-BR', {
-      dateStyle: 'short',
-      timeStyle: 'medium',
-      timeZone: 'America/Sao_Paulo',
-    }).format(new Date(value)),
+    value
+      ? new Intl.DateTimeFormat('pt-BR', {
+          dateStyle: 'short',
+          timeStyle: 'medium',
+          timeZone: 'America/Sao_Paulo',
+        }).format(new Date(value))
+      : null,
   )
   criadoEm: Date;
 
@@ -37,11 +39,13 @@ export class BaseResponseDto {
   @ApiProperty({ description: 'Atualizado em' })
   @Expose()
   @Transform(({ value }) =>
-    new Intl.DateTimeFormat('pt-BR', {
-      dateStyle: 'short',
-      timeStyle: 'medium',
-      timeZone: 'America/Sao_Paulo',
-    }).format(new Date(value)),
+    value
+      ? new Intl.DateTimeFormat('pt-BR', {
+          dateStyle: 'short',
+          timeStyle: 'medium',
+          timeZone: 'America/Sao_Paulo',
+        }).format(new Date(value))
+      : null,
   )
   atualizadoEm: Date;
 }

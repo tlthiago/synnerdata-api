@@ -10,7 +10,6 @@ import { DataSource } from 'typeorm';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { MockAuthGuard } from '../../common/guards/mock-auth.guard';
 import { Company } from './../companies/entities/company.entity';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { Branch } from '../branches/entities/branch.entity';
 import { Department } from '../departments/entities/department.entity';
 import { CostCenter } from '../cost-centers/entities/cost-center.entity';
@@ -29,19 +28,21 @@ import { Warning } from '../warnings/entities/warning.entity';
 import { LaborAction } from '../labor-actions/entities/labor-action.entity';
 import { EpiDelivery } from '../epi-delivery/entities/epi-delivery.entity';
 import { Vacation } from '../vacations/entities/vacation.entity';
-import { User } from '../users/entities/user.entity';
+import { Funcao, User } from '../users/entities/user.entity';
 import { DepartmentsModule } from './departments.module';
 import { UpdateDepartmentDto } from './dto/update-department.dto';
+import { MockUserInterceptor } from '../../common/interceptors/mock-user.interceptor';
 
 describe('DepartmentsController (E2E)', () => {
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
+  let mockUserInterceptor: MockUserInterceptor;
   let createdUser: User;
   let createdCompany: Company;
+
   const department = {
     nome: 'Tecnologia da Informação',
-    criadoPor: 1,
   };
 
   beforeAll(async () => {
@@ -89,6 +90,8 @@ describe('DepartmentsController (E2E)', () => {
         whitelist: true,
       }),
     );
+    mockUserInterceptor = new MockUserInterceptor();
+    app.useGlobalInterceptors(mockUserInterceptor);
     await app.init();
 
     dataSource = app.get(DataSource);
@@ -100,9 +103,11 @@ describe('DepartmentsController (E2E)', () => {
       nome: 'Usuário Teste',
       email: 'teste1@example.com',
       senha: 'senha123',
-      funcao: 'teste',
+      funcao: Funcao.ADMIN,
     });
     createdUser = await userRepository.save(user);
+
+    mockUserInterceptor.setUserId(createdUser.id);
 
     const company = companyRepository.create({
       nomeFantasia: 'Tech Solutions',
@@ -116,16 +121,8 @@ describe('DepartmentsController (E2E)', () => {
       estado: 'SP',
       cep: '01000-000',
       dataFundacao: '2010-05-15',
-      telefone: '(11) 99999-9999',
-      faturamento: 1200000.5,
-      regimeTributario: 'Simples Nacional',
-      inscricaoEstadual: '1234567890',
-      cnaePrincipal: '6201500',
-      segmento: 'Tecnologia',
-      ramoAtuacao: 'Desenvolvimento de Software',
-      logoUrl: 'https://example.com/logo.png',
-      status: 'A',
-      criadoPor: createdUser,
+      email: 'contato@techsolutions.com.br',
+      celular: '+5531991897926',
     });
     createdCompany = await companyRepository.save(company);
   }, 50000);
@@ -143,10 +140,12 @@ describe('DepartmentsController (E2E)', () => {
       .expect(201);
 
     expect(response.status).toBe(201);
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       succeeded: true,
-      data: null,
-      message: `Setor cadastrado com sucesso, id: #1.`,
+      data: {
+        nome: department.nome,
+      },
+      message: expect.stringContaining('Setor cadastrado com sucesso, id: #'),
     });
   });
 
@@ -159,10 +158,7 @@ describe('DepartmentsController (E2E)', () => {
     expect(response.body).toHaveProperty('message');
     expect(Array.isArray(response.body.message)).toBe(true);
     expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'nome should not be empty',
-        'criadoPor should not be empty',
-      ]),
+      expect.arrayContaining(['nome should not be empty']),
     );
   });
 
@@ -180,10 +176,9 @@ describe('DepartmentsController (E2E)', () => {
 
   it('/v1/empresas/:empresaId/setores (POST) - Deve retornar erro caso o ID da empresa não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/999/setores`)
+      .post(`/v1/empresas/86f226c4-38b0-464c-987e-35293033faf6/setores`)
       .send({
         ...department,
-        criadoPor: createdUser.id,
       })
       .expect(404);
 
@@ -194,44 +189,11 @@ describe('DepartmentsController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/:empresaId/setores (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
-    const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/setores`)
-      .send({
-        ...department,
-        criadoPor: 'Teste',
-      })
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'criadoPor must be a number conforming to the specified constraints',
-      ]),
-    );
-  });
-
-  it('/v1/empresas/:empresaId/setores (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
-    const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/setores`)
-      .send({
-        ...department,
-        criadoPor: 999,
-      })
-      .expect(404);
-
-    expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
-    });
-  });
-
   it('/v1/empresas/:empresaId/setores (GET) - Deve listar todos os setores de uma empresa', async () => {
     const departmentsRepository = dataSource.getRepository(Department);
     await departmentsRepository.save({
       ...department,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
@@ -247,7 +209,6 @@ describe('DepartmentsController (E2E)', () => {
     const createdDepartment = await departmentsRepository.save({
       ...department,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
@@ -262,7 +223,7 @@ describe('DepartmentsController (E2E)', () => {
 
   it('/v1/empresas/setores/:id (GET) - Deve retornar erro ao buscar uma setor inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/empresas/setores/999')
+      .get('/v1/empresas/setores/86f226c4-38b0-464c-987e-35293033faf6')
       .expect(404);
 
     expect(response.body).toEqual({
@@ -279,7 +240,7 @@ describe('DepartmentsController (E2E)', () => {
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
@@ -289,12 +250,10 @@ describe('DepartmentsController (E2E)', () => {
     const createdDepartment = await departmentsRepository.save({
       ...department,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
 
     const updateData: UpdateDepartmentDto = {
       nome: 'Recursos Humanos',
-      atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
@@ -305,18 +264,12 @@ describe('DepartmentsController (E2E)', () => {
     expect(response.body).toMatchObject({
       succeeded: true,
       data: {
-        id: expect.any(Number),
-        nome: 'Recursos Humanos',
-        atualizadoPor: expect.any(String),
+        id: createdDepartment.id,
+        nome: updateData.nome,
+        atualizadoPor: createdUser.nome,
       },
       message: `Setor id: #${createdDepartment.id} atualizado com sucesso.`,
     });
-
-    const updatedDepartment = await departmentsRepository.findOneBy({
-      id: createdDepartment.id,
-    });
-
-    expect(updatedDepartment.nome).toBe(updateData.nome);
   });
 
   it('/v1/empresas/setores/:id (PATCH) - Deve retornar um erro ao atualizar um setor com tipo de dado inválido', async () => {
@@ -324,12 +277,10 @@ describe('DepartmentsController (E2E)', () => {
     const createdDepartment = await departmentsRepository.save({
       ...department,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
 
     const updateData = {
       nome: 123,
-      atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
@@ -343,102 +294,26 @@ describe('DepartmentsController (E2E)', () => {
     );
   });
 
-  it('/v1/empresas/setores/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
-    const departmentsRepository = dataSource.getRepository(Department);
-    const createdDepartment = await departmentsRepository.save({
-      ...department,
-      empresa: createdCompany,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      nome: 'Recursos Humanos',
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/setores/${createdDepartment.id}`)
-      .send(updateData)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O usuário responsável pela atualização deve ser informado.',
-      ]),
-    );
-  });
-
-  it('/v1/empresas/setores/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
-    const departmentsRepository = dataSource.getRepository(Department);
-    const createdDepartment = await departmentsRepository.save({
-      ...department,
-      empresa: createdCompany,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      nome: 'Recursos Humanos',
-      atualizadoPor: 'Teste',
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/setores/${createdDepartment.id}`)
-      .send(updateData)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O identificador do usuário deve ser um número.',
-      ]),
-    );
-  });
-
-  it('/v1/empresas/setores/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
-    const departmentsRepository = dataSource.getRepository(Department);
-    const createdDepartment = await departmentsRepository.save({
-      ...department,
-      empresa: createdCompany,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      nome: 'Recursos Humanos',
-      atualizadoPor: 999,
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/setores/${createdDepartment.id}`)
-      .send(updateData)
-      .expect(404);
-
-    expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
-    });
-  });
-
   it('/v1/empresas/setores/:id (PATCH) - Deve retornar erro ao atualizar uma setor com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
       .patch('/v1/empresas/setores/abc')
       .send({
         nome: 'Recursos Humanos',
-        atualizadoPor: 1,
       })
       .expect(400);
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
 
   it('/v1/empresas/setores/:id (PATCH) - Deve retornar erro ao atualizar um setor inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/empresas/setores/9999')
+      .patch('/v1/empresas/setores/86f226c4-38b0-464c-987e-35293033faf6')
       .send({
         nomeFantasia: 'Setor Inexistente',
-        atualizadoPor: 1,
       })
       .expect(404);
 
@@ -454,107 +329,44 @@ describe('DepartmentsController (E2E)', () => {
     const createdDepartment = await departmentsRepository.save({
       ...department,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
-
-    const deleleDepartmentDto: BaseDeleteDto = {
-      excluidoPor: createdUser.id,
-    };
 
     const response = await request(app.getHttpServer())
       .delete(`/v1/empresas/setores/${createdDepartment.id}`)
-      .send(deleleDepartmentDto)
       .expect(200);
 
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       succeeded: true,
-      data: null,
+      data: {
+        id: createdDepartment.id,
+        nome: createdDepartment.nome,
+        atualizadoPor: createdUser.nome,
+        status: 'E',
+      },
       message: `Setor id: #${createdDepartment.id} excluído com sucesso.`,
-    });
-
-    const deletedDepartment = await departmentsRepository.findOneBy({
-      id: createdDepartment.id,
-    });
-
-    expect(deletedDepartment.status).toBe('E');
-  });
-
-  it('/v1/empresas/setores/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
-    const response = await request(app.getHttpServer())
-      .delete(`/v1/empresas/setores/1`)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O usuário responsável pela exclusão deve ser informado.',
-      ]),
-    );
-  });
-
-  it('/v1/empresas/setores/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
-    const deleleDepartmentDto = {
-      excluidoPor: 'Teste',
-    };
-
-    const response = await request(app.getHttpServer())
-      .delete(`/v1/empresas/setores/1`)
-      .send(deleleDepartmentDto)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O identificador do usuário deve ser um número.',
-      ]),
-    );
-  });
-
-  it('/v1/empresas/setores/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
-    const deleleDepartmentDto: BaseDeleteDto = {
-      excluidoPor: 999,
-    };
-
-    const response = await request(app.getHttpServer())
-      .delete(`/v1/empresas/setores/${createdCompany.id}`)
-      .send(deleleDepartmentDto)
-      .expect(404);
-
-    expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
     });
   });
 
   it('/v1/empresas/setores/:id (DELETE) - Deve retornar erro ao excluir um setor com um ID inválido', async () => {
-    const deleleDepartmentDto: BaseDeleteDto = {
-      excluidoPor: 1,
-    };
-
     const response = await request(app.getHttpServer())
       .delete('/v1/empresas/setores/abc')
-      .send(deleleDepartmentDto)
       .expect(400);
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
 
   it('/v1/empresas/setores/:id (DELETE) - Deve retornar erro ao excluir um setor inexistente', async () => {
-    const deleleDepartmentDto: BaseDeleteDto = {
-      excluidoPor: createdUser.id,
-    };
-
     const response = await request(app.getHttpServer())
-      .delete('/v1/empresas/setores/9999')
-      .send(deleleDepartmentDto)
+      .delete('/v1/empresas/setores/86f226c4-38b0-464c-987e-35293033faf6')
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Setor não encontrado.',
+      message: 'Setor já excluído ou não encontrado.',
       error: 'Not Found',
     });
   });

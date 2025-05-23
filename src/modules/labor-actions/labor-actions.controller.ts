@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { LaborActionsService } from './labor-actions.service';
 import { CreateLaborActionDto } from './dto/create-labor-action.dto';
@@ -21,8 +21,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { LaborActionResponseDto } from './dto/labor-action-response.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/funcionarios')
 @ApiTags('Ações Trabalhistas')
@@ -38,7 +39,7 @@ export class LaborActionsController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -63,18 +64,20 @@ export class LaborActionsController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('funcionarioId', ParseIntPipe) employeeId: number,
+    @Param('funcionarioId', ParseUUIDPipe) employeeId: string,
     @Body() createLaborActionDto: CreateLaborActionDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const laborActionId = await this.laborActionsService.create(
+    const laborAction = await this.laborActionsService.create(
       employeeId,
       createLaborActionDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Ação trabalhista cadastrada com sucesso, id: #${laborActionId}.`,
+      data: laborAction,
+      message: `Ação trabalhista cadastrada com sucesso, id: #${laborAction.id}.`,
     };
   }
 
@@ -88,7 +91,7 @@ export class LaborActionsController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -97,7 +100,7 @@ export class LaborActionsController {
     type: [LaborActionResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('funcionarioId', ParseIntPipe) employeeId: number) {
+  findAll(@Param('funcionarioId', ParseUUIDPipe) employeeId: string) {
     return this.laborActionsService.findAll(employeeId);
   }
 
@@ -111,7 +114,7 @@ export class LaborActionsController {
   @ApiParam({
     name: 'id',
     description: 'ID da ação trabalhista.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -120,7 +123,7 @@ export class LaborActionsController {
     type: LaborActionResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.laborActionsService.findOne(id);
   }
 
@@ -134,7 +137,7 @@ export class LaborActionsController {
   @ApiParam({
     name: 'id',
     description: 'ID da ação trabalhista.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -160,12 +163,14 @@ export class LaborActionsController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateLaborActionDto: UpdateLaborActionDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
     const laborAction = await this.laborActionsService.update(
       id,
       updateLaborActionDto,
+      user.id,
     );
 
     return {
@@ -184,12 +189,8 @@ export class LaborActionsController {
   @ApiParam({
     name: 'id',
     description: 'ID da ação trabalhista.',
-    type: 'number',
+    type: 'string',
     required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para excluir os dados da ação trabalhista',
-    type: BaseDeleteDto,
   })
   @ApiResponse({
     status: 200,
@@ -209,15 +210,15 @@ export class LaborActionsController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteLaborActionDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.laborActionsService.remove(id, deleteLaborActionDto);
+    const laborAction = await this.laborActionsService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Ação trabalhista id: #${id} excluída com sucesso.`,
+      data: laborAction,
+      message: `Ação trabalhista id: #${laborAction.id} excluída com sucesso.`,
     };
   }
 }

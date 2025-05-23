@@ -8,7 +8,6 @@ import { CostCenter } from './entities/cost-center.entity';
 import { plainToInstance } from 'class-transformer';
 import { CostCenterResponseDto } from './dto/cost-center-response.dto';
 import { UsersService } from '../users/users.service';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Injectable()
 export class CostCentersService {
@@ -19,23 +18,29 @@ export class CostCentersService {
     private readonly usersService: UsersService,
   ) {}
 
-  async create(companyId: number, createCostCenterDto: CreateCostCenterDto) {
+  async create(
+    companyId: string,
+    createCostCenterDto: CreateCostCenterDto,
+    createdBy: string,
+  ) {
     const company = await this.companiesService.findOne(companyId);
 
-    const user = await this.usersService.findOne(createCostCenterDto.criadoPor);
+    const user = await this.usersService.findOne(createdBy);
 
     const costCenter = this.costCenterRepository.create({
       ...createCostCenterDto,
-      empresa: company,
+      empresa: { id: company.id },
       criadoPor: user,
     });
 
     await this.costCenterRepository.save(costCenter);
 
-    return costCenter.id;
+    return plainToInstance(CostCenterResponseDto, costCenter, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findAll(companyId: number) {
+  async findAll(companyId: string) {
     const company = await this.companiesService.findOne(companyId);
 
     const costCenters = await this.costCenterRepository.find({
@@ -50,7 +55,7 @@ export class CostCentersService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const costCenter = await this.costCenterRepository.findOne({
       where: {
         id,
@@ -67,10 +72,26 @@ export class CostCentersService {
     });
   }
 
-  async update(id: number, updateCostCenterDto: UpdateCostCenterDto) {
-    const user = await this.usersService.findOne(
-      updateCostCenterDto.atualizadoPor,
-    );
+  async findOneInternal(id: string) {
+    const costCenter = await this.costCenterRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!costCenter) {
+      throw new NotFoundException('Centro de custo não encontrado.');
+    }
+
+    return costCenter;
+  }
+
+  async update(
+    id: string,
+    updateCostCenterDto: UpdateCostCenterDto,
+    updatedBy: string,
+  ) {
+    const user = await this.usersService.findOne(updatedBy);
 
     const result = await this.costCenterRepository.update(id, {
       ...updateCostCenterDto,
@@ -81,23 +102,34 @@ export class CostCentersService {
       throw new NotFoundException('Centro de custo não encontrado.');
     }
 
-    return this.findOne(id);
+    const updatedCostCenter = await this.findOne(id);
+
+    return updatedCostCenter;
   }
 
-  async remove(id: number, deleteCostCenterDto: BaseDeleteDto) {
-    const user = await this.usersService.findOne(
-      deleteCostCenterDto.excluidoPor,
+  async remove(id: string, deletedBy: string) {
+    const user = await this.usersService.findOne(deletedBy);
+
+    const result = await this.costCenterRepository.update(
+      { id, status: 'A' },
+      {
+        status: 'E',
+        atualizadoPor: user,
+      },
     );
 
-    const result = await this.costCenterRepository.update(id, {
-      status: 'E',
-      atualizadoPor: user,
-    });
-
     if (result.affected === 0) {
-      throw new NotFoundException('Centro de custo não encontrado.');
+      throw new NotFoundException(
+        'Centro de custo já excluído ou não encontrado.',
+      );
     }
 
-    return { id, status: 'E' };
+    const removedCostCenter = await this.costCenterRepository.findOne({
+      where: { id },
+    });
+
+    return plainToInstance(CostCenterResponseDto, removedCostCenter, {
+      excludeExtraneousValues: true,
+    });
   }
 }

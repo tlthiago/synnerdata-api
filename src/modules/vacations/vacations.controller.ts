@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { VacationsService } from './vacations.service';
 import { CreateVacationDto } from './dto/create-vacation.dto';
@@ -21,8 +21,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { VacationResponseDto } from './dto/vacation-response.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/funcionarios')
 @ApiTags('Férias')
@@ -38,7 +39,7 @@ export class VacationsController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -63,18 +64,20 @@ export class VacationsController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('funcionarioId', ParseIntPipe) employeeId: number,
+    @Param('funcionarioId', ParseUUIDPipe) employeeId: string,
     @Body() createVacationDto: CreateVacationDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const vacationId = await this.vacationsService.create(
+    const vacation = await this.vacationsService.create(
       employeeId,
       createVacationDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Férias cadastrada com sucesso, id: #${vacationId}.`,
+      data: vacation,
+      message: `Férias cadastrada com sucesso, id: #${vacation.id}.`,
     };
   }
 
@@ -88,7 +91,7 @@ export class VacationsController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -97,7 +100,7 @@ export class VacationsController {
     type: [VacationResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('funcionarioId', ParseIntPipe) employeeId: number) {
+  findAll(@Param('funcionarioId', ParseUUIDPipe) employeeId: string) {
     return this.vacationsService.findAll(employeeId);
   }
 
@@ -110,7 +113,7 @@ export class VacationsController {
   @ApiParam({
     name: 'id',
     description: 'ID da férias.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -119,7 +122,7 @@ export class VacationsController {
     type: VacationResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.vacationsService.findOne(id);
   }
 
@@ -132,7 +135,7 @@ export class VacationsController {
   @ApiParam({
     name: 'id',
     description: 'ID da férias.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -157,10 +160,15 @@ export class VacationsController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateVacationDto: UpdateVacationDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const vacation = await this.vacationsService.update(id, updateVacationDto);
+    const vacation = await this.vacationsService.update(
+      id,
+      updateVacationDto,
+      user.id,
+    );
 
     return {
       succeeded: true,
@@ -178,12 +186,8 @@ export class VacationsController {
   @ApiParam({
     name: 'id',
     description: 'ID da férias.',
-    type: 'number',
+    type: 'string',
     required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para atualizar os dados da férias',
-    type: BaseDeleteDto,
   })
   @ApiResponse({
     status: 200,
@@ -203,15 +207,15 @@ export class VacationsController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteVacationDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.vacationsService.remove(id, deleteVacationDto);
+    const vacation = await this.vacationsService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Férias id: #${id} excluída com sucesso.`,
+      data: vacation,
+      message: `Férias id: #${vacation.id} excluída com sucesso.`,
     };
   }
 }

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsDateString } from 'class-validator';
+import { IsNotEmpty, IsDateString } from 'class-validator';
 
 export class CreateVacationDto {
   @ApiProperty({ description: 'Data de início das férias.' })
@@ -11,11 +11,4 @@ export class CreateVacationDto {
   @IsDateString()
   @IsNotEmpty()
   dataFim: string;
-
-  @ApiProperty({
-    description: 'Usuário responsável pelo cadastro das férias.',
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  criadoPor: number;
 }

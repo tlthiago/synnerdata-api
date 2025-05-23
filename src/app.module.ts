@@ -25,6 +25,7 @@ import { LaborActionsModule } from './modules/labor-actions/labor-actions.module
 import { EpiDeliveryModule } from './modules/epi-delivery/epi-delivery.module';
 import { VacationsModule } from './modules/vacations/vacations.module';
 import { EmployeesProjectsModule } from './modules/employees-projects/employees-projects.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 import { MailModule } from './modules/services/mail/mail.module';
 
 @Module({
@@ -63,6 +64,7 @@ import { MailModule } from './modules/services/mail/mail.module';
     EpiDeliveryModule,
     VacationsModule,
     EmployeesProjectsModule,
+    PaymentsModule,
     MailModule,
   ],
   controllers: [],

@@ -1,119 +1,119 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class Migration1739741413322 implements MigrationInterface {
-  name = 'Migration1739741413322';
+export class Migration1746794323671 implements MigrationInterface {
+  name = 'Migration1746794323671';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `CREATE TYPE "public"."usuarios_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."usuarios_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "usuarios" ("id" SERIAL NOT NULL, "nome" character varying(255) NOT NULL, "email" character varying NOT NULL, "senha" character varying NOT NULL, "funcao" character varying NOT NULL, "status" "public"."usuarios_status_enum" NOT NULL DEFAULT 'A', "criado_por" integer, "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_por" integer, "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_446adfc18b35418aac32ae0b7b5" UNIQUE ("email"), CONSTRAINT "PK_d7281c63c176e152e4c531594a8" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "usuarios" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "nome" character varying(255) NOT NULL, "email" character varying NOT NULL, "senha" character varying, "funcao" character varying NOT NULL, "primeiro_acesso" boolean NOT NULL DEFAULT true, "status" "public"."usuarios_status_enum" NOT NULL DEFAULT 'A', "criado_por" uuid, "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_por" uuid, "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "empresa" uuid, CONSTRAINT "UQ_446adfc18b35418aac32ae0b7b5" UNIQUE ("email"), CONSTRAINT "PK_d7281c63c176e152e4c531594a8" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."faltas_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."faltas_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "faltas" ("id" SERIAL NOT NULL, "status" "public"."faltas_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" date NOT NULL, "motivo" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_f5990e028829287d55315bd6ed2" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "faltas" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."faltas_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" date NOT NULL, "motivo" character varying(255) NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "funcionarioId" uuid, CONSTRAINT "PK_f5990e028829287d55315bd6ed2" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."atestados_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."atestados_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "atestados" ("id" SERIAL NOT NULL, "status" "public"."atestados_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data_inicio" date NOT NULL, "data_fim" date NOT NULL, "motivo" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_47af221bfabcbbc7075f3a09e64" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "atestados" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."atestados_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data_inicio" date NOT NULL, "data_fim" date NOT NULL, "motivo" character varying(255) NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "funcionarioId" uuid, CONSTRAINT "PK_47af221bfabcbbc7075f3a09e64" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."filiais_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."filiais_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "filiais" ("id" SERIAL NOT NULL, "status" "public"."filiais_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "cnpj" character varying(14) NOT NULL, "rua" character varying(255) NOT NULL, "numero" character varying(10) NOT NULL, "complemento" character varying(100), "bairro" character varying(100) NOT NULL, "cidade" character varying(100) NOT NULL, "estado" character varying(2) NOT NULL, "cep" character varying(10) NOT NULL, "data_fundacao" date, "telefone" character varying(20), "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "empresaId" integer, CONSTRAINT "UQ_69b849a883435ef28afc72a6a0c" UNIQUE ("cnpj"), CONSTRAINT "PK_9cc507f6ebfb9cdeca7f05044f5" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "filiais" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."filiais_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "cnpj" character varying(14) NOT NULL, "rua" character varying(255) NOT NULL, "numero" character varying(10) NOT NULL, "complemento" character varying(100), "bairro" character varying(100) NOT NULL, "cidade" character varying(100) NOT NULL, "estado" character varying(2) NOT NULL, "cep" character varying(10) NOT NULL, "data_fundacao" date, "telefone" character varying(20), "celular" character varying(20) NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "empresaId" uuid, CONSTRAINT "UQ_69b849a883435ef28afc72a6a0c" UNIQUE ("cnpj"), CONSTRAINT "PK_9cc507f6ebfb9cdeca7f05044f5" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."setores_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."setores_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "setores" ("id" SERIAL NOT NULL, "status" "public"."setores_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "empresaId" integer, CONSTRAINT "PK_85908551895de8d968532c35d07" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "setores" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."setores_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "empresaId" uuid, CONSTRAINT "PK_85908551895de8d968532c35d07" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."centros_de_custo_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."centros_de_custo_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "centros_de_custo" ("id" SERIAL NOT NULL, "status" "public"."centros_de_custo_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "empresaId" integer, CONSTRAINT "PK_1e81867ce2846ef8683cd57070e" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "centros_de_custo" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."centros_de_custo_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "empresaId" uuid, CONSTRAINT "PK_1e81867ce2846ef8683cd57070e" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."cbos_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."cbos_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "cbos" ("id" SERIAL NOT NULL, "status" "public"."cbos_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "empresaId" integer, CONSTRAINT "PK_f04e510d8386ef479ba0188809d" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "cbos" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."cbos_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "empresaId" uuid, CONSTRAINT "PK_f04e510d8386ef479ba0188809d" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."entregas_de_epis_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."entregas_de_epis_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "entregas_de_epis" ("id" SERIAL NOT NULL, "status" "public"."entregas_de_epis_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" date NOT NULL, "motivo" character varying(255) NOT NULL, "entregue_por" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_0cc69811debcd4c43332a1210ec" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "entregas_de_epis" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."entregas_de_epis_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" date NOT NULL, "motivo" character varying(255) NOT NULL, "entregue_por" character varying(255) NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "funcionarioId" uuid, CONSTRAINT "PK_0cc69811debcd4c43332a1210ec" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."epis_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."epis_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "epis" ("id" SERIAL NOT NULL, "status" "public"."epis_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "descricao" character varying(255) NOT NULL, "equipamentos" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "empresaId" integer, CONSTRAINT "PK_470f0275b622d24454cf42f6e99" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "epis" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."epis_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "descricao" character varying(255) NOT NULL, "equipamentos" character varying(255) NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "empresaId" uuid, CONSTRAINT "PK_470f0275b622d24454cf42f6e99" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."projetos_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."projetos_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "projetos" ("id" SERIAL NOT NULL, "status" "public"."projetos_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "descricao" character varying(255) NOT NULL, "data_inicio" date NOT NULL, "cno" character varying(12) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "empresaId" integer, CONSTRAINT "PK_fb6b6aed4b30e10b976fe8bdf5b" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "projetos" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."projetos_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "descricao" character varying(255) NOT NULL, "data_inicio" date NOT NULL, "cno" character varying(12) NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "empresaId" uuid, CONSTRAINT "PK_fb6b6aed4b30e10b976fe8bdf5b" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."empresas_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."empresas_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "empresas" ("id" SERIAL NOT NULL, "status" "public"."empresas_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome_fantasia" character varying(255) NOT NULL, "razao_social" character varying(255) NOT NULL, "cnpj" character varying(14) NOT NULL, "rua" character varying(255) NOT NULL, "numero" character varying(10) NOT NULL, "complemento" character varying(100), "bairro" character varying(100) NOT NULL, "cidade" character varying(100) NOT NULL, "estado" character varying(2) NOT NULL, "cep" character varying(10) NOT NULL, "data_fundacao" date NOT NULL, "telefone" character varying(20) NOT NULL, "faturamento" numeric(15,2) NOT NULL, "regime_tributario" character varying(50) NOT NULL, "inscricao_estadual" character varying(50) NOT NULL, "cnae_principal" character varying(50) NOT NULL, "segmento" character varying(100) NOT NULL, "ramo_atuacao" character varying(100) NOT NULL, "logo_url" character varying(500), "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, CONSTRAINT "UQ_f5ed71aeb4ef47f95df5f8830b8" UNIQUE ("cnpj"), CONSTRAINT "PK_ce7b122b37c6499bfd6520873e1" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "empresas" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "nome_fantasia" character varying(255) NOT NULL, "razao_social" character varying(255) NOT NULL, "cnpj" character varying(14) NOT NULL, "rua" character varying(255) NOT NULL, "numero" character varying(10) NOT NULL, "complemento" character varying(100), "bairro" character varying(100) NOT NULL, "cidade" character varying(100) NOT NULL, "estado" character varying(2) NOT NULL, "cep" character varying(10) NOT NULL, "data_fundacao" date, "email" character varying(100), "telefone" character varying(20), "celular" character varying(20) NOT NULL, "faturamento" numeric(15,2), "regime_tributario" character varying(50), "inscricao_estadual" character varying(50), "cnae_principal" character varying(50), "segmento" character varying(100), "ramo_atuacao" character varying(100), "logo_url" character varying(500), "qt_usuarios" integer NOT NULL DEFAULT '3', "status" "public"."empresas_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_f5ed71aeb4ef47f95df5f8830b8" UNIQUE ("cnpj"), CONSTRAINT "PK_ce7b122b37c6499bfd6520873e1" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."funcoes_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."funcoes_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "funcoes" ("id" SERIAL NOT NULL, "status" "public"."funcoes_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "empresaId" integer, CONSTRAINT "PK_48495eac66422a689003585fb88" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "funcoes" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."funcoes_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "empresaId" uuid, CONSTRAINT "PK_48495eac66422a689003585fb88" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."promocoes_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."promocoes_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "promocoes" ("id" SERIAL NOT NULL, "status" "public"."promocoes_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "salario" numeric(10,2) NOT NULL, "data" date NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcaoId" integer, "funcionarioId" integer, CONSTRAINT "PK_71c26f436e5727cf140cd8a095e" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "promocoes" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."promocoes_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "salario" numeric(10,2) NOT NULL, "data" date NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "funcaoId" uuid, "funcionarioId" uuid, CONSTRAINT "PK_71c26f436e5727cf140cd8a095e" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."demissoes_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."demissoes_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "demissoes" ("id" SERIAL NOT NULL, "status" "public"."demissoes_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" date NOT NULL, "motivo_interno" character varying(255) NOT NULL, "motivo_trabalhista" character varying(255) NOT NULL, "acao_trabalhista" character varying(255) NOT NULL, "forma_demissao" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_5b29022a7f9c3e19a579ade42fb" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "demissoes" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."demissoes_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" date NOT NULL, "motivo_interno" character varying(255) NOT NULL, "motivo_trabalhista" character varying(255) NOT NULL, "acao_trabalhista" character varying(255) NOT NULL, "forma_demissao" character varying(255) NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "funcionarioId" uuid, CONSTRAINT "PK_5b29022a7f9c3e19a579ade42fb" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."analise_de_cpf_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."analise_de_cpf_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "analise_de_cpf" ("id" SERIAL NOT NULL, "status" "public"."analise_de_cpf_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "descricao" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_b75858c5ee8e4d17dd4a97967eb" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "analise_de_cpf" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."analise_de_cpf_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "descricao" character varying(255) NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "funcionarioId" uuid, CONSTRAINT "PK_b75858c5ee8e4d17dd4a97967eb" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."acidentes_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."acidentes_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "acidentes" ("id" SERIAL NOT NULL, "status" "public"."acidentes_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "descricao" character varying(255) NOT NULL, "data" date NOT NULL, "natureza" character varying(255) NOT NULL, "cat" character varying(15) NOT NULL, "medidasTomadas" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_69d71abea5206c911e07ce91335" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "acidentes" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."acidentes_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "descricao" character varying(255) NOT NULL, "data" date NOT NULL, "natureza" character varying(255) NOT NULL, "cat" character varying(15), "medidasTomadas" character varying(255) NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "funcionarioId" uuid, CONSTRAINT "PK_69d71abea5206c911e07ce91335" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."acoes_trabalhistas_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."acoes_trabalhistas_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "acoes_trabalhistas" ("id" SERIAL NOT NULL, "status" "public"."acoes_trabalhistas_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "numero_processo" character varying NOT NULL, "tribunal" character varying NOT NULL, "data_ajuizamento" date NOT NULL, "reclamante" character varying NOT NULL, "reclamado" character varying NOT NULL, "advogado_reclamante" character varying, "advogado_reclamado" character varying, "descricao" character varying NOT NULL, "valor_causa" numeric(10,2), "andamento" character varying, "decisao" character varying, "data_conclusao" date, "recursos" character varying, "custas_despesas" numeric(10,2), "data_conhecimento" date NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_41014cd4224847fd66b43fe5cfd" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "acoes_trabalhistas" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."acoes_trabalhistas_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "numero_processo" character varying NOT NULL, "tribunal" character varying NOT NULL, "data_ajuizamento" date NOT NULL, "reclamante" character varying NOT NULL, "reclamado" character varying NOT NULL, "advogado_reclamante" character varying, "advogado_reclamado" character varying, "descricao" character varying NOT NULL, "valor_causa" numeric(10,2), "andamento" character varying, "decisao" character varying, "data_conclusao" date, "recursos" character varying, "custas_despesas" numeric(10,2), "data_conhecimento" date NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "funcionarioId" uuid, CONSTRAINT "PK_41014cd4224847fd66b43fe5cfd" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."ferias_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."ferias_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "ferias" ("id" SERIAL NOT NULL, "status" "public"."ferias_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data_inicio" date NOT NULL, "data_fim" date NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_15aaf56d0233a1f69ebb6dc1502" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "ferias" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."ferias_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data_inicio" date NOT NULL, "data_fim" date NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "funcionarioId" uuid, CONSTRAINT "PK_15aaf56d0233a1f69ebb6dc1502" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."funcionarios_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."funcionarios_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."funcionarios_sexo_enum" AS ENUM('MASCULINO', 'FEMININO', 'NAO_DECLARADO', 'OUTRO')`,
@@ -134,34 +134,37 @@ export class Migration1739741413322 implements MigrationInterface {
       `CREATE TYPE "public"."funcionarios_status_funcionario_enum" AS ENUM('ATIVO', 'DEMITIDO', 'AFASTADO', 'EM_FERIAS', 'FERIAS_PROGRAMADA')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "funcionarios" ("id" SERIAL NOT NULL, "status" "public"."funcionarios_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "carteira_identidade" character varying(14) NOT NULL, "cpf" character varying(11) NOT NULL, "sexo" "public"."funcionarios_sexo_enum" NOT NULL, "data_nascimento" date NOT NULL, "estado_civil" "public"."funcionarios_estado_civil_enum" NOT NULL, "naturalidade" character varying(100) NOT NULL, "nacionalidade" character varying(100) NOT NULL, "altura" numeric(4,2) NOT NULL, "peso" numeric(6,2) NOT NULL, "nome_pai" character varying(100) NOT NULL, "nome_mae" character varying(100) NOT NULL, "email" character varying(100) NOT NULL, "pis" character varying(11) NOT NULL, "ctps_numero" character varying(7) NOT NULL, "ctps_serie" character varying(4) NOT NULL, "certificado_reservista" character varying(14) NOT NULL, "regime_contratacao" "public"."funcionarios_regime_contratacao_enum" NOT NULL, "data_admissao" date NOT NULL, "salario" numeric(10,2) NOT NULL, "data_ultimo_aso" date, "vencimento_experiencia_1" date, "vencimento_experiencia_2" date, "data_exame_demissional" date, "grau_instrucao" "public"."funcionarios_grau_instrucao_enum" NOT NULL, "necessidades_especiais" boolean NOT NULL, "tipo_deficiencia" character varying(255), "filhos" boolean NOT NULL, "quantidade_filhos" integer, "telefone" character varying(20), "celular" character varying(20) NOT NULL, "gestor" character varying(255) NOT NULL, "rua" character varying(255) NOT NULL, "numero" character varying(10) NOT NULL, "complemento" character varying(100), "bairro" character varying(100) NOT NULL, "cidade" character varying(100) NOT NULL, "estado" character varying(2) NOT NULL, "cep" character varying(10) NOT NULL, "latitude" numeric(9,6), "longitude" numeric(9,6), "quantidade_onibus" integer NOT NULL, "carga_horaria" numeric(5,2) NOT NULL, "escala" "public"."funcionarios_escala_enum" NOT NULL, "status_funcionario" "public"."funcionarios_status_funcionario_enum" NOT NULL DEFAULT 'ATIVO', "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcaoId" integer NOT NULL, "setorId" integer NOT NULL, "centroCustoId" integer, "cboId" integer NOT NULL, "empresaId" integer, CONSTRAINT "UQ_a0de321e9da6c025e7fc92f0bd8" UNIQUE ("cpf"), CONSTRAINT "PK_a6ee7c0e30d968db531ad073337" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "funcionarios" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."funcionarios_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "nome" character varying(255) NOT NULL, "carteira_identidade" character varying(14) NOT NULL, "cpf" character varying(11) NOT NULL, "sexo" "public"."funcionarios_sexo_enum" NOT NULL, "data_nascimento" date NOT NULL, "estado_civil" "public"."funcionarios_estado_civil_enum" NOT NULL, "naturalidade" character varying(100) NOT NULL, "nacionalidade" character varying(100) NOT NULL, "altura" numeric(4,2) NOT NULL, "peso" numeric(6,2) NOT NULL, "nome_pai" character varying(100) NOT NULL, "nome_mae" character varying(100) NOT NULL, "email" character varying(100) NOT NULL, "pis" character varying(11) NOT NULL, "ctps_numero" character varying(7) NOT NULL, "ctps_serie" character varying(4) NOT NULL, "certificado_reservista" character varying(14) NOT NULL, "regime_contratacao" "public"."funcionarios_regime_contratacao_enum" NOT NULL, "data_admissao" date NOT NULL, "salario" numeric(10,2) NOT NULL, "data_ultimo_aso" date, "vencimento_experiencia_1" date, "vencimento_experiencia_2" date, "data_exame_demissional" date, "grau_instrucao" "public"."funcionarios_grau_instrucao_enum" NOT NULL, "necessidades_especiais" boolean NOT NULL, "tipo_deficiencia" character varying(255), "filhos" boolean NOT NULL, "quantidade_filhos" integer, "telefone" character varying(20), "celular" character varying(20) NOT NULL, "gestor" character varying(255) NOT NULL, "rua" character varying(255) NOT NULL, "numero" character varying(10) NOT NULL, "complemento" character varying(100), "bairro" character varying(100) NOT NULL, "cidade" character varying(100) NOT NULL, "estado" character varying(2) NOT NULL, "cep" character varying(10) NOT NULL, "latitude" numeric(9,6), "longitude" numeric(9,6), "quantidade_onibus" integer NOT NULL, "carga_horaria" numeric(5,2) NOT NULL, "escala" "public"."funcionarios_escala_enum" NOT NULL, "status_funcionario" "public"."funcionarios_status_funcionario_enum" NOT NULL DEFAULT 'ATIVO', "criadoPorId" uuid, "atualizadoPorId" uuid, "funcaoId" uuid NOT NULL, "setorId" uuid NOT NULL, "centroCustoId" uuid, "cboId" uuid NOT NULL, "empresaId" uuid, CONSTRAINT "UQ_a0de321e9da6c025e7fc92f0bd8" UNIQUE ("cpf"), CONSTRAINT "PK_a6ee7c0e30d968db531ad073337" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."advertencias_status_enum" AS ENUM('A', 'I', 'E')`,
+      `CREATE TYPE "public"."advertencias_status_enum" AS ENUM('A', 'I', 'E', 'P')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "advertencias" ("id" SERIAL NOT NULL, "status" "public"."advertencias_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" date NOT NULL, "motivo" character varying(255) NOT NULL, "criadoPorId" integer NOT NULL, "atualizadoPorId" integer, "funcionarioId" integer, CONSTRAINT "PK_daf66cb2e71e4926957c7d74b79" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "advertencias" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."advertencias_status_enum" NOT NULL DEFAULT 'A', "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "atualizado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "data" date NOT NULL, "motivo" character varying(255) NOT NULL, "criadoPorId" uuid, "atualizadoPorId" uuid, "funcionarioId" uuid, CONSTRAINT "PK_daf66cb2e71e4926957c7d74b79" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "tokens_de_ativacao_de_usuarios" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "email" character varying NOT NULL, "token" uuid NOT NULL, "expira_em" TIMESTAMP WITH TIME ZONE NOT NULL, "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_09bdb86c27ec16a169e402c3030" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."funcao_epi_logs_acao_enum" AS ENUM('REMOVEU', 'ADICIONOU')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "funcao_epi_logs" ("id" SERIAL NOT NULL, "acao" "public"."funcao_epi_logs_acao_enum" NOT NULL, "descricao" character varying NOT NULL, "criado_por" integer NOT NULL, "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "funcaoId" integer, "epiId" integer, CONSTRAINT "PK_9ccde2cb971be53184066677c37" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "funcao_epi_logs" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "acao" "public"."funcao_epi_logs_acao_enum" NOT NULL, "descricao" character varying NOT NULL, "criado_por" uuid NOT NULL, "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "funcaoId" uuid, "epiId" uuid, CONSTRAINT "PK_9ccde2cb971be53184066677c37" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."entregas_epis_logs_acao_enum" AS ENUM('REMOVEU', 'ADICIONOU')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "entregas_epis_logs" ("id" SERIAL NOT NULL, "acao" "public"."entregas_epis_logs_acao_enum" NOT NULL, "descricao" character varying NOT NULL, "criado_por" integer NOT NULL, "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "entregaDeEpiId" integer, "epiId" integer, CONSTRAINT "PK_682e5f76e9269d81340364a724f" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "entregas_epis_logs" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "acao" "public"."entregas_epis_logs_acao_enum" NOT NULL, "descricao" character varying NOT NULL, "criado_por" uuid NOT NULL, "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "entregaDeEpiId" uuid, "epiId" uuid, CONSTRAINT "PK_682e5f76e9269d81340364a724f" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."funcionarios_projetos_logs_acao_enum" AS ENUM('ADICIONOU', 'REMOVEU')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "funcionarios_projetos_logs" ("id" SERIAL NOT NULL, "data_inicio" date NOT NULL DEFAULT now(), "acao" "public"."funcionarios_projetos_logs_acao_enum" NOT NULL, "descricao" character varying NOT NULL, "criado_por" integer NOT NULL, "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "projetoId" integer, "funcionarioId" integer, CONSTRAINT "PK_352175c674e09d7cffa8407088a" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "funcionarios_projetos_logs" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "data_inicio" date NOT NULL DEFAULT now(), "acao" "public"."funcionarios_projetos_logs_acao_enum" NOT NULL, "descricao" character varying NOT NULL, "criado_por" uuid NOT NULL, "criado_em" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "projetoId" uuid, "funcionarioId" uuid, CONSTRAINT "PK_352175c674e09d7cffa8407088a" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TABLE "entregas_epis" ("entregaId" integer NOT NULL, "epiId" integer NOT NULL, CONSTRAINT "PK_f193c324d593c815ccf4ef1c24f" PRIMARY KEY ("entregaId", "epiId"))`,
+      `CREATE TABLE "entregas_epis" ("entregaId" uuid NOT NULL, "epiId" uuid NOT NULL, CONSTRAINT "PK_f193c324d593c815ccf4ef1c24f" PRIMARY KEY ("entregaId", "epiId"))`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_91ad62a43fee57030eacb54251" ON "entregas_epis" ("entregaId") `,
@@ -170,7 +173,7 @@ export class Migration1739741413322 implements MigrationInterface {
       `CREATE INDEX "IDX_570fcc24a6aaa8d9c3046b3718" ON "entregas_epis" ("epiId") `,
     );
     await queryRunner.query(
-      `CREATE TABLE "projetos_funcionarios" ("projetoId" integer NOT NULL, "funcionarioId" integer NOT NULL, CONSTRAINT "PK_e35b5e2a6cbda1cbf4b604e98fd" PRIMARY KEY ("projetoId", "funcionarioId"))`,
+      `CREATE TABLE "projetos_funcionarios" ("projetoId" uuid NOT NULL, "funcionarioId" uuid NOT NULL, CONSTRAINT "PK_e35b5e2a6cbda1cbf4b604e98fd" PRIMARY KEY ("projetoId", "funcionarioId"))`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_8663a86eeb5c14f3d3f54060a1" ON "projetos_funcionarios" ("projetoId") `,
@@ -179,7 +182,7 @@ export class Migration1739741413322 implements MigrationInterface {
       `CREATE INDEX "IDX_168dd5769f24892016a56553b8" ON "projetos_funcionarios" ("funcionarioId") `,
     );
     await queryRunner.query(
-      `CREATE TABLE "funcoes_epis" ("funcaoId" integer NOT NULL, "epiId" integer NOT NULL, CONSTRAINT "PK_f5259dd3943682a7adc90f2444f" PRIMARY KEY ("funcaoId", "epiId"))`,
+      `CREATE TABLE "funcoes_epis" ("funcaoId" uuid NOT NULL, "epiId" uuid NOT NULL, CONSTRAINT "PK_f5259dd3943682a7adc90f2444f" PRIMARY KEY ("funcaoId", "epiId"))`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_a38bc15b5ff546a5940e3fc941" ON "funcoes_epis" ("funcaoId") `,
@@ -267,12 +270,6 @@ export class Migration1739741413322 implements MigrationInterface {
     );
     await queryRunner.query(
       `ALTER TABLE "projetos" ADD CONSTRAINT "FK_b58e4c1de339356a987700c655d" FOREIGN KEY ("empresaId") REFERENCES "empresas"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "empresas" ADD CONSTRAINT "FK_5139a44e732d7600e93125c294d" FOREIGN KEY ("criadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "empresas" ADD CONSTRAINT "FK_95ca04571a44dfc16d2614f3437" FOREIGN KEY ("atualizadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "funcoes" ADD CONSTRAINT "FK_91f591d55f681f3593274450ae6" FOREIGN KEY ("criadoPorId") REFERENCES "usuarios"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
@@ -542,12 +539,6 @@ export class Migration1739741413322 implements MigrationInterface {
       `ALTER TABLE "funcoes" DROP CONSTRAINT "FK_91f591d55f681f3593274450ae6"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "empresas" DROP CONSTRAINT "FK_95ca04571a44dfc16d2614f3437"`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "empresas" DROP CONSTRAINT "FK_5139a44e732d7600e93125c294d"`,
-    );
-    await queryRunner.query(
       `ALTER TABLE "projetos" DROP CONSTRAINT "FK_b58e4c1de339356a987700c655d"`,
     );
     await queryRunner.query(
@@ -659,6 +650,7 @@ export class Migration1739741413322 implements MigrationInterface {
     );
     await queryRunner.query(`DROP TABLE "funcao_epi_logs"`);
     await queryRunner.query(`DROP TYPE "public"."funcao_epi_logs_acao_enum"`);
+    await queryRunner.query(`DROP TABLE "tokens_de_ativacao_de_usuarios"`);
     await queryRunner.query(`DROP TABLE "advertencias"`);
     await queryRunner.query(`DROP TYPE "public"."advertencias_status_enum"`);
     await queryRunner.query(`DROP TABLE "funcionarios"`);

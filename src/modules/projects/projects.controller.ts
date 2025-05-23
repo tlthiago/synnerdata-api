@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -22,7 +22,8 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ProjectResponseDto } from './dto/project-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Projetos')
@@ -38,7 +39,7 @@ export class ProjectsController {
   @ApiParam({
     name: 'empresaId',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -63,18 +64,20 @@ export class ProjectsController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('empresaId', ParseIntPipe) companyId: number,
+    @Param('empresaId', ParseUUIDPipe) companyId: string,
     @Body() createProjectDto: CreateProjectDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const projectId = await this.projectsService.create(
+    const project = await this.projectsService.create(
       companyId,
       createProjectDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Projeto cadastrado com sucesso, id: #${projectId}.`,
+      data: project,
+      message: `Projeto cadastrado com sucesso, id: #${project.id}.`,
     };
   }
 
@@ -88,7 +91,7 @@ export class ProjectsController {
   @ApiParam({
     name: 'empresaId',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -97,7 +100,7 @@ export class ProjectsController {
     type: [ProjectResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('empresaId', ParseIntPipe) companyId: number) {
+  findAll(@Param('empresaId', ParseUUIDPipe) companyId: string) {
     return this.projectsService.findAll(companyId);
   }
 
@@ -110,7 +113,7 @@ export class ProjectsController {
   @ApiParam({
     name: 'id',
     description: 'ID do projeto.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -119,7 +122,7 @@ export class ProjectsController {
     type: ProjectResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.projectsService.findOne(id);
   }
 
@@ -132,7 +135,7 @@ export class ProjectsController {
   @ApiParam({
     name: 'id',
     description: 'ID do projeto.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -157,10 +160,15 @@ export class ProjectsController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateProjectDto: UpdateProjectDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const project = await this.projectsService.update(id, updateProjectDto);
+    const project = await this.projectsService.update(
+      id,
+      updateProjectDto,
+      user.id,
+    );
 
     return {
       succeeded: true,
@@ -178,12 +186,8 @@ export class ProjectsController {
   @ApiParam({
     name: 'id',
     description: 'ID do projeto.',
-    type: 'number',
+    type: 'string',
     required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para atualizar os dados do projeto',
-    type: BaseDeleteDto,
   })
   @ApiResponse({
     status: 200,
@@ -203,15 +207,15 @@ export class ProjectsController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteProjectDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.projectsService.remove(id, deleteProjectDto);
+    const project = await this.projectsService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Projeto id: #${id} excluído com sucesso.`,
+      data: project,
+      message: `Projeto id: #${project.id} excluído com sucesso.`,
     };
   }
 }

@@ -7,7 +7,6 @@ import { In, Repository } from 'typeorm';
 import { CompaniesService } from '../companies/companies.service';
 import { plainToInstance } from 'class-transformer';
 import { EpiResponseDto } from './dto/epi-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -19,23 +18,29 @@ export class EpisService {
     private readonly usersService: UsersService,
   ) {}
 
-  async create(companyId: number, createEpiDto: CreateEpiDto) {
+  async create(
+    companyId: string,
+    createEpiDto: CreateEpiDto,
+    createdBy: string,
+  ) {
     const company = await this.companiesService.findOne(companyId);
 
-    const user = await this.usersService.findOne(createEpiDto.criadoPor);
+    const user = await this.usersService.findOne(createdBy);
 
     const epi = this.epiRepository.create({
       ...createEpiDto,
-      empresa: company,
+      empresa: { id: company.id },
       criadoPor: user,
     });
 
     await this.epiRepository.save(epi);
 
-    return epi.id;
+    return plainToInstance(EpiResponseDto, epi, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findAll(companyId: number) {
+  async findAll(companyId: string) {
     const company = await this.companiesService.findOne(companyId);
 
     const epis = await this.epiRepository.find({
@@ -50,7 +55,7 @@ export class EpisService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const epi = await this.epiRepository.findOne({
       where: {
         id,
@@ -67,7 +72,7 @@ export class EpisService {
     });
   }
 
-  async findByIds(ids: number[]) {
+  async findByIds(ids: string[]) {
     const epis = await this.epiRepository.findBy({
       id: In(ids),
     });
@@ -79,8 +84,8 @@ export class EpisService {
     return epis;
   }
 
-  async update(id: number, updateEpiDto: UpdateEpiDto) {
-    const user = await this.usersService.findOne(updateEpiDto.atualizadoPor);
+  async update(id: string, updateEpiDto: UpdateEpiDto, updatedBy: string) {
+    const user = await this.usersService.findOne(updatedBy);
 
     const result = await this.epiRepository.update(id, {
       ...updateEpiDto,
@@ -91,21 +96,32 @@ export class EpisService {
       throw new NotFoundException('Epi não encontrado.');
     }
 
-    return this.findOne(id);
+    const updatedEpi = await this.findOne(id);
+
+    return updatedEpi;
   }
 
-  async remove(id: number, deleteEpiDto: BaseDeleteDto) {
-    const user = await this.usersService.findOne(deleteEpiDto.excluidoPor);
+  async remove(id: string, deletedBy: string) {
+    const user = await this.usersService.findOne(deletedBy);
 
-    const result = await this.epiRepository.update(id, {
-      status: 'E',
-      atualizadoPor: user,
-    });
+    const result = await this.epiRepository.update(
+      { id, status: 'A' },
+      {
+        status: 'E',
+        atualizadoPor: user,
+      },
+    );
 
     if (result.affected === 0) {
       throw new NotFoundException('Epi não encontrado.');
     }
 
-    return { id, status: 'E' };
+    const removedEpi = await this.epiRepository.findOne({
+      where: { id },
+    });
+
+    return plainToInstance(EpiResponseDto, removedEpi, {
+      excludeExtraneousValues: true,
+    });
   }
 }

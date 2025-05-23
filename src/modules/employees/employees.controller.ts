@@ -5,8 +5,9 @@ import {
   Body,
   Patch,
   Param,
-  ParseIntPipe,
   UseGuards,
+  Delete,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
@@ -20,6 +21,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Funcionários')
@@ -35,7 +38,7 @@ export class EmployeesController {
   @ApiParam({
     name: 'empresaId',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -60,17 +63,20 @@ export class EmployeesController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('empresaId', ParseIntPipe) companyId: number,
+    @Param('empresaId', ParseUUIDPipe) companyId: string,
     @Body() createEmployeeDto: CreateEmployeeDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const employeeId = await this.employeesService.create(
+    const employee = await this.employeesService.create(
       companyId,
       createEmployeeDto,
+      user.id,
     );
+
     return {
       succeeded: true,
-      data: null,
-      message: `Funcionário cadastrado com sucesso, id: #${employeeId}.`,
+      data: employee,
+      message: `Funcionário cadastrado com sucesso, id: #${employee.id}.`,
     };
   }
 
@@ -84,7 +90,7 @@ export class EmployeesController {
   @ApiParam({
     name: 'empresaId',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -93,7 +99,7 @@ export class EmployeesController {
     type: [CreateEmployeeDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('empresaId', ParseIntPipe) companyId: number) {
+  findAll(@Param('empresaId', ParseUUIDPipe) companyId: string) {
     return this.employeesService.findAll(companyId);
   }
 
@@ -106,7 +112,7 @@ export class EmployeesController {
   @ApiParam({
     name: 'id',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -115,7 +121,7 @@ export class EmployeesController {
     type: CreateEmployeeDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.employeesService.findOne(id);
   }
 
@@ -129,7 +135,7 @@ export class EmployeesController {
   @ApiParam({
     name: 'id',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -154,15 +160,62 @@ export class EmployeesController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateEmployeeDto: UpdateEmployeeDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const employee = await this.employeesService.update(id, updateEmployeeDto);
+    const employee = await this.employeesService.update(
+      id,
+      updateEmployeeDto,
+      user.id,
+    );
 
     return {
       succeeded: true,
       data: employee,
       message: `Funcionário id: #${employee.id} atualizado com sucesso.`,
+    };
+  }
+
+  @Delete('funcionarios/:id')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Excluir um funcionário',
+    description: 'Endpoint responsável por excluir um funcionário.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do funcionário.',
+    type: 'string',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Retorna uma mensagem de sucesso caso a atualização seja bem sucedida.',
+    schema: {
+      type: 'object',
+      properties: {
+        succeeded: { type: 'boolean' },
+        data: { type: 'string', nullable: true },
+        message: {
+          type: 'string',
+          description: 'Funcionário excluído com sucesso.',
+        },
+      },
+    },
+  })
+  @UseGuards(JwtAuthGuard)
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
+  ) {
+    const employee = await this.employeesService.remove(id, user.id);
+
+    return {
+      succeeded: true,
+      data: employee,
+      message: `Funcionário id: #${employee.id} excluído com sucesso.`,
     };
   }
 }

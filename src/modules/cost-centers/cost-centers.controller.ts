@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { CostCentersService } from './cost-centers.service';
 import { CreateCostCenterDto } from './dto/create-cost-center.dto';
@@ -22,7 +22,8 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CostCenterResponseDto } from './dto/cost-center-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Centros de custo')
@@ -38,7 +39,7 @@ export class CostCentersController {
   @ApiParam({
     name: 'empresaId',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -63,18 +64,20 @@ export class CostCentersController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('empresaId', ParseIntPipe) companyId: number,
+    @Param('empresaId', ParseUUIDPipe) companyId: string,
     @Body() createCostCenterDto: CreateCostCenterDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const costCenterId = await this.costCentersService.create(
+    const costCenter = await this.costCentersService.create(
       companyId,
       createCostCenterDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Centro de custo cadastrado com sucesso, id: #${costCenterId}.`,
+      data: costCenter,
+      message: `Centro de custo cadastrado com sucesso, id: #${costCenter.id}.`,
     };
   }
 
@@ -88,7 +91,7 @@ export class CostCentersController {
   @ApiParam({
     name: 'empresaId',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -97,7 +100,7 @@ export class CostCentersController {
     type: [CostCenterResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('empresaId', ParseIntPipe) companyId: number) {
+  findAll(@Param('empresaId', ParseUUIDPipe) companyId: string) {
     return this.costCentersService.findAll(companyId);
   }
 
@@ -110,7 +113,7 @@ export class CostCentersController {
   @ApiParam({
     name: 'id',
     description: 'ID do centro de custo.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -119,7 +122,7 @@ export class CostCentersController {
     type: CostCenterResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.costCentersService.findOne(id);
   }
 
@@ -133,7 +136,7 @@ export class CostCentersController {
   @ApiParam({
     name: 'id',
     description: 'ID do centro de custo.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -158,18 +161,20 @@ export class CostCentersController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCostCenterDto: UpdateCostCenterDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
     const costCenter = await this.costCentersService.update(
       id,
       updateCostCenterDto,
+      user.id,
     );
 
     return {
       succeeded: true,
       data: costCenter,
-      message: `Centro de custo id: #${id} atualizado com sucesso.`,
+      message: `Centro de custo id: #${costCenter.id} atualizado com sucesso.`,
     };
   }
 
@@ -182,12 +187,8 @@ export class CostCentersController {
   @ApiParam({
     name: 'id',
     description: 'ID do centro de custo.',
-    type: 'number',
+    type: 'string',
     required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para atualizar os dados do centro de custo',
-    type: BaseDeleteDto,
   })
   @ApiResponse({
     status: 200,
@@ -207,15 +208,15 @@ export class CostCentersController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteCostCenterDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.costCentersService.remove(id, deleteCostCenterDto);
+    const costCenter = await this.costCentersService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Centro de custo id: #${id} excluído com sucesso.`,
+      data: costCenter,
+      message: `Centro de custo id: #${costCenter.id} excluído com sucesso.`,
     };
   }
 }

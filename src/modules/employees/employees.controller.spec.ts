@@ -28,7 +28,7 @@ import { Warning } from '../warnings/entities/warning.entity';
 import { LaborAction } from '../labor-actions/entities/labor-action.entity';
 import { EpiDelivery } from '../epi-delivery/entities/epi-delivery.entity';
 import { Vacation } from '../vacations/entities/vacation.entity';
-import { User } from '../users/entities/user.entity';
+import { Funcao, User } from '../users/entities/user.entity';
 import { EmployeesModule } from './employees.module';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import {
@@ -38,11 +38,13 @@ import {
   RegimeContratacao,
   Sexo,
 } from './enums/employees.enum';
+import { MockUserInterceptor } from '../../common/interceptors/mock-user.interceptor';
 
 describe('FuncionárioController (E2E)', () => {
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
+  let mockUserInterceptor: MockUserInterceptor;
   let createdUser: User;
   let createdCompany: Company;
   let createdRole: Role;
@@ -71,17 +73,14 @@ describe('FuncionárioController (E2E)', () => {
     dataAdmissao: '2025-02-12',
     salario: 3799,
     dataUltimoASO: '2025-02-12',
-    funcao: 1,
-    setor: 1,
-    vencimentoExperiencia1: '2025-02-12',
-    vencimentoExperiencia2: '2025-05-12',
-    dataExameDemissional: '2025-05-12',
+    funcao: '1',
+    setor: '1',
     grauInstrucao: GrauInstrucao.SUPERIOR,
     necessidadesEspeciais: false,
     filhos: false,
     celular: '31991897926',
     gestor: 'Gestor Teste',
-    cbo: 1,
+    cbo: '1',
     rua: 'Rua Teste',
     numero: '1000',
     bairro: 'Bela Vista',
@@ -91,7 +90,6 @@ describe('FuncionárioController (E2E)', () => {
     quantidadeOnibus: 1,
     cargaHoraria: 60,
     escala: Escala.SEIS_UM,
-    criadoPor: 1,
   };
 
   beforeAll(async () => {
@@ -139,6 +137,8 @@ describe('FuncionárioController (E2E)', () => {
         whitelist: true,
       }),
     );
+    mockUserInterceptor = new MockUserInterceptor();
+    app.useGlobalInterceptors(mockUserInterceptor);
     await app.init();
 
     dataSource = app.get(DataSource);
@@ -153,9 +153,11 @@ describe('FuncionárioController (E2E)', () => {
       nome: 'Usuário Teste',
       email: 'teste1@example.com',
       senha: 'senha123',
-      funcao: 'teste',
+      funcao: Funcao.ADMIN,
     });
     createdUser = await userRepository.save(user);
+
+    mockUserInterceptor.setUserId(createdUser.id);
 
     const company = companyRepository.create({
       nomeFantasia: 'Tech Solutions',
@@ -169,15 +171,8 @@ describe('FuncionárioController (E2E)', () => {
       estado: 'SP',
       cep: '01000-000',
       dataFundacao: '2010-05-15',
-      telefone: '(11) 99999-9999',
-      faturamento: 1200000.5,
-      regimeTributario: 'Simples Nacional',
-      inscricaoEstadual: '1234567890',
-      cnaePrincipal: '6201500',
-      segmento: 'Tecnologia',
-      ramoAtuacao: 'Desenvolvimento de Software',
-      logoUrl: 'https://example.com/logo.png',
-      criadoPor: createdUser,
+      email: 'contato@techsolutions.com.br',
+      celular: '+5531991897926',
     });
     createdCompany = await companyRepository.save(company);
 
@@ -217,10 +212,14 @@ describe('FuncionárioController (E2E)', () => {
       .expect(201);
 
     expect(response.status).toBe(201);
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       succeeded: true,
-      data: null,
-      message: `Funcionário cadastrado com sucesso, id: #1.`,
+      data: {
+        nome: employee.nome,
+      },
+      message: expect.stringContaining(
+        'Funcionário cadastrado com sucesso, id: #',
+      ),
     });
   });
 
@@ -233,10 +232,7 @@ describe('FuncionárioController (E2E)', () => {
     expect(response.body).toHaveProperty('message');
     expect(Array.isArray(response.body.message)).toBe(true);
     expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'nome should not be empty',
-        'criadoPor should not be empty',
-      ]),
+      expect.arrayContaining(['nome should not be empty']),
     );
   });
 
@@ -254,10 +250,9 @@ describe('FuncionárioController (E2E)', () => {
 
   it('/v1/empresas/:empresaId/funcionarios (POST) - Deve retornar erro caso o ID da empresa não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/999/funcionarios`)
+      .post(`/v1/empresas/86f226c4-38b0-464c-987e-35293033faf6/funcionarios`)
       .send({
         ...employee,
-        criadoPor: createdUser.id,
       })
       .expect(404);
 
@@ -268,13 +263,28 @@ describe('FuncionárioController (E2E)', () => {
     });
   });
 
+  it('/v1/empresas/:empresaId/funcionarios (POST) - Deve retornar erro caso o ID da função seja inválido', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/v1/empresas/${createdCompany.id}/funcionarios`)
+      .send({
+        ...employee,
+        funcao: 123,
+      })
+      .expect(400);
+
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: ['funcao must be a UUID'],
+      error: 'Bad Request',
+    });
+  });
+
   it('/v1/empresas/:empresaId/funcionarios (POST) - Deve retornar erro caso o ID da função não exista', async () => {
     const response = await request(app.getHttpServer())
       .post(`/v1/empresas/${createdCompany.id}/funcionarios`)
       .send({
         ...employee,
-        funcao: 999,
-        criadoPor: createdUser.id,
+        funcao: '86f226c4-38b0-464c-987e-35293033faf6',
       })
       .expect(404);
 
@@ -285,13 +295,28 @@ describe('FuncionárioController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/:empresaId/funcionarios (POST) - Deve retornar erro caso o ID do setor não exista', async () => {
+  it('/v1/empresas/:empresaId/funcionarios (POST) - Deve retornar erro caso o ID do setor seja inválido', async () => {
     const response = await request(app.getHttpServer())
       .post(`/v1/empresas/${createdCompany.id}/funcionarios`)
       .send({
         ...employee,
         setor: 999,
-        criadoPor: createdUser.id,
+      })
+      .expect(400);
+
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: ['setor must be a UUID'],
+      error: 'Bad Request',
+    });
+  });
+
+  it('/v1/empresas/:empresaId/funcionarios (POST) - Deve retornar erro caso o ID do setor não exista', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/v1/empresas/${createdCompany.id}/funcionarios`)
+      .send({
+        ...employee,
+        setor: '86f226c4-38b0-464c-987e-35293033faf6',
       })
       .expect(404);
 
@@ -302,20 +327,51 @@ describe('FuncionárioController (E2E)', () => {
     });
   });
 
+  it('/v1/empresas/:empresaId/funcionarios (POST) - Deve retornar erro caso o ID do centro de custo seja inválido', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/v1/empresas/${createdCompany.id}/funcionarios`)
+      .send({
+        ...employee,
+        centroCusto: 999,
+      })
+      .expect(400);
+
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: ['centroCusto must be a UUID'],
+      error: 'Bad Request',
+    });
+  });
+
   it('/v1/empresas/:empresaId/funcionarios (POST) - Deve retornar erro caso o ID do centro de custo não exista', async () => {
     const response = await request(app.getHttpServer())
       .post(`/v1/empresas/${createdCompany.id}/funcionarios`)
       .send({
         ...employee,
-        cbo: 999,
-        criadoPor: createdUser.id,
+        centroCusto: '86f226c4-38b0-464c-987e-35293033faf6',
       })
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Cbo não encontrado.',
+      message: 'Centro de custo não encontrado.',
       error: 'Not Found',
+    });
+  });
+
+  it('/v1/empresas/:empresaId/funcionarios (POST) - Deve retornar erro caso o ID do cbo seja inválido', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/v1/empresas/${createdCompany.id}/funcionarios`)
+      .send({
+        ...employee,
+        cbo: 999,
+      })
+      .expect(400);
+
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: ['cbo must be a UUID'],
+      error: 'Bad Request',
     });
   });
 
@@ -324,8 +380,7 @@ describe('FuncionárioController (E2E)', () => {
       .post(`/v1/empresas/${createdCompany.id}/funcionarios`)
       .send({
         ...employee,
-        cbo: 999,
-        criadoPor: createdUser.id,
+        cbo: '86f226c4-38b0-464c-987e-35293033faf6',
       })
       .expect(404);
 
@@ -344,14 +399,12 @@ describe('FuncionárioController (E2E)', () => {
       setor: createdDepartment,
       cbo: createdCbo,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
       .post(`/v1/empresas/${createdCompany.id}/funcionarios`)
       .send({
         ...employee,
-        criadoPor: createdUser.id,
       })
       .expect(409);
 
@@ -359,38 +412,6 @@ describe('FuncionárioController (E2E)', () => {
       statusCode: 409,
       message: 'Já existe um funcionário cadastrado com o mesmo número de CPF.',
       error: 'Conflict',
-    });
-  });
-
-  it('/v1/empresas/:empresaId/funcionarios (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
-    const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/funcionarios`)
-      .send({
-        ...employee,
-        criadoPor: 'Teste',
-      })
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'criadoPor must be a number conforming to the specified constraints',
-      ]),
-    );
-  });
-
-  it('/v1/empresas/:empresaId/funcionarios (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
-    const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/funcionarios`)
-      .send({
-        ...employee,
-        criadoPor: 999,
-      })
-      .expect(404);
-
-    expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
     });
   });
 
@@ -402,7 +423,6 @@ describe('FuncionárioController (E2E)', () => {
       setor: createdDepartment,
       cbo: createdCbo,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
@@ -421,7 +441,6 @@ describe('FuncionárioController (E2E)', () => {
       setor: createdDepartment,
       cbo: createdCbo,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
@@ -436,7 +455,7 @@ describe('FuncionárioController (E2E)', () => {
 
   it('/v1/empresas/funcionarios/:id (GET) - Deve retornar erro ao buscar um funcionário inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/empresas/funcionarios/999')
+      .get('/v1/empresas/funcionarios/86f226c4-38b0-464c-987e-35293033faf6')
       .expect(404);
 
     expect(response.body).toEqual({
@@ -453,7 +472,7 @@ describe('FuncionárioController (E2E)', () => {
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
@@ -466,12 +485,10 @@ describe('FuncionárioController (E2E)', () => {
       setor: createdDepartment,
       cbo: createdCbo,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
 
     const updateData: UpdateEmployeeDto = {
       nome: 'Funcionário Atualizado',
-      atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
@@ -482,18 +499,12 @@ describe('FuncionárioController (E2E)', () => {
     expect(response.body).toMatchObject({
       succeeded: true,
       data: {
-        id: expect.any(Number),
-        nome: 'Funcionário Atualizado',
-        atualizadoPor: expect.any(String),
+        id: createdEmployee.id,
+        nome: updateData.nome,
+        atualizadoPor: createdUser.nome,
       },
       message: `Funcionário id: #${createdEmployee.id} atualizado com sucesso.`,
     });
-
-    const updatedfuncionário = await employeeRepository.findOneBy({
-      id: createdEmployee.id,
-    });
-
-    expect(updatedfuncionário.nome).toBe(updateData.nome);
   });
 
   it('/v1/empresas/funcionarios/:id (PATCH) - Deve retornar um erro ao atualizar um funcionário com tipo de dado inválido', async () => {
@@ -504,12 +515,10 @@ describe('FuncionárioController (E2E)', () => {
       setor: createdDepartment,
       cbo: createdCbo,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
 
     const updateData = {
       nome: 123,
-      atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
@@ -531,12 +540,36 @@ describe('FuncionárioController (E2E)', () => {
       setor: createdDepartment,
       cbo: createdCbo,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
 
     const updateData = {
       funcao: 999,
-      atualizadoPor: createdUser.id,
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/empresas/funcionarios/${createdEmployee.id}`)
+      .send(updateData)
+      .expect(400);
+
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: ['funcao must be a UUID'],
+      error: 'Bad Request',
+    });
+  });
+
+  it('/v1/empresas/funcionarios/:id (PATCH) - Deve retornar um erro ao atualizar um funcionário caso o ID da função não exista', async () => {
+    const employeeRepository = dataSource.getRepository(Employee);
+    const createdEmployee = await employeeRepository.save({
+      ...employee,
+      funcao: createdRole,
+      setor: createdDepartment,
+      cbo: createdCbo,
+      empresa: createdCompany,
+    });
+
+    const updateData = {
+      funcao: '86f226c4-38b0-464c-987e-35293033faf6',
     };
 
     const response = await request(app.getHttpServer())
@@ -551,6 +584,32 @@ describe('FuncionárioController (E2E)', () => {
     });
   });
 
+  it('/v1/empresas/funcionarios/:id (PATCH) - Deve retornar um erro ao atualizar um funcionário caso o ID do setor seja inválido', async () => {
+    const employeeRepository = dataSource.getRepository(Employee);
+    const createdEmployee = await employeeRepository.save({
+      ...employee,
+      funcao: createdRole,
+      setor: createdDepartment,
+      cbo: createdCbo,
+      empresa: createdCompany,
+    });
+
+    const updateData = {
+      setor: 999,
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/empresas/funcionarios/${createdEmployee.id}`)
+      .send(updateData)
+      .expect(400);
+
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: ['setor must be a UUID'],
+      error: 'Bad Request',
+    });
+  });
+
   it('/v1/empresas/funcionarios/:id (PATCH) - Deve retornar um erro ao atualizar um funcionário caso o ID do setor não exista', async () => {
     const employeeRepository = dataSource.getRepository(Employee);
     const createdEmployee = await employeeRepository.save({
@@ -559,12 +618,10 @@ describe('FuncionárioController (E2E)', () => {
       setor: createdDepartment,
       cbo: createdCbo,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
 
     const updateData = {
-      setor: 999,
-      atualizadoPor: createdUser.id,
+      setor: '86f226c4-38b0-464c-987e-35293033faf6',
     };
 
     const response = await request(app.getHttpServer())
@@ -579,6 +636,32 @@ describe('FuncionárioController (E2E)', () => {
     });
   });
 
+  it('/v1/empresas/funcionarios/:id (PATCH) - Deve retornar um erro ao atualizar um funcionário caso o ID do centro de custo seja inválido', async () => {
+    const employeeRepository = dataSource.getRepository(Employee);
+    const createdEmployee = await employeeRepository.save({
+      ...employee,
+      funcao: createdRole,
+      setor: createdDepartment,
+      cbo: createdCbo,
+      empresa: createdCompany,
+    });
+
+    const updateData = {
+      centroCusto: 999,
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/empresas/funcionarios/${createdEmployee.id}`)
+      .send(updateData)
+      .expect(400);
+
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: ['centroCusto must be a UUID'],
+      error: 'Bad Request',
+    });
+  });
+
   it('/v1/empresas/funcionarios/:id (PATCH) - Deve retornar um erro ao atualizar um funcionário caso o ID do centro de custo não exista', async () => {
     const employeeRepository = dataSource.getRepository(Employee);
     const createdEmployee = await employeeRepository.save({
@@ -587,12 +670,10 @@ describe('FuncionárioController (E2E)', () => {
       setor: createdDepartment,
       cbo: createdCbo,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
 
     const updateData = {
-      centroCusto: 999,
-      atualizadoPor: createdUser.id,
+      centroCusto: '86f226c4-38b0-464c-987e-35293033faf6',
     };
 
     const response = await request(app.getHttpServer())
@@ -607,6 +688,32 @@ describe('FuncionárioController (E2E)', () => {
     });
   });
 
+  it('/v1/empresas/funcionarios/:id (PATCH) - Deve retornar um erro ao atualizar um funcionário caso o ID do cbo seja inválido', async () => {
+    const employeeRepository = dataSource.getRepository(Employee);
+    const createdEmployee = await employeeRepository.save({
+      ...employee,
+      funcao: createdRole,
+      setor: createdDepartment,
+      cbo: createdCbo,
+      empresa: createdCompany,
+    });
+
+    const updateData = {
+      cbo: 999,
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/empresas/funcionarios/${createdEmployee.id}`)
+      .send(updateData)
+      .expect(400);
+
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: ['cbo must be a UUID'],
+      error: 'Bad Request',
+    });
+  });
+
   it('/v1/empresas/funcionarios/:id (PATCH) - Deve retornar um erro ao atualizar um funcionário caso o ID do cbo não exista', async () => {
     const employeeRepository = dataSource.getRepository(Employee);
     const createdEmployee = await employeeRepository.save({
@@ -615,12 +722,10 @@ describe('FuncionárioController (E2E)', () => {
       setor: createdDepartment,
       cbo: createdCbo,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
 
     const updateData = {
-      cbo: 999,
-      atualizadoPor: createdUser.id,
+      cbo: '86f226c4-38b0-464c-987e-35293033faf6',
     };
 
     const response = await request(app.getHttpServer())
@@ -643,12 +748,10 @@ describe('FuncionárioController (E2E)', () => {
       setor: createdDepartment,
       cbo: createdCbo,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
 
     const updateData = {
       cpf: '13420162626',
-      atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
@@ -663,117 +766,82 @@ describe('FuncionárioController (E2E)', () => {
     });
   });
 
-  it('/v1/empresas/funcionarios/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
-    const employeeRepository = dataSource.getRepository(Employee);
-    const createdEmployee = await employeeRepository.save({
-      ...employee,
-      funcao: createdRole,
-      setor: createdDepartment,
-      cbo: createdCbo,
-      empresa: createdCompany,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      nome: 'Funcionário Atualizado',
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/funcionarios/${createdEmployee.id}`)
-      .send(updateData)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O usuário responsável pela atualização deve ser informado.',
-      ]),
-    );
-  });
-
-  it('/v1/empresas/funcionarios/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
-    const employeeRepository = dataSource.getRepository(Employee);
-    const createdEmployee = await employeeRepository.save({
-      ...employee,
-      funcao: createdRole,
-      setor: createdDepartment,
-      cbo: createdCbo,
-      empresa: createdCompany,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      nome: 'Funcionário Atualizado',
-      atualizadoPor: 'Teste',
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/funcionarios/${createdEmployee.id}`)
-      .send(updateData)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O identificador do usuário deve ser um número.',
-      ]),
-    );
-  });
-
-  it('/v1/empresas/funcionarios/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
-    const employeeRepository = dataSource.getRepository(Employee);
-    const createdEmployee = await employeeRepository.save({
-      ...employee,
-      funcao: createdRole,
-      setor: createdDepartment,
-      cbo: createdCbo,
-      empresa: createdCompany,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      nome: 'Funcionário Atualizado',
-      atualizadoPor: 999,
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/funcionarios/${createdEmployee.id}`)
-      .send(updateData)
-      .expect(404);
-
-    expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
-    });
-  });
-
   it('/v1/empresas/funcionarios/:id (PATCH) - Deve retornar erro ao atualizar um funcionário com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
       .patch('/v1/empresas/funcionarios/abc')
       .send({
         nome: 'Funcionário Atualizado',
-        atualizadoPor: 1,
       })
       .expect(400);
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
 
   it('/v1/empresas/funcionarios/:id (PATCH) - Deve retornar erro ao atualizar um funcionário inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/empresas/funcionarios/9999')
+      .patch('/v1/empresas/funcionarios/86f226c4-38b0-464c-987e-35293033faf6')
       .send({
         nomeFantasia: 'Funcionário Inexistente',
-        atualizadoPor: 1,
       })
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
       message: 'Funcionário não encontrado.',
+      error: 'Not Found',
+    });
+  });
+
+  it('/v1/empresas/funcionarios/:id (DELETE) - Deve excluir um funcionário', async () => {
+    const employeeRepository = dataSource.getRepository(Employee);
+    const createdEmployee = await employeeRepository.save({
+      ...employee,
+      funcao: createdRole,
+      setor: createdDepartment,
+      cbo: createdCbo,
+      empresa: createdCompany,
+    });
+
+    const response = await request(app.getHttpServer())
+      .delete(`/v1/empresas/funcionarios/${createdEmployee.id}`)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      succeeded: true,
+      data: {
+        id: createdEmployee.id,
+        nome: createdEmployee.nome,
+        atualizadoPor: createdUser.nome,
+        status: 'E',
+      },
+      message: `Funcionário id: #${createdEmployee.id} excluído com sucesso.`,
+    });
+  });
+
+  it('/v1/empresas/funcionarios/:id (DELETE) - Deve retornar erro ao excluir um funcionário com um ID inválido', async () => {
+    const response = await request(app.getHttpServer())
+      .delete('/v1/empresas/funcionarios/abc')
+      .expect(400);
+
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: 'Validation failed (uuid is expected)',
+      error: 'Bad Request',
+    });
+  });
+
+  it('/v1/empresas/funcionarios/:id (DELETE) - Deve retornar erro ao excluir um funcionário inexistente', async () => {
+    const response = await request(app.getHttpServer())
+      .delete('/v1/empresas/funcionarios/86f226c4-38b0-464c-987e-35293033faf6')
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Funcionário já excluído ou não encontrado.',
       error: 'Not Found',
     });
   });

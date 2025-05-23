@@ -7,7 +7,6 @@ import { Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { LaborActionResponseDto } from './dto/labor-action-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -19,25 +18,29 @@ export class LaborActionsService {
     private readonly usersService: UsersService,
   ) {}
 
-  async create(employeeId: number, createLaborActionDto: CreateLaborActionDto) {
+  async create(
+    employeeId: string,
+    createLaborActionDto: CreateLaborActionDto,
+    createdBy: string,
+  ) {
     const employee = await this.employeesService.findOne(employeeId);
 
-    const user = await this.usersService.findOne(
-      createLaborActionDto.criadoPor,
-    );
+    const user = await this.usersService.findOne(createdBy);
 
     const laborAction = this.laborActionRepository.create({
       ...createLaborActionDto,
-      funcionario: employee,
+      funcionario: { id: employee.id },
       criadoPor: user,
     });
 
     await this.laborActionRepository.save(laborAction);
 
-    return laborAction.id;
+    return plainToInstance(LaborActionResponseDto, laborAction, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findAll(employeeId: number) {
+  async findAll(employeeId: string) {
     const employee = await this.employeesService.findOne(employeeId);
 
     const laborActions = await this.laborActionRepository.find({
@@ -52,7 +55,7 @@ export class LaborActionsService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const laborAction = await this.laborActionRepository.findOne({
       where: {
         id,
@@ -69,10 +72,12 @@ export class LaborActionsService {
     });
   }
 
-  async update(id: number, updateLaborActionDto: UpdateLaborActionDto) {
-    const user = await this.usersService.findOne(
-      updateLaborActionDto.atualizadoPor,
-    );
+  async update(
+    id: string,
+    updateLaborActionDto: UpdateLaborActionDto,
+    updatedBy: string,
+  ) {
+    const user = await this.usersService.findOne(updatedBy);
 
     const result = await this.laborActionRepository.update(id, {
       ...updateLaborActionDto,
@@ -83,23 +88,34 @@ export class LaborActionsService {
       throw new NotFoundException('Ação trabalhista não encontrada.');
     }
 
-    return this.findOne(id);
+    const updatedLaborAction = await this.findOne(id);
+
+    return updatedLaborAction;
   }
 
-  async remove(id: number, deleteLaborActionDto: BaseDeleteDto) {
-    const user = await this.usersService.findOne(
-      deleteLaborActionDto.excluidoPor,
+  async remove(id: string, deletedBy: string) {
+    const user = await this.usersService.findOne(deletedBy);
+
+    const result = await this.laborActionRepository.update(
+      { id, status: 'A' },
+      {
+        status: 'E',
+        atualizadoPor: user,
+      },
     );
 
-    const result = await this.laborActionRepository.update(id, {
-      status: 'E',
-      atualizadoPor: user,
-    });
-
     if (result.affected === 0) {
-      throw new NotFoundException('Ação trabalhista não encontrada.');
+      throw new NotFoundException(
+        'Ação trabalhista já excluída ou não encontrada.',
+      );
     }
 
-    return { id, status: 'E' };
+    const removedLaborAction = await this.laborActionRepository.findOne({
+      where: { id },
+    });
+
+    return plainToInstance(LaborActionResponseDto, removedLaborAction, {
+      excludeExtraneousValues: true,
+    });
   }
 }

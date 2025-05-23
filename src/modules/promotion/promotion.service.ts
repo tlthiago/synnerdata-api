@@ -7,7 +7,6 @@ import { Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { PromotionResponseDto } from './dto/promotion-response.dto';
-import { BaseDeleteDto } from 'src/common/utils/dto/base-delete.dto';
 import { RolesService } from '../roles/roles.service';
 import { UsersService } from '../users/users.service';
 
@@ -21,26 +20,32 @@ export class PromotionService {
     private readonly usersService: UsersService,
   ) {}
 
-  async create(employeeId: number, createPromotionDto: CreatePromotionDto) {
+  async create(
+    employeeId: string,
+    createPromotionDto: CreatePromotionDto,
+    createdBy: string,
+  ) {
     const employee = await this.employeesService.findOne(employeeId);
 
     const role = await this.roleService.findById(createPromotionDto.funcaoId);
 
-    const user = await this.usersService.findOne(createPromotionDto.criadoPor);
+    const user = await this.usersService.findOne(createdBy);
 
     const promotion = this.promotionRepository.create({
       ...createPromotionDto,
-      funcao: role,
-      funcionario: employee,
+      funcao: { id: role.id },
+      funcionario: { id: employee.id },
       criadoPor: user,
     });
 
     await this.promotionRepository.save(promotion);
 
-    return promotion.id;
+    return plainToInstance(PromotionResponseDto, promotion, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findAll(employeeId: number) {
+  async findAll(employeeId: string) {
     const employee = await this.employeesService.findOne(employeeId);
 
     const promotions = await this.promotionRepository.find({
@@ -55,7 +60,7 @@ export class PromotionService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const promotion = await this.promotionRepository.findOne({
       where: {
         id,
@@ -72,12 +77,14 @@ export class PromotionService {
     });
   }
 
-  async update(id: number, updatePromotionDto: UpdatePromotionDto) {
+  async update(
+    id: string,
+    updatePromotionDto: UpdatePromotionDto,
+    updatedBy: string,
+  ) {
     const role = await this.roleService.findById(updatePromotionDto.funcaoId);
 
-    const user = await this.usersService.findOne(
-      updatePromotionDto.atualizadoPor,
-    );
+    const user = await this.usersService.findOne(updatedBy);
 
     const result = await this.promotionRepository.update(id, {
       ...updatePromotionDto,
@@ -89,23 +96,32 @@ export class PromotionService {
       throw new NotFoundException('Promoção não encontrada.');
     }
 
-    return this.findOne(id);
+    const updatedPromotion = await this.findOne(id);
+
+    return updatedPromotion;
   }
 
-  async remove(id: number, deletePromotionDto: BaseDeleteDto) {
-    const user = await this.usersService.findOne(
-      deletePromotionDto.excluidoPor,
+  async remove(id: string, deletedBy: string) {
+    const user = await this.usersService.findOne(deletedBy);
+
+    const result = await this.promotionRepository.update(
+      { id, status: 'A' },
+      {
+        status: 'E',
+        atualizadoPor: user,
+      },
     );
 
-    const result = await this.promotionRepository.update(id, {
-      status: 'E',
-      atualizadoPor: user,
-    });
-
     if (result.affected === 0) {
-      throw new NotFoundException('Promoção não encontrada.');
+      throw new NotFoundException('Promoção já excluída ou não encontrada.');
     }
 
-    return { id, status: 'E' };
+    const removedPromotion = await this.promotionRepository.findOne({
+      where: { id },
+    });
+
+    return plainToInstance(PromotionResponseDto, removedPromotion, {
+      excludeExtraneousValues: true,
+    });
   }
 }

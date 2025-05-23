@@ -2,10 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
   IsNotEmpty,
-  IsNumber,
   Length,
   IsArray,
   IsOptional,
+  IsUUID,
 } from 'class-validator';
 
 export class CreateRoleDto {
@@ -15,19 +15,9 @@ export class CreateRoleDto {
   @Length(1, 255)
   nome: string;
 
-  @ApiProperty({ description: 'Epis da função.', type: [Number] })
+  @ApiProperty({ description: 'Epis da função.', type: [String] })
   @IsOptional()
   @IsArray()
-  @IsNumber(
-    {},
-    { each: true, message: 'O identificador do(s) epi(s) deve ser um número' },
-  )
-  epis: number[];
-
-  @ApiProperty({
-    description: 'Usuário responsável pela criação da função.',
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  criadoPor: number;
+  @IsUUID('4', { each: true })
+  epis: string[];
 }

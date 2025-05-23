@@ -7,19 +7,19 @@ import {
   ManyToOne,
 } from 'typeorm';
 
-export class BaseEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+export abstract class BaseEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({
     name: 'status',
     type: 'enum',
-    enum: ['A', 'I', 'E'],
+    enum: ['A', 'I', 'E', 'P'],
     default: 'A',
   })
   status: string;
 
-  @ManyToOne(() => User, { nullable: false, eager: true })
+  @ManyToOne(() => User, { eager: true })
   criadoPor: User;
 
   @CreateDateColumn({

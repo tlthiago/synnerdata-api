@@ -6,7 +6,6 @@ import { Repository } from 'typeorm';
 import { Department } from './entities/department.entity';
 import { CompaniesService } from '../companies/companies.service';
 import { UsersService } from '../users/users.service';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { plainToInstance } from 'class-transformer';
 import { DepartmentResponseDto } from './dto/department-response.dto';
 
@@ -19,23 +18,29 @@ export class DepartmentsService {
     private readonly usersService: UsersService,
   ) {}
 
-  async create(companyId: number, createDepartmentDto: CreateDepartmentDto) {
+  async create(
+    companyId: string,
+    createDepartmentDto: CreateDepartmentDto,
+    createdBy: string,
+  ) {
     const company = await this.companiesService.findOne(companyId);
 
-    const user = await this.usersService.findOne(createDepartmentDto.criadoPor);
+    const user = await this.usersService.findOne(createdBy);
 
     const department = this.departmentRepository.create({
       ...createDepartmentDto,
-      empresa: company,
+      empresa: { id: company.id },
       criadoPor: user,
     });
 
     await this.departmentRepository.save(department);
 
-    return department.id;
+    return plainToInstance(DepartmentResponseDto, department, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findAll(companyId: number) {
+  async findAll(companyId: string) {
     const company = await this.companiesService.findOne(companyId);
 
     const departments = this.departmentRepository.find({
@@ -50,7 +55,7 @@ export class DepartmentsService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const department = await this.departmentRepository.findOne({
       where: {
         id,
@@ -67,10 +72,26 @@ export class DepartmentsService {
     });
   }
 
-  async update(id: number, updateDepartmentDto: UpdateDepartmentDto) {
-    const user = await this.usersService.findOne(
-      updateDepartmentDto.atualizadoPor,
-    );
+  async findOneInternal(id: string) {
+    const department = await this.departmentRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!department) {
+      throw new NotFoundException('Setor não encontrado.');
+    }
+
+    return department;
+  }
+
+  async update(
+    id: string,
+    updateDepartmentDto: UpdateDepartmentDto,
+    updatedBy: string,
+  ) {
+    const user = await this.usersService.findOne(updatedBy);
 
     const result = await this.departmentRepository.update(id, {
       ...updateDepartmentDto,
@@ -81,23 +102,32 @@ export class DepartmentsService {
       throw new NotFoundException('Setor não encontrado.');
     }
 
-    return this.findOne(id);
+    const updatedDepartment = await this.findOne(id);
+
+    return updatedDepartment;
   }
 
-  async remove(id: number, deleteDepartmentDto: BaseDeleteDto) {
-    const user = await this.usersService.findOne(
-      deleteDepartmentDto.excluidoPor,
+  async remove(id: string, deletedBy: string) {
+    const user = await this.usersService.findOne(deletedBy);
+
+    const result = await this.departmentRepository.update(
+      { id, status: 'A' },
+      {
+        status: 'E',
+        atualizadoPor: user,
+      },
     );
 
-    const result = await this.departmentRepository.update(id, {
-      status: 'E',
-      atualizadoPor: user,
-    });
-
     if (result.affected === 0) {
-      throw new NotFoundException('Setor não encontrado.');
+      throw new NotFoundException('Setor já excluído ou não encontrado.');
     }
 
-    return { id, status: 'E' };
+    const removedDepartment = await this.departmentRepository.findOne({
+      where: { id },
+    });
+
+    return plainToInstance(DepartmentResponseDto, removedDepartment, {
+      excludeExtraneousValues: true,
+    });
   }
 }

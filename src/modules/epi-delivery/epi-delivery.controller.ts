@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { EpiDeliveryService } from './epi-delivery.service';
 import { CreateEpiDeliveryDto } from './dto/create-epi-delivery.dto';
@@ -21,8 +21,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { EpiDeliveryResponseDto } from './dto/epi-delivery-response.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/funcionarios')
 @ApiTags('Entregas de Epis')
@@ -38,7 +39,7 @@ export class EpiDeliveryController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -63,18 +64,20 @@ export class EpiDeliveryController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('funcionarioId', ParseIntPipe) employeeId: number,
+    @Param('funcionarioId', ParseUUIDPipe) employeeId: string,
     @Body() createEpiDeliveryDto: CreateEpiDeliveryDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const epiDeliveryId = await this.epiDeliveryService.create(
+    const epiDelivery = await this.epiDeliveryService.create(
       employeeId,
       createEpiDeliveryDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Entrega de epis cadastrada com sucesso, id: #${epiDeliveryId}.`,
+      data: epiDelivery,
+      message: `Entrega de epis cadastrada com sucesso, id: #${epiDelivery.id}.`,
     };
   }
 
@@ -88,7 +91,7 @@ export class EpiDeliveryController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -97,7 +100,7 @@ export class EpiDeliveryController {
     type: [EpiDeliveryResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('funcionarioId', ParseIntPipe) employeeId: number) {
+  findAll(@Param('funcionarioId', ParseUUIDPipe) employeeId: string) {
     return this.epiDeliveryService.findAll(employeeId);
   }
 
@@ -110,7 +113,7 @@ export class EpiDeliveryController {
   @ApiParam({
     name: 'id',
     description: 'ID da entrega de epis.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -119,7 +122,7 @@ export class EpiDeliveryController {
     type: EpiDeliveryResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.epiDeliveryService.findOne(id);
   }
 
@@ -133,7 +136,7 @@ export class EpiDeliveryController {
   @ApiParam({
     name: 'id',
     description: 'ID da entrega de epis.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -158,12 +161,14 @@ export class EpiDeliveryController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateEpiDeliveryDto: UpdateEpiDeliveryDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
     const epiDelivery = await this.epiDeliveryService.update(
       id,
       updateEpiDeliveryDto,
+      user.id,
     );
 
     return {
@@ -182,12 +187,8 @@ export class EpiDeliveryController {
   @ApiParam({
     name: 'id',
     description: 'ID da entrega de epis.',
-    type: 'number',
+    type: 'string',
     required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para atualizar os dados da entrega de epis',
-    type: BaseDeleteDto,
   })
   @ApiResponse({
     status: 200,
@@ -207,15 +208,15 @@ export class EpiDeliveryController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteEpiDeliveryDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.epiDeliveryService.remove(id, deleteEpiDeliveryDto);
+    const epiDelivery = await this.epiDeliveryService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Entrega de epis id: #${id} excluída com sucesso.`,
+      data: epiDelivery,
+      message: `Entrega de epis id: #${epiDelivery.id} excluída com sucesso.`,
     };
   }
 }

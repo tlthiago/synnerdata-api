@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { BranchesService } from './branches.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
@@ -22,7 +22,8 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { BranchResponseDto } from './dto/branch-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Filiais')
@@ -38,7 +39,7 @@ export class BranchesController {
   @ApiParam({
     name: 'empresaId',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -63,18 +64,20 @@ export class BranchesController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('empresaId', ParseIntPipe) companyId: number,
+    @Param('empresaId', ParseUUIDPipe) companyId: string,
     @Body() createBranchDto: CreateBranchDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const branchId = await this.branchesService.create(
+    const branch = await this.branchesService.create(
       companyId,
       createBranchDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Filial cadastrada com sucesso, id: #${branchId}.`,
+      data: branch,
+      message: `Filial cadastrada com sucesso, id: #${branch.id}.`,
     };
   }
 
@@ -88,7 +91,7 @@ export class BranchesController {
   @ApiParam({
     name: 'empresaId',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -97,7 +100,7 @@ export class BranchesController {
     type: [BranchResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('empresaId', ParseIntPipe) companyId: number) {
+  findAll(@Param('empresaId', ParseUUIDPipe) companyId: string) {
     return this.branchesService.findAll(companyId);
   }
 
@@ -110,7 +113,7 @@ export class BranchesController {
   @ApiParam({
     name: 'id',
     description: 'ID da filial.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -119,7 +122,7 @@ export class BranchesController {
     type: BranchResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.branchesService.findOne(id);
   }
 
@@ -132,7 +135,7 @@ export class BranchesController {
   @ApiParam({
     name: 'id',
     description: 'ID da filial.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -157,10 +160,15 @@ export class BranchesController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateBranchDto: UpdateBranchDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const branch = await this.branchesService.update(id, updateBranchDto);
+    const branch = await this.branchesService.update(
+      id,
+      updateBranchDto,
+      user.id,
+    );
 
     return {
       succeeded: true,
@@ -178,7 +186,7 @@ export class BranchesController {
   @ApiParam({
     name: 'id',
     description: 'ID da filial.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -199,14 +207,14 @@ export class BranchesController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteBranchDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.branchesService.remove(id, deleteBranchDto);
+    const branch = await this.branchesService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
+      data: branch,
       message: `Filial id: #${id} excluída com sucesso.`,
     };
   }

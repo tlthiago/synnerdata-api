@@ -51,4 +51,8 @@ export class BranchResponseDto extends BaseResponseDto {
   @ApiProperty({ description: 'Telefone.' })
   @Expose()
   telefone: string;
+
+  @ApiProperty({ description: 'Celular.' })
+  @Expose()
+  celular: string;
 }
