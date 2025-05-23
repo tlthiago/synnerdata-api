@@ -11,7 +11,6 @@ import { Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { MedicalCertificateResponseDto } from './dto/medical-certificate-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -24,8 +23,9 @@ export class MedicalCertificateService {
   ) {}
 
   async create(
-    employeeId: number,
+    employeeId: string,
     createMedicalCertificateDto: CreateMedicalCertificateDto,
+    createdBy: string,
   ) {
     const employee = await this.employeesService.findOne(employeeId);
 
@@ -40,24 +40,24 @@ export class MedicalCertificateService {
       );
     }
 
-    const user = await this.usersService.findOne(
-      createMedicalCertificateDto.criadoPor,
-    );
+    const user = await this.usersService.findOne(createdBy);
 
     const medicalCertificate = this.medicalCertificateRepository.create({
       ...rest,
       dataInicio: dataInicioDate,
       dataFim: dataFimDate,
-      funcionario: employee,
+      funcionario: { id: employee.id },
       criadoPor: user,
     });
 
     await this.medicalCertificateRepository.save(medicalCertificate);
 
-    return medicalCertificate.id;
+    return plainToInstance(MedicalCertificateResponseDto, medicalCertificate, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findAll(employeeId: number) {
+  async findAll(employeeId: string) {
     const employee = await this.employeesService.findOne(employeeId);
 
     const medicalCertificates = await this.medicalCertificateRepository.find({
@@ -72,7 +72,7 @@ export class MedicalCertificateService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const medicalCertificate = await this.medicalCertificateRepository.findOne({
       where: {
         id,
@@ -90,8 +90,9 @@ export class MedicalCertificateService {
   }
 
   async update(
-    id: number,
+    id: string,
     updateMedicalCertificateDto: UpdateMedicalCertificateDto,
+    updatedBy: string,
   ) {
     const { dataInicio, dataFim, ...rest } = updateMedicalCertificateDto;
 
@@ -104,9 +105,7 @@ export class MedicalCertificateService {
       );
     }
 
-    const user = await this.usersService.findOne(
-      updateMedicalCertificateDto.atualizadoPor,
-    );
+    const user = await this.usersService.findOne(updatedBy);
 
     const result = await this.medicalCertificateRepository.update(id, {
       ...rest,
@@ -119,23 +118,37 @@ export class MedicalCertificateService {
       throw new NotFoundException('Atestado não encontrado.');
     }
 
-    return this.findOne(id);
+    const updatedMedicalCertificate = await this.findOne(id);
+
+    return updatedMedicalCertificate;
   }
 
-  async remove(id: number, deleteMedicalCertificateDto: BaseDeleteDto) {
-    const user = await this.usersService.findOne(
-      deleteMedicalCertificateDto.excluidoPor,
+  async remove(id: string, deletedBy: string) {
+    const user = await this.usersService.findOne(deletedBy);
+
+    const result = await this.medicalCertificateRepository.update(
+      { id, status: 'A' },
+      {
+        status: 'E',
+        atualizadoPor: user,
+      },
     );
 
-    const result = await this.medicalCertificateRepository.update(id, {
-      status: 'E',
-      atualizadoPor: user,
-    });
-
     if (result.affected === 0) {
-      throw new NotFoundException('Atestado não encontrado.');
+      throw new NotFoundException('Atestado já excluído ou não encontrado.');
     }
 
-    return { id, status: 'E' };
+    const removedMedicalCertificate =
+      await this.medicalCertificateRepository.findOne({
+        where: { id },
+      });
+
+    return plainToInstance(
+      MedicalCertificateResponseDto,
+      removedMedicalCertificate,
+      {
+        excludeExtraneousValues: true,
+      },
+    );
   }
 }

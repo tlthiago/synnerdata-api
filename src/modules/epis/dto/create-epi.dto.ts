@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, Length } from 'class-validator';
+import { IsString, IsNotEmpty, Length } from 'class-validator';
 
 export class CreateEpiDto {
   @ApiProperty({ description: 'Nome do cbo.' })
@@ -19,11 +19,4 @@ export class CreateEpiDto {
   @IsNotEmpty()
   @Length(1, 255)
   equipamentos: string;
-
-  @ApiProperty({
-    description: 'Usuário responsável pela criação do cbo.',
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  criadoPor: number;
 }

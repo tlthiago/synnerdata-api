@@ -6,7 +6,7 @@ import {
   Patch,
   Param,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { EmployeesProjectsService } from './employees-projects.service';
 import { CreateEmployeesProjectDto } from './dto/create-employees-project.dto';
@@ -21,6 +21,8 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { EmployeeProjectsResponseDto } from './dto/employee-projects-response.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/funcionarios')
 @ApiTags('Projetos dos Funcionários')
@@ -39,7 +41,7 @@ export class EmployeesProjectsController {
   @ApiParam({
     name: 'projetoId',
     description: 'ID do projeto.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -66,18 +68,20 @@ export class EmployeesProjectsController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('id', ParseIntPipe) projectId: number,
+    @Param('id', ParseUUIDPipe) projectId: string,
     @Body() createEmployeesProjectDto: CreateEmployeesProjectDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const employeesProjectsId = await this.employeesProjectsService.create(
+    const employeesProjects = await this.employeesProjectsService.create(
       projectId,
       createEmployeesProjectDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Funcionário(s) cadastrado(s) com sucesso no projeto, id: #${employeesProjectsId}.`,
+      data: employeesProjects,
+      message: `Funcionário(s) cadastrado(s) com sucesso no projeto, id: #${employeesProjects.id}.`,
     };
   }
 
@@ -91,7 +95,7 @@ export class EmployeesProjectsController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -100,7 +104,7 @@ export class EmployeesProjectsController {
     type: [EmployeeProjectsResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('funcionarioId', ParseIntPipe) employeeId: number) {
+  findAll(@Param('funcionarioId', ParseUUIDPipe) employeeId: string) {
     return this.employeesProjectsService.findAll(employeeId);
   }
 
@@ -114,7 +118,7 @@ export class EmployeesProjectsController {
   @ApiParam({
     name: 'id',
     description: 'ID do projeto.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -140,18 +144,20 @@ export class EmployeesProjectsController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) projectId: number,
+    @Param('id', ParseUUIDPipe) projectId: string,
     @Body() updateEmployeesProjectDto: UpdateEmployeesProjectDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.employeesProjectsService.update(
+    const employeesProjects = await this.employeesProjectsService.update(
       projectId,
       updateEmployeesProjectDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Funcionário(s) do projeto id: #${projectId} atualizado(s) com sucesso.`,
+      data: employeesProjects,
+      message: `Funcionário(s) do projeto id: #${employeesProjects.id} atualizado(s) com sucesso.`,
     };
   }
 }

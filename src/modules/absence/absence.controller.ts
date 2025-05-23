@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { AbsenceService } from './absence.service';
 import { CreateAbsenceDto } from './dto/create-absence.dto';
@@ -22,7 +22,8 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AbsenceResponseDto } from './dto/absence-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/funcionarios')
 @ApiTags('Faltas')
@@ -38,7 +39,7 @@ export class AbsenceController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -53,7 +54,7 @@ export class AbsenceController {
       type: 'object',
       properties: {
         succeeded: { type: 'boolean' },
-        data: { type: 'string', nullable: true },
+        data: { type: 'object', nullable: true },
         message: {
           type: 'string',
           description: 'Falta cadastrada com sucesso.',
@@ -63,15 +64,20 @@ export class AbsenceController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('funcionarioId', ParseIntPipe) employeeId: number,
+    @Param('funcionarioId', ParseUUIDPipe) employeeId: string,
     @Body() createAbsenceDto: CreateAbsenceDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const id = await this.absenceService.create(employeeId, createAbsenceDto);
+    const absence = await this.absenceService.create(
+      employeeId,
+      createAbsenceDto,
+      user.id,
+    );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Falta cadastrada com sucesso, id: #${id}.`,
+      data: absence,
+      message: `Falta cadastrada com sucesso, id: #${absence.id}.`,
     };
   }
 
@@ -85,7 +91,7 @@ export class AbsenceController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -94,7 +100,7 @@ export class AbsenceController {
     type: [AbsenceResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('funcionarioId', ParseIntPipe) employeeId: number) {
+  findAll(@Param('funcionarioId', ParseUUIDPipe) employeeId: string) {
     return this.absenceService.findAll(employeeId);
   }
 
@@ -107,7 +113,7 @@ export class AbsenceController {
   @ApiParam({
     name: 'id',
     description: 'ID da falta.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -116,7 +122,7 @@ export class AbsenceController {
     type: AbsenceResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.absenceService.findOne(id);
   }
 
@@ -129,7 +135,7 @@ export class AbsenceController {
   @ApiParam({
     name: 'id',
     description: 'ID da falta.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -154,10 +160,15 @@ export class AbsenceController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateAbsenceDto: UpdateAbsenceDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const absence = await this.absenceService.update(id, updateAbsenceDto);
+    const absence = await this.absenceService.update(
+      id,
+      updateAbsenceDto,
+      user.id,
+    );
 
     return {
       succeeded: true,
@@ -175,12 +186,8 @@ export class AbsenceController {
   @ApiParam({
     name: 'id',
     description: 'ID da falta.',
-    type: 'number',
+    type: 'string',
     required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para atualizar os dados da falta',
-    type: BaseDeleteDto,
   })
   @ApiResponse({
     status: 200,
@@ -200,15 +207,15 @@ export class AbsenceController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteAbsenceDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.absenceService.remove(id, deleteAbsenceDto);
+    const absence = await this.absenceService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Falta id: #${id} excluída com sucesso.`,
+      data: absence,
+      message: `Falta id: #${absence.id} excluída com sucesso.`,
     };
   }
 }

@@ -2,6 +2,7 @@ import {
   IsDateString,
   IsEmail,
   IsEnum,
+  IsNotEmpty,
   IsOptional,
   IsString,
 } from 'class-validator';
@@ -68,12 +69,15 @@ class Metadata {
 
 export class CreateCustomerDto {
   @IsString()
+  @IsOptional()
   code: string;
 
   @IsString()
+  @IsNotEmpty()
   name: string;
 
   @IsEmail()
+  @IsNotEmpty()
   email: string;
 
   @IsEnum(DocumentType)
@@ -86,6 +90,7 @@ export class CreateCustomerDto {
   type: Type;
 
   @IsEnum(Gender)
+  @IsOptional()
   gender: Gender;
 
   address: Address;
@@ -93,7 +98,9 @@ export class CreateCustomerDto {
   phones: Phones;
 
   @IsDateString()
+  @IsOptional()
   birthdate: Date;
 
+  @IsOptional()
   metadata: Metadata;
 }

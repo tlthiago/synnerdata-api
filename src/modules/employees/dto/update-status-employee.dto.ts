@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsEnum, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { StatusFuncionario } from '../enums/employees.enum';
 
@@ -10,18 +10,4 @@ export class UpdateStatusDto {
   @IsEnum(StatusFuncionario)
   @IsNotEmpty()
   statusFuncionario: StatusFuncionario;
-
-  @ApiProperty({
-    description: 'Usuário responsável pela atualização do funcionário.',
-  })
-  @IsNotEmpty({
-    message: 'O usuário responsável pela atualização deve ser informado.',
-  })
-  @IsNumber(
-    {},
-    {
-      message: 'O identificador do usuário deve ser um número.',
-    },
-  )
-  atualizadoPor: number;
 }

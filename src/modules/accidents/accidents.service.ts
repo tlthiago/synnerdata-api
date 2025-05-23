@@ -7,7 +7,6 @@ import { Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { AccidentResponseDto } from './dto/accidents-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -19,23 +18,29 @@ export class AccidentsService {
     private readonly usersService: UsersService,
   ) {}
 
-  async create(employeeId: number, createAccidentDto: CreateAccidentDto) {
+  async create(
+    employeeId: string,
+    createAccidentDto: CreateAccidentDto,
+    createdBy: string,
+  ) {
     const employee = await this.employeesService.findOne(employeeId);
 
-    const user = await this.usersService.findOne(createAccidentDto.criadoPor);
+    const user = await this.usersService.findOne(createdBy);
 
     const accident = this.accidentRepository.create({
       ...createAccidentDto,
-      funcionario: employee,
+      funcionario: { id: employee.id },
       criadoPor: user,
     });
 
     await this.accidentRepository.save(accident);
 
-    return accident.id;
+    return plainToInstance(AccidentResponseDto, accident, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findAll(employeeId: number) {
+  async findAll(employeeId: string) {
     const employee = await this.employeesService.findOne(employeeId);
 
     const accidents = await this.accidentRepository.find({
@@ -50,7 +55,7 @@ export class AccidentsService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const accident = await this.accidentRepository.findOne({
       where: {
         id,
@@ -67,10 +72,12 @@ export class AccidentsService {
     });
   }
 
-  async update(id: number, updateAccidentDto: UpdateAccidentDto) {
-    const user = await this.usersService.findOne(
-      updateAccidentDto.atualizadoPor,
-    );
+  async update(
+    id: string,
+    updateAccidentDto: UpdateAccidentDto,
+    updatedBy: string,
+  ) {
+    const user = await this.usersService.findOne(updatedBy);
 
     const result = await this.accidentRepository.update(id, {
       ...updateAccidentDto,
@@ -81,21 +88,31 @@ export class AccidentsService {
       throw new NotFoundException('Acidente não encontrado.');
     }
 
-    return this.findOne(id);
+    const updatedAccident = await this.findOne(id);
+    return updatedAccident;
   }
 
-  async remove(id: number, deleteAccidentDto: BaseDeleteDto) {
-    const user = await this.usersService.findOne(deleteAccidentDto.excluidoPor);
+  async remove(id: string, deletedBy: string) {
+    const user = await this.usersService.findOne(deletedBy);
 
-    const result = await this.accidentRepository.update(id, {
-      status: 'E',
-      atualizadoPor: user,
-    });
+    const result = await this.accidentRepository.update(
+      { id, status: 'A' },
+      {
+        status: 'E',
+        atualizadoPor: user,
+      },
+    );
 
     if (result.affected === 0) {
-      throw new NotFoundException('Acidente não encontrado.');
+      throw new NotFoundException('Acidente já excluído ou não encontrado.');
     }
 
-    return { id, status: 'E' };
+    const removedAccident = await this.accidentRepository.findOne({
+      where: { id },
+    });
+
+    return plainToInstance(AccidentResponseDto, removedAccident, {
+      excludeExtraneousValues: true,
+    });
   }
 }

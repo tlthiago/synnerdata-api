@@ -111,9 +111,11 @@ export class EmployeeResponseDto extends BaseResponseDto {
   @ApiProperty({ description: 'Data do último ASO' })
   @Expose()
   @Transform(({ value }) =>
-    new Intl.DateTimeFormat('pt-BR', {
-      dateStyle: 'short',
-    }).format(new Date(value)),
+    value
+      ? new Intl.DateTimeFormat('pt-BR', {
+          dateStyle: 'short',
+        }).format(new Date(value))
+      : null,
   )
   dataUltimoASO: string;
 
@@ -134,9 +136,11 @@ export class EmployeeResponseDto extends BaseResponseDto {
   })
   @Expose()
   @Transform(({ value }) =>
-    new Intl.DateTimeFormat('pt-BR', {
-      dateStyle: 'short',
-    }).format(new Date(value)),
+    value
+      ? new Intl.DateTimeFormat('pt-BR', {
+          dateStyle: 'short',
+        }).format(new Date(value))
+      : null,
   )
   vencimentoExperiencia1: string;
 
@@ -145,18 +149,22 @@ export class EmployeeResponseDto extends BaseResponseDto {
   })
   @Expose()
   @Transform(({ value }) =>
-    new Intl.DateTimeFormat('pt-BR', {
-      dateStyle: 'short',
-    }).format(new Date(value)),
+    value
+      ? new Intl.DateTimeFormat('pt-BR', {
+          dateStyle: 'short',
+        }).format(new Date(value))
+      : null,
   )
   vencimentoExperiencia2: string;
 
   @ApiProperty({ description: 'Data do exame demissional' })
   @Expose()
   @Transform(({ value }) =>
-    new Intl.DateTimeFormat('pt-BR', {
-      dateStyle: 'short',
-    }).format(new Date(value)),
+    value
+      ? new Intl.DateTimeFormat('pt-BR', {
+          dateStyle: 'short',
+        }).format(new Date(value))
+      : null,
   )
   dataExameDemissional: string;
 

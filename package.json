@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "dev": "docker compose --profile dev up",
-    "dev:build": "docker compose --profile dev up --build",
+    "dev:build": "docker compose --profile dev up --build --no-cache",
     "build": "nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",

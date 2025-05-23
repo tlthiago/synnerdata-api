@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
@@ -22,7 +22,8 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RoleResponseDto } from './dto/role-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Funções')
@@ -38,7 +39,7 @@ export class RolesController {
   @ApiParam({
     name: 'empresaId',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -63,15 +64,20 @@ export class RolesController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('empresaId', ParseIntPipe) companyId: number,
+    @Param('empresaId', ParseUUIDPipe) companyId: string,
     @Body() createRoleDto: CreateRoleDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const id = await this.rolesService.create(companyId, createRoleDto);
+    const role = await this.rolesService.create(
+      companyId,
+      createRoleDto,
+      user.id,
+    );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Função cadastrada com sucesso, id: #${id}.`,
+      data: role,
+      message: `Função cadastrada com sucesso, id: #${role.id}.`,
     };
   }
 
@@ -85,7 +91,7 @@ export class RolesController {
   @ApiParam({
     name: 'empresaId',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -94,7 +100,7 @@ export class RolesController {
     type: [RoleResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('empresaId', ParseIntPipe) companyId: number) {
+  findAll(@Param('empresaId', ParseUUIDPipe) companyId: string) {
     return this.rolesService.findAll(companyId);
   }
 
@@ -107,7 +113,7 @@ export class RolesController {
   @ApiParam({
     name: 'id',
     description: 'ID da função.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -116,7 +122,7 @@ export class RolesController {
     type: RoleResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.rolesService.findOne(id);
   }
 
@@ -129,7 +135,7 @@ export class RolesController {
   @ApiParam({
     name: 'id',
     description: 'ID da função.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -154,10 +160,11 @@ export class RolesController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateRoleDto: UpdateRoleDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const role = await this.rolesService.update(id, updateRoleDto);
+    const role = await this.rolesService.update(id, updateRoleDto, user.id);
 
     return {
       succeeded: true,
@@ -175,12 +182,8 @@ export class RolesController {
   @ApiParam({
     name: 'id',
     description: 'ID da função.',
-    type: 'number',
+    type: 'string',
     required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para atualizar os dados da função',
-    type: BaseDeleteDto,
   })
   @ApiResponse({
     status: 200,
@@ -200,15 +203,15 @@ export class RolesController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteEpiDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.rolesService.remove(id, deleteEpiDto);
+    const role = await this.rolesService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Função id: #${id} excluída com sucesso.`,
+      data: role,
+      message: `Função id: #${role.id} excluída com sucesso.`,
     };
   }
 }

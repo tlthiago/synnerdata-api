@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsDateString } from 'class-validator';
+import { IsNotEmpty, IsDateString, IsUUID, IsNumber } from 'class-validator';
 
 export class CreatePromotionDto {
   @ApiProperty({ description: 'Nova função.' })
-  @IsNumber()
+  @IsUUID()
   @IsNotEmpty()
-  funcaoId: number;
+  funcaoId: string;
 
   @ApiProperty({ description: 'Novo salário.' })
   @IsNumber()
@@ -16,11 +16,4 @@ export class CreatePromotionDto {
   @IsDateString()
   @IsNotEmpty()
   data: string;
-
-  @ApiProperty({
-    description: 'Usuário responsável pelo cadastro da promoção.',
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  criadoPor: number;
 }

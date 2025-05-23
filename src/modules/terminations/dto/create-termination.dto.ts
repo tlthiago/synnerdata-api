@@ -1,11 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsString,
-  IsNotEmpty,
-  IsNumber,
-  Length,
-  IsDateString,
-} from 'class-validator';
+import { IsString, IsNotEmpty, Length, IsDateString } from 'class-validator';
 
 export class CreateTerminationDto {
   @ApiProperty({ description: 'Data da demissão.' })
@@ -36,11 +30,4 @@ export class CreateTerminationDto {
   @IsNotEmpty()
   @Length(1, 255)
   formaDemissao: string;
-
-  @ApiProperty({
-    description: 'Usuário responsável pelo cadastro da demissão.',
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  criadoPor: number;
 }

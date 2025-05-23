@@ -10,7 +10,6 @@ import { DataSource } from 'typeorm';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { MockAuthGuard } from '../../common/guards/mock-auth.guard';
 import { Company } from './../companies/entities/company.entity';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { Branch } from '../branches/entities/branch.entity';
 import { Department } from '../departments/entities/department.entity';
 import { CostCenter } from '../cost-centers/entities/cost-center.entity';
@@ -29,7 +28,7 @@ import { Warning } from '../warnings/entities/warning.entity';
 import { LaborAction } from '../labor-actions/entities/labor-action.entity';
 import { EpiDelivery } from '../epi-delivery/entities/epi-delivery.entity';
 import { Vacation } from '../vacations/entities/vacation.entity';
-import { User } from '../users/entities/user.entity';
+import { Funcao, User } from '../users/entities/user.entity';
 import {
   Escala,
   EstadoCivil,
@@ -38,18 +37,20 @@ import {
   Sexo,
 } from '../employees/enums/employees.enum';
 import { MedicalCertificateModule } from './medical-certificate.module';
+import { MockUserInterceptor } from '../../common/interceptors/mock-user.interceptor';
 
 describe('MedicalCertificateController (E2E)', () => {
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
+  let mockUserInterceptor: MockUserInterceptor;
   let createdUser: User;
   let createdEmployee: Employee;
+
   const medicalCertificate = {
     dataInicio: '2025-02-10',
     dataFim: '2025-02-14',
     motivo: 'Motivo Teste',
-    criadoPor: 1,
   };
 
   beforeAll(async () => {
@@ -97,6 +98,8 @@ describe('MedicalCertificateController (E2E)', () => {
         whitelist: true,
       }),
     );
+    mockUserInterceptor = new MockUserInterceptor();
+    app.useGlobalInterceptors(mockUserInterceptor);
     await app.init();
 
     dataSource = app.get(DataSource);
@@ -112,9 +115,11 @@ describe('MedicalCertificateController (E2E)', () => {
       nome: 'Usuário Teste',
       email: 'teste1@example.com',
       senha: 'senha123',
-      funcao: 'teste',
+      funcao: Funcao.ADMIN,
     });
     createdUser = await userRepository.save(user);
+
+    mockUserInterceptor.setUserId(createdUser.id);
 
     const company = companyRepository.create({
       nomeFantasia: 'Tech Solutions',
@@ -128,34 +133,23 @@ describe('MedicalCertificateController (E2E)', () => {
       estado: 'SP',
       cep: '01000-000',
       dataFundacao: '2010-05-15',
-      telefone: '(11) 99999-9999',
-      faturamento: 1200000.5,
-      regimeTributario: 'Simples Nacional',
-      inscricaoEstadual: '1234567890',
-      cnaePrincipal: '6201500',
-      segmento: 'Tecnologia',
-      ramoAtuacao: 'Desenvolvimento de Software',
-      logoUrl: 'https://example.com/logo.png',
-      status: 'A',
-      criadoPor: createdUser,
+      email: 'contato@techsolutions.com.br',
+      celular: '+5531991897926',
     });
     const createdCompany = await companyRepository.save(company);
 
     const role = roleRepository.create({
       nome: 'Função Teste',
-      criadoPor: createdUser,
     });
     const createdRole = await roleRepository.save(role);
 
     const department = departmentRepository.create({
       nome: 'Departamento Teste',
-      criadoPor: createdUser,
     });
     const createdDepartment = await departmentRepository.save(department);
 
     const cbo = cboRepository.create({
       nome: 'Cbo Teste',
-      criadoPor: user,
     });
     const createdCbo = await cboRepository.save(cbo);
 
@@ -183,9 +177,6 @@ describe('MedicalCertificateController (E2E)', () => {
       dataUltimoASO: '2025-02-12',
       funcao: createdRole,
       setor: createdDepartment,
-      vencimentoExperiencia1: '2025-02-12',
-      vencimentoExperiencia2: '2025-05-12',
-      dataExameDemissional: '2025-05-12',
       grauInstrucao: GrauInstrucao.SUPERIOR,
       necessidadesEspeciais: false,
       filhos: false,
@@ -202,7 +193,6 @@ describe('MedicalCertificateController (E2E)', () => {
       cargaHoraria: 60,
       escala: Escala.SEIS_UM,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
     createdEmployee = await employeeRepository.save(employee);
   }, 50000);
@@ -220,10 +210,14 @@ describe('MedicalCertificateController (E2E)', () => {
       .expect(201);
 
     expect(response.status).toBe(201);
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       succeeded: true,
-      data: null,
-      message: `Atestado cadastrado com sucesso, id: #1.`,
+      data: {
+        motivo: medicalCertificate.motivo,
+      },
+      message: expect.stringContaining(
+        'Atestado cadastrado com sucesso, id: #',
+      ),
     });
   });
 
@@ -236,10 +230,7 @@ describe('MedicalCertificateController (E2E)', () => {
     expect(response.body).toHaveProperty('message');
     expect(Array.isArray(response.body.message)).toBe(true);
     expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'dataInicio should not be empty',
-        'criadoPor should not be empty',
-      ]),
+      expect.arrayContaining(['dataInicio should not be empty']),
     );
   });
 
@@ -275,10 +266,9 @@ describe('MedicalCertificateController (E2E)', () => {
 
   it('/v1/funcionarios/:funcionarioId/atestados (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/999/atestados`)
+      .post(`/v1/funcionarios/86f226c4-38b0-464c-987e-35293033faf6/atestados`)
       .send({
         ...medicalCertificate,
-        criadoPor: createdUser.id,
       })
       .expect(404);
 
@@ -289,45 +279,12 @@ describe('MedicalCertificateController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/atestados (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
-    const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/atestados`)
-      .send({
-        ...medicalCertificate,
-        criadoPor: 'Teste',
-      })
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'criadoPor must be a number conforming to the specified constraints',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/:funcionarioId/atestados (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
-    const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/atestados`)
-      .send({
-        ...medicalCertificate,
-        criadoPor: 999,
-      })
-      .expect(404);
-
-    expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
-    });
-  });
-
   it('/v1/funcionarios/:funcionarioId/atestados (GET) - Deve listar todos os atestados de um funcionário', async () => {
     const medicalCertificateRepository =
       dataSource.getRepository(MedicalCertificate);
     await medicalCertificateRepository.save({
       ...medicalCertificate,
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
@@ -344,7 +301,6 @@ describe('MedicalCertificateController (E2E)', () => {
     const createdMedicalCertificate = await medicalCertificateRepository.save({
       ...medicalCertificate,
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
@@ -361,7 +317,7 @@ describe('MedicalCertificateController (E2E)', () => {
 
   it('/v1/funcionarios/atestados/:id (GET) - Deve retornar erro ao buscar um atestado inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/funcionarios/atestados/999')
+      .get('/v1/funcionarios/atestados/86f226c4-38b0-464c-987e-35293033faf6')
       .expect(404);
 
     expect(response.body).toEqual({
@@ -378,7 +334,7 @@ describe('MedicalCertificateController (E2E)', () => {
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
@@ -389,7 +345,6 @@ describe('MedicalCertificateController (E2E)', () => {
     const createdMedicalCertificate = await medicalCertificateRepository.save({
       ...medicalCertificate,
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
 
     const updateData = {
@@ -406,9 +361,9 @@ describe('MedicalCertificateController (E2E)', () => {
     expect(response.body).toMatchObject({
       succeeded: true,
       data: {
-        id: expect.any(Number),
+        id: createdMedicalCertificate.id,
         dataInicio: expect.any(String),
-        atualizadoPor: expect.any(String),
+        atualizadoPor: createdUser.nome,
       },
       message: `Atestado id: #${createdMedicalCertificate.id} atualizada com sucesso.`,
     });
@@ -431,12 +386,10 @@ describe('MedicalCertificateController (E2E)', () => {
     const createdMedicalCertificate = await medicalCertificateRepository.save({
       ...medicalCertificate,
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
 
     const updateData = {
       dataInicio: 123,
-      atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
@@ -458,13 +411,11 @@ describe('MedicalCertificateController (E2E)', () => {
     const createdMedicalCertificate = await medicalCertificateRepository.save({
       ...medicalCertificate,
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
 
     const updateData = {
       dataInicio: '2025-02-16',
       dataFim: '2025-02-11',
-      atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
@@ -478,106 +429,27 @@ describe('MedicalCertificateController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/atestados/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
-    const medicalCertificateRepository =
-      dataSource.getRepository(MedicalCertificate);
-    const createdMedicalCertificate = await medicalCertificateRepository.save({
-      ...medicalCertificate,
-      funcionario: createdEmployee,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      dataInicio: '2025-02-11',
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/atestados/${createdMedicalCertificate.id}`)
-      .send(updateData)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O usuário responsável pela atualização deve ser informado.',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/atestados/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
-    const medicalCertificateRepository =
-      dataSource.getRepository(MedicalCertificate);
-    const createdMedicalCertificate = await medicalCertificateRepository.save({
-      ...medicalCertificate,
-      funcionario: createdEmployee,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      dataInicio: '2025-02-11',
-      atualizadoPor: 'Teste',
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/atestados/${createdMedicalCertificate.id}`)
-      .send(updateData)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O identificador do usuário deve ser um número.',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/atestados/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
-    const medicalCertificateRepository =
-      dataSource.getRepository(MedicalCertificate);
-    const createdMedicalCertificate = await medicalCertificateRepository.save({
-      ...medicalCertificate,
-      funcionario: createdEmployee,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      dataInicio: '2025-02-11',
-      atualizadoPor: 999,
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/atestados/${createdMedicalCertificate.id}`)
-      .send(updateData)
-      .expect(404);
-
-    expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
-    });
-  });
-
   it('/v1/funcionarios/atestados/:id (PATCH) - Deve retornar erro ao atualizar um atestado com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
       .patch('/v1/funcionarios/atestados/abc')
       .send({
         dataInicio: '2025-02-11',
-        atualizadoPor: 1,
       })
       .expect(400);
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
 
   it('/v1/funcionarios/atestados/:id (PATCH) - Deve retornar erro ao atualizar um atestado inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/funcionarios/atestados/9999')
+      .patch('/v1/funcionarios/atestados/86f226c4-38b0-464c-987e-35293033faf6')
       .send({
         dataInicio: '2025-02-11',
         dataFim: '2025-02-14',
-        atualizadoPor: 1,
       })
       .expect(404);
 
@@ -594,108 +466,43 @@ describe('MedicalCertificateController (E2E)', () => {
     const createdMedicalCertificate = await medicalCertificateRepository.save({
       ...medicalCertificate,
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
-
-    const deleteMedicalCertificateDto: BaseDeleteDto = {
-      excluidoPor: createdUser.id,
-    };
 
     const response = await request(app.getHttpServer())
       .delete(`/v1/funcionarios/atestados/${createdMedicalCertificate.id}`)
-      .send(deleteMedicalCertificateDto)
       .expect(200);
 
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       succeeded: true,
-      data: null,
-      message: `Atestado id: #${createdMedicalCertificate.id} excluído com sucesso.`,
-    });
-
-    const deletedMedicalCertificate =
-      await medicalCertificateRepository.findOneBy({
+      data: {
         id: createdMedicalCertificate.id,
-      });
-
-    expect(deletedMedicalCertificate.status).toBe('E');
-  });
-
-  it('/v1/funcionarios/atestados/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
-    const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/atestados/1`)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O usuário responsável pela exclusão deve ser informado.',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/atestados/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
-    const deleteMedicalCertificateDto = {
-      excluidoPor: 'Teste',
-    };
-
-    const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/atestados/1`)
-      .send(deleteMedicalCertificateDto)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O identificador do usuário deve ser um número.',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/atestados/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
-    const deleteMedicalCertificateDto: BaseDeleteDto = {
-      excluidoPor: 999,
-    };
-
-    const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/atestados/${createdEmployee.id}`)
-      .send(deleteMedicalCertificateDto)
-      .expect(404);
-
-    expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
+        atualizadoPor: createdUser.nome,
+        status: 'E',
+      },
+      message: `Atestado id: #${createdMedicalCertificate.id} excluído com sucesso.`,
     });
   });
 
   it('/v1/funcionarios/atestados/:id (DELETE) - Deve retornar erro ao excluir um atestado com um ID inválido', async () => {
-    const deleteMedicalCertificateDto: BaseDeleteDto = {
-      excluidoPor: 1,
-    };
-
     const response = await request(app.getHttpServer())
       .delete('/v1/funcionarios/atestados/abc')
-      .send(deleteMedicalCertificateDto)
       .expect(400);
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
 
   it('/v1/funcionarios/atestados/:id (DELETE) - Deve retornar erro ao excluir um atestado inexistente', async () => {
-    const deleteMedicalCertificateDto: BaseDeleteDto = {
-      excluidoPor: createdUser.id,
-    };
-
     const response = await request(app.getHttpServer())
-      .delete('/v1/funcionarios/atestados/9999')
-      .send(deleteMedicalCertificateDto)
+      .delete('/v1/funcionarios/atestados/86f226c4-38b0-464c-987e-35293033faf6')
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Atestado não encontrado.',
+      message: 'Atestado já excluído ou não encontrado.',
       error: 'Not Found',
     });
   });

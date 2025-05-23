@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { PromotionService } from './promotion.service';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
@@ -22,7 +22,8 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PromotionResponseDto } from './dto/promotion-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/funcionarios')
 @ApiTags('Promoções')
@@ -38,7 +39,7 @@ export class PromotionController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -63,18 +64,20 @@ export class PromotionController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('funcionarioId', ParseIntPipe) employeeId: number,
+    @Param('funcionarioId', ParseUUIDPipe) employeeId: string,
     @Body() createPromotionDto: CreatePromotionDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const promotionId = await this.promotionService.create(
+    const promotion = await this.promotionService.create(
       employeeId,
       createPromotionDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Promoção cadastrada com sucesso, id: #${promotionId}.`,
+      data: promotion,
+      message: `Promoção cadastrada com sucesso, id: #${promotion.id}.`,
     };
   }
 
@@ -88,7 +91,7 @@ export class PromotionController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -97,7 +100,7 @@ export class PromotionController {
     type: [PromotionResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('funcionarioId', ParseIntPipe) employeeId: number) {
+  findAll(@Param('funcionarioId', ParseUUIDPipe) employeeId: string) {
     return this.promotionService.findAll(employeeId);
   }
 
@@ -110,7 +113,7 @@ export class PromotionController {
   @ApiParam({
     name: 'id',
     description: 'ID da promoção.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -119,7 +122,7 @@ export class PromotionController {
     type: PromotionResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.promotionService.findOne(id);
   }
 
@@ -132,7 +135,7 @@ export class PromotionController {
   @ApiParam({
     name: 'id',
     description: 'ID da promoção.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -157,12 +160,14 @@ export class PromotionController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updatePromotionDto: UpdatePromotionDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
     const promotion = await this.promotionService.update(
       id,
       updatePromotionDto,
+      user.id,
     );
 
     return {
@@ -181,12 +186,8 @@ export class PromotionController {
   @ApiParam({
     name: 'id',
     description: 'ID da promoção.',
-    type: 'number',
+    type: 'string',
     required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para atualizar os dados da promoção',
-    type: BaseDeleteDto,
   })
   @ApiResponse({
     status: 200,
@@ -206,15 +207,15 @@ export class PromotionController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deletePromotionDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.promotionService.remove(id, deletePromotionDto);
+    const promotion = await this.promotionService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Promoção id: #${id} excluída com sucesso.`,
+      data: promotion,
+      message: `Promoção id: #${promotion.id} excluída com sucesso.`,
     };
   }
 }

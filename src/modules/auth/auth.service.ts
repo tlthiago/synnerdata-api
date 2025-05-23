@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -10,12 +11,24 @@ import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { AuthDto } from './dto/auth.dto';
+import { CreateSubscriptionDto } from '../payments/subscriptions/dto/create-subscription.dto';
+import { SubscriptionsService } from '../payments/subscriptions/subscriptions.service';
+import { CompaniesService } from '../companies/companies.service';
+import { ActivateAccountDto } from '../users/dto/activate-account.dto';
+import { UserActivationTokenService } from '../users/users-activation-token.service';
+import { MailService } from '../services/mail/mail.service';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
+    private readonly subscriptionsService: SubscriptionsService,
+    private readonly companiesService: CompaniesService,
+    private readonly userActivationTokenService: UserActivationTokenService,
+    private readonly mailService: MailService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async signUp(createUserDto: CreateUserDto) {
@@ -30,7 +43,86 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(senha, 6);
 
     const userData = { ...createUserDto, senha: passwordHash };
-    return await this.usersService.create(userData);
+
+    const createdUser = await this.usersService.create(userData);
+
+    return createdUser;
+  }
+
+  async subscriptionSignUp(subscriptionSignUpDto: CreateSubscriptionDto) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    let subscriptionResponse: any;
+
+    try {
+      subscriptionResponse = await this.subscriptionsService.create(
+        subscriptionSignUpDto,
+      );
+
+      if (
+        !subscriptionResponse?.id ||
+        subscriptionResponse.status !== 'active'
+      ) {
+        throw new BadRequestException('Erro ao criar assinatura no Pagar.me');
+      }
+
+      const { customer } = subscriptionSignUpDto;
+
+      const companyData = this.extractCompanyDataFromCustomer(customer);
+
+      const company = await this.companiesService.createInitialCompany(
+        companyData,
+        queryRunner.manager,
+      );
+
+      const user = await this.usersService.createInitialUser(
+        {
+          nome: customer.name,
+          email: customer.email,
+          empresaId: company.id,
+        },
+        queryRunner.manager,
+      );
+
+      await this.mailService.sendActivationAccountEmail({
+        email: user.email,
+      });
+
+      await queryRunner.commitTransaction();
+
+      return await this.usersService.findOne(user.id);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+
+      if (subscriptionResponse?.id) {
+        await this.subscriptionsService.remove(subscriptionResponse.id);
+      }
+
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async activateAccount(activateAccountDto: ActivateAccountDto) {
+    const { nome, email, password, activationToken } = activateAccountDto;
+
+    await this.userActivationTokenService.findOne(activationToken);
+
+    const user = await this.usersService.findOneByEmail(email);
+
+    if (!user || user.status !== 'P') {
+      throw new ConflictException('Usuário já ativado ou inválido');
+    }
+
+    const passwordHash = await bcrypt.hash(password, 6);
+
+    await this.usersService.activateUser(user.id, nome, email, passwordHash);
+    await this.userActivationTokenService.remove(activationToken);
+
+    return user.id;
   }
 
   async signIn(authDto: AuthDto): Promise<SignInResponseDto> {
@@ -50,6 +142,7 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign({
       sub: user.id,
+      email: user.email,
     });
     const expirationDate = new Date();
     expirationDate.setHours(expirationDate.getHours() + 8);
@@ -63,6 +156,35 @@ export class AuthService {
         token_type: tokenType,
       },
       message: 'Login realizado com sucesso.',
+    };
+  }
+
+  private extractCompanyDataFromCustomer(
+    customer: CreateSubscriptionDto['customer'],
+  ) {
+    const homePhone = customer.phones.home_phone
+      ? customer.phones.home_phone.country_code +
+        customer.phones.home_phone.number
+      : null;
+
+    const mobilePhone = `${customer.phones.mobile_phone.area_code}${customer.phones.mobile_phone.number}`;
+
+    const [number, street, neighborhood] = customer.address.line_1.split(', ');
+
+    return {
+      razaoSocial: customer.name,
+      nomeFantasia: customer.metadata.company,
+      cnpj: customer.document,
+      email: customer.email,
+      telefone: homePhone,
+      celular: mobilePhone,
+      rua: street,
+      numero: number,
+      bairro: neighborhood,
+      complemento: customer.address.line_2,
+      cidade: customer.address.city,
+      estado: customer.address.country,
+      cep: customer.address.zip_code,
     };
   }
 }

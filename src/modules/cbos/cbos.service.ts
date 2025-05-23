@@ -7,7 +7,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Cbo } from './entities/cbo.entity';
 import { CboResponseDto } from './dto/cbo-response.dto';
 import { plainToInstance } from 'class-transformer';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -19,23 +18,29 @@ export class CbosService {
     private readonly usersService: UsersService,
   ) {}
 
-  async create(companyId: number, createCboDto: CreateCboDto) {
+  async create(
+    companyId: string,
+    createCboDto: CreateCboDto,
+    createdBy: string,
+  ) {
     const company = await this.companiesService.findOne(companyId);
 
-    const user = await this.usersService.findOne(createCboDto.criadoPor);
+    const user = await this.usersService.findOne(createdBy);
 
     const cbo = this.cboRepository.create({
       ...createCboDto,
-      empresa: company,
+      empresa: { id: company.id },
       criadoPor: user,
     });
 
     await this.cboRepository.save(cbo);
 
-    return cbo.id;
+    return plainToInstance(CboResponseDto, cbo, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findAll(companyId: number) {
+  async findAll(companyId: string) {
     const company = await this.companiesService.findOne(companyId);
 
     const cbos = await this.cboRepository.find({
@@ -50,7 +55,7 @@ export class CbosService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const cbo = await this.cboRepository.findOne({
       where: {
         id,
@@ -67,8 +72,22 @@ export class CbosService {
     });
   }
 
-  async update(id: number, updateCboDto: UpdateCboDto) {
-    const user = await this.usersService.findOne(updateCboDto.atualizadoPor);
+  async findOneInternal(id: string) {
+    const cbo = await this.cboRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!cbo) {
+      throw new NotFoundException('Cbo não encontrado.');
+    }
+
+    return cbo;
+  }
+
+  async update(id: string, updateCboDto: UpdateCboDto, updatedBy: string) {
+    const user = await this.usersService.findOne(updatedBy);
 
     const result = await this.cboRepository.update(id, {
       ...updateCboDto,
@@ -79,21 +98,32 @@ export class CbosService {
       throw new NotFoundException('Cbo não encontrado.');
     }
 
-    return this.findOne(id);
+    const updatedCbo = await this.findOne(id);
+
+    return updatedCbo;
   }
 
-  async remove(id: number, deleteCboDto: BaseDeleteDto) {
-    const user = await this.usersService.findOne(deleteCboDto.excluidoPor);
+  async remove(id: string, deletedBy: string) {
+    const user = await this.usersService.findOne(deletedBy);
 
-    const result = await this.cboRepository.update(id, {
-      status: 'E',
-      atualizadoPor: user,
-    });
+    const result = await this.cboRepository.update(
+      { id, status: 'A' },
+      {
+        status: 'E',
+        atualizadoPor: user,
+      },
+    );
 
     if (result.affected === 0) {
-      throw new NotFoundException('Cbo não encontrado.');
+      throw new NotFoundException('Cbo já excluído ou não encontrado.');
     }
 
-    return { id, status: 'E' };
+    const removedCbo = await this.cboRepository.findOne({
+      where: { id },
+    });
+
+    return plainToInstance(CboResponseDto, removedCbo, {
+      excludeExtraneousValues: true,
+    });
   }
 }

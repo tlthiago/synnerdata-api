@@ -10,7 +10,6 @@ import { DataSource } from 'typeorm';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { MockAuthGuard } from '../../common/guards/mock-auth.guard';
 import { Company } from './../companies/entities/company.entity';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { Branch } from '../branches/entities/branch.entity';
 import { Department } from '../departments/entities/department.entity';
 import { CostCenter } from '../cost-centers/entities/cost-center.entity';
@@ -29,7 +28,7 @@ import { Warning } from '../warnings/entities/warning.entity';
 import { LaborAction } from '../labor-actions/entities/labor-action.entity';
 import { EpiDelivery } from '../epi-delivery/entities/epi-delivery.entity';
 import { Vacation } from '../vacations/entities/vacation.entity';
-import { User } from '../users/entities/user.entity';
+import { Funcao, User } from '../users/entities/user.entity';
 import {
   Escala,
   EstadoCivil,
@@ -39,17 +38,19 @@ import {
 } from '../employees/enums/employees.enum';
 import { WarningsModule } from './warnings.module';
 import { UpdateWarningDto } from './dto/update-warning.dto';
+import { MockUserInterceptor } from '../../common/interceptors/mock-user.interceptor';
 
 describe('WarningsController (E2E)', () => {
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
+  let mockUserInterceptor: MockUserInterceptor;
   let createdUser: User;
   let createdEmployee: Employee;
+
   const warning = {
     data: '2025-01-29',
     motivo: 'Motivo Teste',
-    criadoPor: 1,
   };
 
   beforeAll(async () => {
@@ -97,6 +98,8 @@ describe('WarningsController (E2E)', () => {
         whitelist: true,
       }),
     );
+    mockUserInterceptor = new MockUserInterceptor();
+    app.useGlobalInterceptors(mockUserInterceptor);
     await app.init();
 
     dataSource = app.get(DataSource);
@@ -112,9 +115,11 @@ describe('WarningsController (E2E)', () => {
       nome: 'Usuário Teste',
       email: 'teste1@example.com',
       senha: 'senha123',
-      funcao: 'teste',
+      funcao: Funcao.ADMIN,
     });
     createdUser = await userRepository.save(user);
+
+    mockUserInterceptor.setUserId(createdUser.id);
 
     const company = companyRepository.create({
       nomeFantasia: 'Tech Solutions',
@@ -128,34 +133,23 @@ describe('WarningsController (E2E)', () => {
       estado: 'SP',
       cep: '01000-000',
       dataFundacao: '2010-05-15',
-      telefone: '(11) 99999-9999',
-      faturamento: 1200000.5,
-      regimeTributario: 'Simples Nacional',
-      inscricaoEstadual: '1234567890',
-      cnaePrincipal: '6201500',
-      segmento: 'Tecnologia',
-      ramoAtuacao: 'Desenvolvimento de Software',
-      logoUrl: 'https://example.com/logo.png',
-      status: 'A',
-      criadoPor: createdUser,
+      email: 'contato@techsolutions.com.br',
+      celular: '+5531991897926',
     });
     const createdCompany = await companyRepository.save(company);
 
     const role = roleRepository.create({
       nome: 'Função Teste',
-      criadoPor: createdUser,
     });
     const createdRole = await roleRepository.save(role);
 
     const department = departmentRepository.create({
       nome: 'Departamento Teste',
-      criadoPor: createdUser,
     });
     const createdDepartment = await departmentRepository.save(department);
 
     const cbo = cboRepository.create({
       nome: 'Cbo Teste',
-      criadoPor: user,
     });
     const createdCbo = await cboRepository.save(cbo);
 
@@ -183,9 +177,6 @@ describe('WarningsController (E2E)', () => {
       dataUltimoASO: '2025-02-12',
       funcao: createdRole,
       setor: createdDepartment,
-      vencimentoExperiencia1: '2025-02-12',
-      vencimentoExperiencia2: '2025-05-12',
-      dataExameDemissional: '2025-05-12',
       grauInstrucao: GrauInstrucao.SUPERIOR,
       necessidadesEspeciais: false,
       filhos: false,
@@ -202,7 +193,6 @@ describe('WarningsController (E2E)', () => {
       cargaHoraria: 60,
       escala: Escala.SEIS_UM,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
     createdEmployee = await employeeRepository.save(employee);
   }, 50000);
@@ -220,10 +210,14 @@ describe('WarningsController (E2E)', () => {
       .expect(201);
 
     expect(response.status).toBe(201);
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       succeeded: true,
-      data: null,
-      message: `Advertência cadastrada com sucesso, id: #1.`,
+      data: {
+        motivo: warning.motivo,
+      },
+      message: expect.stringContaining(
+        'Advertência cadastrada com sucesso, id: #',
+      ),
     });
   });
 
@@ -236,10 +230,7 @@ describe('WarningsController (E2E)', () => {
     expect(response.body).toHaveProperty('message');
     expect(Array.isArray(response.body.message)).toBe(true);
     expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'data should not be empty',
-        'criadoPor should not be empty',
-      ]),
+      expect.arrayContaining(['data should not be empty']),
     );
   });
 
@@ -257,10 +248,11 @@ describe('WarningsController (E2E)', () => {
 
   it('/v1/funcionarios/:funcionarioId/advertencias (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/999/advertencias`)
+      .post(
+        `/v1/funcionarios/86f226c4-38b0-464c-987e-35293033faf6/advertencias`,
+      )
       .send({
         ...warning,
-        criadoPor: createdUser.id,
       })
       .expect(404);
 
@@ -271,44 +263,11 @@ describe('WarningsController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/advertencias (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
-    const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/advertencias`)
-      .send({
-        ...warning,
-        criadoPor: 'Teste',
-      })
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'criadoPor must be a number conforming to the specified constraints',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/:funcionarioId/advertencias (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
-    const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/advertencias`)
-      .send({
-        ...warning,
-        criadoPor: 999,
-      })
-      .expect(404);
-
-    expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
-    });
-  });
-
   it('/v1/funcionarios/:funcionarioId/advertencias (GET) - Deve listar todas as advertências de um funcionário', async () => {
     const warningRepository = dataSource.getRepository(Warning);
     await warningRepository.save({
       ...warning,
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
@@ -324,7 +283,6 @@ describe('WarningsController (E2E)', () => {
     const createdWarning = await warningRepository.save({
       ...warning,
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
@@ -341,7 +299,7 @@ describe('WarningsController (E2E)', () => {
 
   it('/v1/funcionarios/advertencias/:id (GET) - Deve retornar erro ao buscar uma advertência inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/funcionarios/advertencias/999')
+      .get('/v1/funcionarios/advertencias/86f226c4-38b0-464c-987e-35293033faf6')
       .expect(404);
 
     expect(response.body).toEqual({
@@ -358,7 +316,7 @@ describe('WarningsController (E2E)', () => {
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
@@ -368,12 +326,10 @@ describe('WarningsController (E2E)', () => {
     const createdWarning = await warningRepository.save({
       ...warning,
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
 
     const updateData: UpdateWarningDto = {
       data: '2025-02-13',
-      atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
@@ -384,28 +340,14 @@ describe('WarningsController (E2E)', () => {
     expect(response.body).toMatchObject({
       succeeded: true,
       data: {
-        id: expect.any(Number),
+        id: createdWarning.id,
         data: new Intl.DateTimeFormat('pt-BR', {
           dateStyle: 'short',
         }).format(new Date(updateData.data)),
-        atualizadoPor: expect.any(String),
+        atualizadoPor: createdUser.nome,
       },
       message: `Advertência id: #${createdWarning.id} atualizada com sucesso.`,
     });
-
-    const updatedWarning = await warningRepository.findOneBy({
-      id: createdWarning.id,
-    });
-
-    expect(
-      new Intl.DateTimeFormat('pt-BR', {
-        dateStyle: 'short',
-      }).format(new Date(updatedWarning.data)),
-    ).toBe(
-      new Intl.DateTimeFormat('pt-BR', {
-        dateStyle: 'short',
-      }).format(new Date(updateData.data)),
-    );
   });
 
   it('/v1/funcionarios/advertencias/:id (PATCH) - Deve retornar um erro ao atualizar uma advertência com tipo de dado inválido', async () => {
@@ -413,12 +355,10 @@ describe('WarningsController (E2E)', () => {
     const createdWarning = await warningRepository.save({
       ...warning,
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
 
     const updateData = {
       data: 123,
-      atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
@@ -432,102 +372,28 @@ describe('WarningsController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/advertencias/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
-    const warningRepository = dataSource.getRepository(Warning);
-    const createdWarning = await warningRepository.save({
-      ...warning,
-      funcionario: createdEmployee,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      data: '2025-02-11',
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/advertencias/${createdWarning.id}`)
-      .send(updateData)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O usuário responsável pela atualização deve ser informado.',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/advertencias/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
-    const warningRepository = dataSource.getRepository(Warning);
-    const createdWarning = await warningRepository.save({
-      ...warning,
-      funcionario: createdEmployee,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      data: '2025-02-11',
-      atualizadoPor: 'Teste',
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/advertencias/${createdWarning.id}`)
-      .send(updateData)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O identificador do usuário deve ser um número.',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/advertencias/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
-    const warningRepository = dataSource.getRepository(Warning);
-    const createdWarning = await warningRepository.save({
-      ...warning,
-      funcionario: createdEmployee,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      data: '2025-02-11',
-      atualizadoPor: 999,
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/advertencias/${createdWarning.id}`)
-      .send(updateData)
-      .expect(404);
-
-    expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
-    });
-  });
-
   it('/v1/funcionarios/advertencias/:id (PATCH) - Deve retornar erro ao atualizar uma advertência com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
       .patch('/v1/funcionarios/advertencias/abc')
       .send({
         data: '2025-02-11',
-        atualizadoPor: 1,
       })
       .expect(400);
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
 
   it('/v1/funcionarios/advertencias/:id (PATCH) - Deve retornar erro ao atualizar uma advertência inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/funcionarios/advertencias/9999')
+      .patch(
+        '/v1/funcionarios/advertencias/86f226c4-38b0-464c-987e-35293033faf6',
+      )
       .send({
         data: '2025-02-11',
-        atualizadoPor: 1,
       })
       .expect(404);
 
@@ -543,107 +409,41 @@ describe('WarningsController (E2E)', () => {
     const createdWarning = await warningRepository.save({
       ...warning,
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
-
-    const deleteWarningDto: BaseDeleteDto = {
-      excluidoPor: createdUser.id,
-    };
 
     const response = await request(app.getHttpServer())
       .delete(`/v1/funcionarios/advertencias/${createdWarning.id}`)
-      .send(deleteWarningDto)
       .expect(200);
 
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       succeeded: true,
-      data: null,
+      data: {},
       message: `Advertência id: #${createdWarning.id} excluída com sucesso.`,
-    });
-
-    const deletedWarning = await warningRepository.findOneBy({
-      id: createdWarning.id,
-    });
-
-    expect(deletedWarning.status).toBe('E');
-  });
-
-  it('/v1/funcionarios/advertencias/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
-    const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/advertencias/1`)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O usuário responsável pela exclusão deve ser informado.',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/advertencias/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
-    const deleteWarningDto = {
-      excluidoPor: 'Teste',
-    };
-
-    const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/advertencias/1`)
-      .send(deleteWarningDto)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O identificador do usuário deve ser um número.',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/advertencias/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
-    const deleteWarningDto: BaseDeleteDto = {
-      excluidoPor: 999,
-    };
-
-    const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/advertencias/${createdEmployee.id}`)
-      .send(deleteWarningDto)
-      .expect(404);
-
-    expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
     });
   });
 
   it('/v1/funcionarios/advertencias/:id (DELETE) - Deve retornar erro ao excluir uma advertência com um ID inválido', async () => {
-    const deleteWarningDto: BaseDeleteDto = {
-      excluidoPor: 1,
-    };
-
     const response = await request(app.getHttpServer())
       .delete('/v1/funcionarios/advertencias/abc')
-      .send(deleteWarningDto)
       .expect(400);
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
 
   it('/v1/funcionarios/advertencias/:id (DELETE) - Deve retornar erro ao excluir uma advertência inexistente', async () => {
-    const deleteWarningDto: BaseDeleteDto = {
-      excluidoPor: createdUser.id,
-    };
-
     const response = await request(app.getHttpServer())
-      .delete('/v1/funcionarios/advertencias/9999')
-      .send(deleteWarningDto)
+      .delete(
+        '/v1/funcionarios/advertencias/86f226c4-38b0-464c-987e-35293033faf6',
+      )
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Advertência não encontrada.',
+      message: 'Advertência já excluída ou não encontrada.',
       error: 'Not Found',
     });
   });

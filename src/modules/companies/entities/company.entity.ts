@@ -1,4 +1,12 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { User } from '../../../modules/users/entities/user.entity';
 import { Branch } from '../../../modules/branches/entities/branch.entity';
 import { Department } from '../../../modules/departments/entities/department.entity';
 import { CostCenter } from '../../../modules/cost-centers/entities/cost-center.entity';
@@ -7,10 +15,12 @@ import { Epi } from '../../../modules/epis/entities/epi.entity';
 import { Role } from '../../../modules/roles/entities/role.entity';
 import { Project } from '../../../modules/projects/entities/project.entity';
 import { Employee } from '../../../modules/employees/entities/employee.entity';
-import { BaseEntity } from '../../../config/database/entities/base.entity';
 
 @Entity('empresas')
-export class Company extends BaseEntity {
+export class Company {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
   @Column({ name: 'nome_fantasia', type: 'varchar', length: 255 })
   nomeFantasia: string;
 
@@ -41,32 +51,90 @@ export class Company extends BaseEntity {
   @Column({ name: 'cep', type: 'varchar', length: 10 })
   cep: string;
 
-  @Column({ name: 'data_fundacao', type: 'date' })
+  @Column({ name: 'data_fundacao', type: 'date', nullable: true })
   dataFundacao: Date;
 
-  @Column({ name: 'telefone', type: 'varchar', length: 20 })
-  telefone: string;
+  @Column({ name: 'email', type: 'varchar', length: 100, nullable: true })
+  email: string;
 
-  @Column({ name: 'faturamento', type: 'numeric', precision: 15, scale: 2 })
+  @Column({ name: 'telefone', type: 'varchar', length: 20, nullable: true })
+  telefone?: string;
+
+  @Column({ name: 'celular', type: 'varchar', length: 20 })
+  celular: string;
+
+  @Column({
+    name: 'faturamento',
+    type: 'numeric',
+    precision: 15,
+    scale: 2,
+    nullable: true,
+  })
   faturamento: number;
 
-  @Column({ name: 'regime_tributario', type: 'varchar', length: 50 })
+  @Column({
+    name: 'regime_tributario',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
   regimeTributario: string;
 
-  @Column({ name: 'inscricao_estadual', type: 'varchar', length: 50 })
+  @Column({
+    name: 'inscricao_estadual',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
   inscricaoEstadual: string;
 
-  @Column({ name: 'cnae_principal', type: 'varchar', length: 50 })
+  @Column({
+    name: 'cnae_principal',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
   cnaePrincipal: string;
 
-  @Column({ name: 'segmento', type: 'varchar', length: 100 })
+  @Column({ name: 'segmento', type: 'varchar', length: 100, nullable: true })
   segmento: string;
 
-  @Column({ name: 'ramo_atuacao', type: 'varchar', length: 100 })
+  @Column({
+    name: 'ramo_atuacao',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
   ramoAtuacao: string;
 
   @Column({ name: 'logo_url', type: 'varchar', length: 500, nullable: true })
   logoUrl?: string;
+
+  @Column({ name: 'qt_usuarios', type: 'int', default: 3 })
+  quantidadeUsuarios?: number;
+
+  @Column({
+    name: 'status',
+    type: 'enum',
+    enum: ['A', 'I', 'E', 'P'],
+    default: 'A',
+  })
+  status: string;
+
+  @CreateDateColumn({
+    name: 'criado_em',
+    type: 'timestamptz',
+  })
+  readonly criadoEm: Date;
+
+  @UpdateDateColumn({
+    name: 'atualizado_em',
+    type: 'timestamptz',
+  })
+  readonly atualizadoEm?: Date;
+
+  @OneToMany(() => User, (user) => user.empresa)
+  usuarios: User[];
 
   @OneToMany(() => Branch, (branch) => branch.empresa)
   filiais: Branch[];
@@ -80,11 +148,11 @@ export class Company extends BaseEntity {
   @OneToMany(() => Cbo, (cbo) => cbo.empresa)
   cbos: Cbo[];
 
-  @OneToMany(() => Epi, (epi) => epi.empresa)
-  epis: Epi[];
-
   @OneToMany(() => Role, (role) => role.empresa)
   funcoes: Role[];
+
+  @OneToMany(() => Epi, (epi) => epi.empresa)
+  epis: Epi[];
 
   @OneToMany(() => Project, (project) => project.empresa)
   projetos: Project[];

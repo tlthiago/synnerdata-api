@@ -1,11 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsString,
-  IsNotEmpty,
-  IsNumber,
-  Length,
-  IsDateString,
-} from 'class-validator';
+import { IsString, IsNotEmpty, Length, IsDateString } from 'class-validator';
 
 export class CreateWarningDto {
   @ApiProperty({ description: 'Data da advertência.' })
@@ -18,11 +12,4 @@ export class CreateWarningDto {
   @IsNotEmpty()
   @Length(1, 255)
   motivo: string;
-
-  @ApiProperty({
-    description: 'Usuário responsável pelo cadastro da advertência.',
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  criadoPor: number;
 }

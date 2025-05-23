@@ -2,11 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
   IsNotEmpty,
-  IsNumber,
   Length,
   IsArray,
   ArrayMinSize,
   IsDateString,
+  IsUUID,
 } from 'class-validator';
 
 export class CreateEpiDeliveryDto {
@@ -15,14 +15,14 @@ export class CreateEpiDeliveryDto {
   @IsNotEmpty()
   data: string;
 
-  @ApiProperty({ description: 'Epi(s) entregues.', type: [Number] })
+  @ApiProperty({ description: 'Epi(s) entregues.', type: [String] })
   @IsArray()
-  @IsNumber(
-    {},
-    { each: true, message: 'O identificador do(s) epi(s) deve ser um número' },
-  )
+  @IsUUID('4', {
+    each: true,
+    message: 'O identificador do(s) epi(s) deve ser um número',
+  })
   @ArrayMinSize(1)
-  epis: number[];
+  epis: string[];
 
   @ApiProperty({ description: 'Motivo da entrega.' })
   @IsString()
@@ -34,11 +34,4 @@ export class CreateEpiDeliveryDto {
   @IsString()
   @IsNotEmpty()
   entreguePor: string;
-
-  @ApiProperty({
-    description: 'Usuário responsável pelo cadastro da entrega do(s) Epi(s).',
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  criadoPor: number;
 }

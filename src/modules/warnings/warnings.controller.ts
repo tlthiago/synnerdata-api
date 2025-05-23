@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { WarningsService } from './warnings.service';
 import { CreateWarningDto } from './dto/create-warning.dto';
@@ -21,8 +21,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { WarningResponseDto } from './dto/warning-response.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/funcionarios')
 @ApiTags('Advertências')
@@ -38,7 +39,7 @@ export class WarningsController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -63,18 +64,20 @@ export class WarningsController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('funcionarioId', ParseIntPipe) employeeId: number,
+    @Param('funcionarioId', ParseUUIDPipe) employeeId: string,
     @Body() createWarningDto: CreateWarningDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const warningId = await this.warningsService.create(
+    const warning = await this.warningsService.create(
       employeeId,
       createWarningDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Advertência cadastrada com sucesso, id: #${warningId}.`,
+      data: warning,
+      message: `Advertência cadastrada com sucesso, id: #${warning.id}.`,
     };
   }
 
@@ -88,7 +91,7 @@ export class WarningsController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -97,7 +100,7 @@ export class WarningsController {
     type: [WarningResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('funcionarioId', ParseIntPipe) employeeId: number) {
+  findAll(@Param('funcionarioId', ParseUUIDPipe) employeeId: string) {
     return this.warningsService.findAll(employeeId);
   }
 
@@ -110,7 +113,7 @@ export class WarningsController {
   @ApiParam({
     name: 'id',
     description: 'ID da advertência.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -119,7 +122,7 @@ export class WarningsController {
     type: WarningResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.warningsService.findOne(id);
   }
 
@@ -133,7 +136,7 @@ export class WarningsController {
   @ApiParam({
     name: 'id',
     description: 'ID da advertência.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -158,10 +161,15 @@ export class WarningsController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateWarningDto: UpdateWarningDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const warning = await this.warningsService.update(id, updateWarningDto);
+    const warning = await this.warningsService.update(
+      id,
+      updateWarningDto,
+      user.id,
+    );
 
     return {
       succeeded: true,
@@ -179,12 +187,8 @@ export class WarningsController {
   @ApiParam({
     name: 'id',
     description: 'ID da advertência.',
-    type: 'number',
+    type: 'string',
     required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para atualizar os dados da advertência',
-    type: BaseDeleteDto,
   })
   @ApiResponse({
     status: 200,
@@ -204,15 +208,15 @@ export class WarningsController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteWarningDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.warningsService.remove(id, deleteWarningDto);
+    const warning = await this.warningsService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Advertência id: #${id} excluída com sucesso.`,
+      data: warning,
+      message: `Advertência id: #${warning.id} excluída com sucesso.`,
     };
   }
 }

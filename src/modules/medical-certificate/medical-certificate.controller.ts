@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { MedicalCertificateService } from './medical-certificate.service';
 import { CreateMedicalCertificateDto } from './dto/create-medical-certificate.dto';
@@ -22,7 +22,8 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { MedicalCertificateResponseDto } from './dto/medical-certificate-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/funcionarios')
 @ApiTags('Atestados')
@@ -40,7 +41,7 @@ export class MedicalCertificateController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -65,18 +66,20 @@ export class MedicalCertificateController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('funcionarioId', ParseIntPipe) employeeId: number,
+    @Param('funcionarioId', ParseUUIDPipe) employeeId: string,
     @Body() createMedicalCertificateDto: CreateMedicalCertificateDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const medicalCertificateId = await this.medicalCertificateService.create(
+    const medicalCertificate = await this.medicalCertificateService.create(
       employeeId,
       createMedicalCertificateDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Atestado cadastrado com sucesso, id: #${medicalCertificateId}.`,
+      data: medicalCertificate,
+      message: `Atestado cadastrado com sucesso, id: #${medicalCertificate.id}.`,
     };
   }
 
@@ -90,7 +93,7 @@ export class MedicalCertificateController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -99,7 +102,7 @@ export class MedicalCertificateController {
     type: [MedicalCertificateResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('funcionarioId', ParseIntPipe) employeeId: number) {
+  findAll(@Param('funcionarioId', ParseUUIDPipe) employeeId: string) {
     return this.medicalCertificateService.findAll(employeeId);
   }
 
@@ -112,7 +115,7 @@ export class MedicalCertificateController {
   @ApiParam({
     name: 'id',
     description: 'ID da atestado.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -121,7 +124,7 @@ export class MedicalCertificateController {
     type: MedicalCertificateResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.medicalCertificateService.findOne(id);
   }
 
@@ -134,7 +137,7 @@ export class MedicalCertificateController {
   @ApiParam({
     name: 'id',
     description: 'ID da atestado.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -159,12 +162,14 @@ export class MedicalCertificateController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateMedicalCertificateDto: UpdateMedicalCertificateDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
     const medicalCertificate = await this.medicalCertificateService.update(
       id,
       updateMedicalCertificateDto,
+      user.id,
     );
 
     return {
@@ -183,12 +188,8 @@ export class MedicalCertificateController {
   @ApiParam({
     name: 'id',
     description: 'ID da atestado.',
-    type: 'number',
+    type: 'string',
     required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para atualizar os dados da atestado',
-    type: BaseDeleteDto,
   })
   @ApiResponse({
     status: 200,
@@ -208,18 +209,18 @@ export class MedicalCertificateController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteMedicalCertificateDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.medicalCertificateService.remove(
+    const medicalCertificate = await this.medicalCertificateService.remove(
       id,
-      deleteMedicalCertificateDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Atestado id: #${id} excluído com sucesso.`,
+      data: medicalCertificate,
+      message: `Atestado id: #${medicalCertificate.id} excluído com sucesso.`,
     };
   }
 }

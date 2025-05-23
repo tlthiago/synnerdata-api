@@ -17,10 +17,11 @@ import { CostCenterResponseDto } from '../cost-centers/dto/cost-center-response.
 import { UsersService } from '../users/users.service';
 import { CbosService } from '../cbos/cbos.service';
 import { EmployeeResponseDto } from './dto/employee-response.dto';
-import { RoleResponseDto } from '../roles/dto/role-response.dto';
-import { DepartmentResponseDto } from '../departments/dto/department-response.dto';
-import { CboResponseDto } from '../cbos/dto/cbo-response.dto';
 import { UpdateStatusDto } from './dto/update-status-employee.dto';
+import { Role } from '../roles/entities/role.entity';
+import { Department } from '../departments/entities/department.entity';
+import { CostCenter } from '../cost-centers/entities/cost-center.entity';
+import { Cbo } from '../cbos/entities/cbo.entity';
 
 @Injectable()
 export class EmployeesService {
@@ -35,7 +36,11 @@ export class EmployeesService {
     private readonly usersService: UsersService,
   ) {}
 
-  async create(companyId: number, createEmployeeDto: CreateEmployeeDto) {
+  async create(
+    companyId: string,
+    createEmployeeDto: CreateEmployeeDto,
+    createdBy: string,
+  ) {
     const company = await this.companiesService.findOne(companyId);
     const role = await this.rolesService.findOne(createEmployeeDto.funcao);
     const department = await this.departmentsService.findOne(
@@ -51,7 +56,7 @@ export class EmployeesService {
 
     const cbo = await this.cbosService.findOne(createEmployeeDto.cbo);
 
-    const user = await this.usersService.findOne(createEmployeeDto.criadoPor);
+    const user = await this.usersService.findOne(createdBy);
 
     const cpfExists = await this.findByCpf(createEmployeeDto.cpf);
 
@@ -63,30 +68,36 @@ export class EmployeesService {
 
     const employee = this.employeesRepository.create({
       ...createEmployeeDto,
-      empresa: company,
-      funcao: role,
-      setor: department,
-      centroCusto: costCenter,
-      cbo: cbo,
+      empresa: { id: company.id },
+      funcao: { id: role.id },
+      setor: { id: department.id },
+      centroCusto: costCenter ? { id: costCenter.id } : null,
+      cbo: { id: cbo.id },
       dataNascimento: new Date(createEmployeeDto.dataNascimento),
       dataAdmissao: new Date(createEmployeeDto.dataAdmissao),
-      dataUltimoASO: new Date(createEmployeeDto.dataUltimoASO),
-      vencimentoExperiencia1: new Date(
-        createEmployeeDto.vencimentoExperiencia1,
-      ),
-      vencimentoExperiencia2: new Date(
-        createEmployeeDto.vencimentoExperiencia2,
-      ),
-      dataExameDemissional: new Date(createEmployeeDto.dataExameDemissional),
+      dataUltimoASO: createEmployeeDto.dataUltimoASO
+        ? new Date(createEmployeeDto.dataUltimoASO)
+        : null,
+      vencimentoExperiencia1: createEmployeeDto.vencimentoExperiencia1
+        ? new Date(createEmployeeDto.vencimentoExperiencia1)
+        : null,
+      vencimentoExperiencia2: createEmployeeDto.vencimentoExperiencia2
+        ? new Date(createEmployeeDto.vencimentoExperiencia2)
+        : null,
+      dataExameDemissional: createEmployeeDto.dataExameDemissional
+        ? new Date(createEmployeeDto.dataExameDemissional)
+        : null,
       criadoPor: user,
     });
 
     await this.employeesRepository.save(employee);
 
-    return employee.id;
+    return plainToInstance(EmployeeResponseDto, employee, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findAll(companyId: number) {
+  async findAll(companyId: string) {
     const company = await this.companiesService.findOne(companyId);
 
     const employees = await this.employeesRepository.find({
@@ -100,7 +111,7 @@ export class EmployeesService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const employee = await this.employeesRepository.findOne({
       where: {
         id,
@@ -126,7 +137,7 @@ export class EmployeesService {
     return !!employee;
   }
 
-  async findByIds(ids: number[]) {
+  async findByIds(ids: string[]) {
     const employees = await this.employeesRepository.findBy({
       id: In(ids),
     });
@@ -138,34 +149,36 @@ export class EmployeesService {
     return employees;
   }
 
-  async update(id: number, updateEmployeeDto: UpdateEmployeeDto) {
-    const user = await this.usersService.findOne(
-      updateEmployeeDto.atualizadoPor,
-    );
+  async update(
+    id: string,
+    updateEmployeeDto: UpdateEmployeeDto,
+    updatedBy: string,
+  ) {
+    const user = await this.usersService.findOne(updatedBy);
 
-    let role: RoleResponseDto;
-    let department: DepartmentResponseDto;
-    let costCenter: CostCenterResponseDto;
-    let cbo: CboResponseDto;
+    let role: Role;
+    let department: Department;
+    let costCenter: CostCenter;
+    let cbo: Cbo;
 
     if (updateEmployeeDto.funcao) {
-      role = await this.rolesService.findOne(updateEmployeeDto.funcao);
+      role = await this.rolesService.findOneInternal(updateEmployeeDto.funcao);
     }
 
     if (updateEmployeeDto.setor) {
-      department = await this.departmentsService.findOne(
+      department = await this.departmentsService.findOneInternal(
         updateEmployeeDto.setor,
       );
     }
 
     if (updateEmployeeDto.centroCusto) {
-      costCenter = await this.costCentersService.findOne(
+      costCenter = await this.costCentersService.findOneInternal(
         updateEmployeeDto.centroCusto,
       );
     }
 
     if (updateEmployeeDto.cbo) {
-      cbo = await this.cbosService.findOne(updateEmployeeDto.cbo);
+      cbo = await this.cbosService.findOneInternal(updateEmployeeDto.cbo);
     }
 
     if (updateEmployeeDto.cpf) {
@@ -183,7 +196,7 @@ export class EmployeesService {
       funcao: role,
       setor: department,
       centroCusto: costCenter,
-      cbo,
+      cbo: cbo,
       atualizadoPor: user,
     });
 
@@ -191,11 +204,38 @@ export class EmployeesService {
       throw new NotFoundException('Funcionário não encontrado.');
     }
 
-    return this.findOne(id);
+    const updatedEmployee = await this.findOne(id);
+
+    return updatedEmployee;
   }
 
-  async updateEmployeeStatus(id: number, updateStatusDto: UpdateStatusDto) {
-    const user = await this.usersService.findOne(updateStatusDto.atualizadoPor);
+  async remove(id: string, deletedBy: string) {
+    const user = await this.usersService.findOne(deletedBy);
+
+    const result = await this.employeesRepository.update(id, {
+      status: 'E',
+      atualizadoPor: user,
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Funcionário já excluído ou não encontrado.');
+    }
+
+    const removedEmployee = await this.employeesRepository.findOne({
+      where: { id },
+    });
+
+    return plainToInstance(EmployeeResponseDto, removedEmployee, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async updateEmployeeStatus(
+    id: string,
+    updateStatusDto: UpdateStatusDto,
+    updatedBy: string,
+  ) {
+    const user = await this.usersService.findOne(updatedBy);
 
     const result = await this.employeesRepository.update(id, {
       ...updateStatusDto,

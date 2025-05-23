@@ -3,7 +3,6 @@ import {
   IsEnum,
   IsOptional,
   IsNotEmpty,
-  Matches,
   Length,
   IsNumber,
   IsBoolean,
@@ -12,6 +11,9 @@ import {
   IsPhoneNumber,
   IsEmail,
   IsDateString,
+  IsMobilePhone,
+  IsPostalCode,
+  IsUUID,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -142,15 +144,15 @@ export class CreateEmployeeDto {
   @IsOptional()
   dataUltimoASO?: string;
 
-  @ApiProperty({ description: 'Função', type: 'number' })
-  @IsNumber()
+  @ApiProperty({ description: 'Função', type: 'string' })
+  @IsUUID()
   @IsNotEmpty()
-  funcao: number;
+  funcao: string;
 
-  @ApiProperty({ description: 'Setor', type: 'number' })
-  @IsNumber()
+  @ApiProperty({ description: 'Setor', type: 'string' })
+  @IsUUID()
   @IsNotEmpty()
-  setor: number;
+  setor: string;
 
   @ApiProperty({
     description: 'Data do vencimento do 1º período de experiência',
@@ -173,10 +175,10 @@ export class CreateEmployeeDto {
   @IsOptional()
   dataExameDemissional?: string;
 
-  @ApiProperty({ description: 'Centro de custo', type: 'number' })
-  @IsNumber()
+  @ApiProperty({ description: 'Centro de custo', type: 'string' })
+  @IsUUID()
   @IsOptional()
-  centroCusto?: number;
+  centroCusto?: string;
 
   @ApiProperty({ description: 'Grau de instrução', enum: GrauInstrucao })
   @IsEnum(GrauInstrucao)
@@ -207,15 +209,12 @@ export class CreateEmployeeDto {
   quantidadeFilhos?: number;
 
   @ApiProperty({ description: 'Telefone residencial', type: 'string' })
-  @IsString()
   @IsOptional()
   @IsPhoneNumber('BR')
   telefone?: string;
 
   @ApiProperty({ description: 'Telefone celular', type: 'string' })
-  @IsString()
-  @IsNotEmpty()
-  @IsPhoneNumber('BR')
+  @IsMobilePhone('pt-BR')
   celular: string;
 
   @ApiProperty({ description: 'Gestor', type: 'string' })
@@ -223,10 +222,10 @@ export class CreateEmployeeDto {
   @IsNotEmpty()
   gestor: string;
 
-  @ApiProperty({ description: 'Cbo', type: 'number' })
-  @IsNumber()
+  @ApiProperty({ description: 'Cbo', type: 'string' })
+  @IsUUID()
   @IsNotEmpty()
-  cbo: number;
+  cbo: string;
 
   @ApiProperty({ description: 'Rua', type: 'string' })
   @IsString()
@@ -265,10 +264,7 @@ export class CreateEmployeeDto {
   estado: string;
 
   @ApiProperty({ description: 'CEP.', type: 'string' })
-  @IsString()
-  @IsNotEmpty()
-  @Length(8, 10)
-  @Matches(/^\d{5}-?\d{3}$/, {
+  @IsPostalCode('BR', {
     message: 'CEP deve estar no formato 00000-000 ou 00000000',
   })
   cep: string;
@@ -305,12 +301,4 @@ export class CreateEmployeeDto {
   @IsEnum(Escala)
   @IsNotEmpty()
   escala: Escala;
-
-  @ApiProperty({
-    description: 'Usuário responsável pelo cadastro do funcionário.',
-    type: 'number',
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  criadoPor: number;
 }

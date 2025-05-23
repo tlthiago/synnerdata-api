@@ -11,7 +11,6 @@ import { Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { VacationResponseDto } from './dto/vacation-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -23,7 +22,11 @@ export class VacationsService {
     private readonly usersService: UsersService,
   ) {}
 
-  async create(employeeId: number, createVacationDto: CreateVacationDto) {
+  async create(
+    employeeId: string,
+    createVacationDto: CreateVacationDto,
+    createdBy: string,
+  ) {
     const employee = await this.employeesService.findOne(employeeId);
 
     const { dataInicio, dataFim } = createVacationDto;
@@ -37,21 +40,23 @@ export class VacationsService {
       );
     }
 
-    const user = await this.usersService.findOne(createVacationDto.criadoPor);
+    const user = await this.usersService.findOne(createdBy);
 
     const vacation = this.vacationRepository.create({
       dataInicio: dataInicioDate,
       dataFim: dataFimDate,
-      funcionario: employee,
+      funcionario: { id: employee.id },
       criadoPor: user,
     });
 
     await this.vacationRepository.save(vacation);
 
-    return vacation.id;
+    return plainToInstance(VacationResponseDto, vacation, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findAll(employeeId: number) {
+  async findAll(employeeId: string) {
     const employee = await this.employeesService.findOne(employeeId);
 
     const vacations = await this.vacationRepository.find({
@@ -66,7 +71,7 @@ export class VacationsService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const vacation = await this.vacationRepository.findOne({
       where: {
         id,
@@ -83,7 +88,11 @@ export class VacationsService {
     });
   }
 
-  async update(id: number, updateVacationDto: UpdateVacationDto) {
+  async update(
+    id: string,
+    updateVacationDto: UpdateVacationDto,
+    updatedBy: string,
+  ) {
     const { dataInicio, dataFim } = updateVacationDto;
 
     const dataInicioDate = new Date(dataInicio);
@@ -95,9 +104,7 @@ export class VacationsService {
       );
     }
 
-    const user = await this.usersService.findOne(
-      updateVacationDto.atualizadoPor,
-    );
+    const user = await this.usersService.findOne(updatedBy);
 
     const result = await this.vacationRepository.update(id, {
       ...updateVacationDto,
@@ -108,21 +115,32 @@ export class VacationsService {
       throw new NotFoundException('Férias não encontrada.');
     }
 
-    return this.findOne(id);
+    const updatedVacation = await this.findOne(id);
+
+    return updatedVacation;
   }
 
-  async remove(id: number, deleteVacationDto: BaseDeleteDto) {
-    const user = await this.usersService.findOne(deleteVacationDto.excluidoPor);
+  async remove(id: string, deletedBy: string) {
+    const user = await this.usersService.findOne(deletedBy);
 
-    const result = await this.vacationRepository.update(id, {
-      status: 'E',
-      atualizadoPor: user,
-    });
+    const result = await this.vacationRepository.update(
+      { id, status: 'A' },
+      {
+        status: 'E',
+        atualizadoPor: user,
+      },
+    );
 
     if (result.affected === 0) {
-      throw new NotFoundException('Férias não encontrada.');
+      throw new NotFoundException('Férias já excluída ou não encontrada.');
     }
 
-    return { id, status: 'E' };
+    const removedVacation = this.vacationRepository.findOne({
+      where: { id },
+    });
+
+    return plainToInstance(VacationResponseDto, removedVacation, {
+      excludeExtraneousValues: true,
+    });
   }
 }

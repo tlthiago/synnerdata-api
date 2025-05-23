@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
   IsNotEmpty,
-  IsNumber,
   Length,
   IsOptional,
   IsDateString,
@@ -36,11 +35,4 @@ export class CreateAccidentDto {
   @IsNotEmpty()
   @Length(1, 255)
   medidasTomadas: string;
-
-  @ApiProperty({
-    description: 'Usuário responsável pelo cadastro do acidente.',
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  criadoPor: number;
 }

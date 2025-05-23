@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, Length } from 'class-validator';
+import { IsString, IsNotEmpty, Length } from 'class-validator';
 
 export class CreateDepartmentDto {
   @ApiProperty({ description: 'Nome.' })
@@ -7,9 +7,4 @@ export class CreateDepartmentDto {
   @IsNotEmpty()
   @Length(1, 255)
   nome: string;
-
-  @ApiProperty({ description: 'Usuário responsável pela criação do setor.' })
-  @IsNotEmpty()
-  @IsNumber()
-  criadoPor: number;
 }

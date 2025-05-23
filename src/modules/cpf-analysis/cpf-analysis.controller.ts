@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { CpfAnalysisService } from './cpf-analysis.service';
 import { CreateCpfAnalysisDto } from './dto/create-cpf-analysis.dto';
@@ -21,8 +21,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { CpfAnalysisResponseDto } from './dto/cpf-analysis-response.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/funcionarios')
 @ApiTags('Análise de CPF')
@@ -38,7 +39,7 @@ export class CpfAnalysisController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -63,18 +64,20 @@ export class CpfAnalysisController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('funcionarioId', ParseIntPipe) employeeId: number,
+    @Param('funcionarioId', ParseUUIDPipe) employeeId: string,
     @Body() createCpfAnalysisDto: CreateCpfAnalysisDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const cpfAnalysisId = await this.cpfAnalysisService.create(
+    const cpfAnalysis = await this.cpfAnalysisService.create(
       employeeId,
       createCpfAnalysisDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Análise de CPF cadastrada com sucesso, id: #${cpfAnalysisId}.`,
+      data: cpfAnalysis,
+      message: `Análise de CPF cadastrada com sucesso, id: #${cpfAnalysis.id}.`,
     };
   }
 
@@ -88,7 +91,7 @@ export class CpfAnalysisController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -97,7 +100,7 @@ export class CpfAnalysisController {
     type: [CpfAnalysisResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('funcionarioId', ParseIntPipe) employeeId: number) {
+  findAll(@Param('funcionarioId', ParseUUIDPipe) employeeId: string) {
     return this.cpfAnalysisService.findAll(employeeId);
   }
 
@@ -110,7 +113,7 @@ export class CpfAnalysisController {
   @ApiParam({
     name: 'id',
     description: 'ID da análise de CPF.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -119,7 +122,7 @@ export class CpfAnalysisController {
     type: CpfAnalysisResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.cpfAnalysisService.findOne(id);
   }
 
@@ -133,7 +136,7 @@ export class CpfAnalysisController {
   @ApiParam({
     name: 'id',
     description: 'ID da análise de CPF.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -158,12 +161,14 @@ export class CpfAnalysisController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCpfAnalysisDto: UpdateCpfAnalysisDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
     const cpfAnalysis = await this.cpfAnalysisService.update(
       id,
       updateCpfAnalysisDto,
+      user.id,
     );
 
     return {
@@ -182,12 +187,8 @@ export class CpfAnalysisController {
   @ApiParam({
     name: 'id',
     description: 'ID da análise de CPF.',
-    type: 'number',
+    type: 'string',
     required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para atualizar os dados da análise de CPF',
-    type: BaseDeleteDto,
   })
   @ApiResponse({
     status: 200,
@@ -207,15 +208,15 @@ export class CpfAnalysisController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteCpfAnalysisDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.cpfAnalysisService.remove(id, deleteCpfAnalysisDto);
+    const cpfAnalysis = await this.cpfAnalysisService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Análise de CPF id: #${id} excluída com sucesso.`,
+      data: cpfAnalysis,
+      message: `Análise de CPF id: #${cpfAnalysis.id} excluída com sucesso.`,
     };
   }
 }

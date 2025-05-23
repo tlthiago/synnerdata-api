@@ -93,11 +93,4 @@ export class CreateLaborActionDto {
   @IsDateString()
   @IsNotEmpty()
   dataConhecimento: string;
-
-  @ApiProperty({
-    description: 'Usuário responsável pelo cadastro da ação trabalhista.',
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  criadoPor: number;
 }

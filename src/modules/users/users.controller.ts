@@ -5,8 +5,8 @@ import {
   Patch,
   Param,
   UseGuards,
-  ParseIntPipe,
   Delete,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -20,7 +20,8 @@ import {
 } from '@nestjs/swagger';
 import { UsersResponseDto } from './dto/user-response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/usuarios')
 @ApiTags('Usuários')
@@ -40,8 +41,31 @@ export class UsersController {
     type: [UsersResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  async findAll(): Promise<UsersResponseDto[]> {
+  async findAll() {
     return await this.userService.findAll();
+  }
+
+  @Get('empresa/:empresaId')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Buscar todos os usuários de uma organização',
+    description:
+      'Endpoint responsável por retornar os dados dos usuários cadastrados em uma organização.',
+  })
+  @ApiParam({
+    name: 'empresaId',
+    description: 'ID da empresa.',
+    type: 'string',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Retorna todos os usuários cadastrados em uma organização.',
+    type: [UsersResponseDto],
+  })
+  @UseGuards(JwtAuthGuard)
+  async findAllByCompany(@Param('empresaId', ParseUUIDPipe) companyId: string) {
+    return await this.userService.findAllByCompany(companyId);
   }
 
   @Get(':id')
@@ -53,7 +77,7 @@ export class UsersController {
   @ApiParam({
     name: 'id',
     description: 'ID do usuário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -62,10 +86,8 @@ export class UsersController {
     type: UsersResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  async findOne(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<UsersResponseDto> {
-    return await this.userService.findOne(+id);
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return await this.userService.findOne(id);
   }
 
   @Patch(':id')
@@ -77,7 +99,7 @@ export class UsersController {
   @ApiParam({
     name: 'id',
     description: 'ID do usuário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -102,15 +124,20 @@ export class UsersController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.userService.update(+id, updateUserDto);
+    const updatedUser = await this.userService.update(
+      id,
+      updateUserDto,
+      user.id,
+    );
 
     return {
       succeeded: true,
-      data: null,
-      message: 'Usuário atualizado com sucesso.',
+      data: updatedUser,
+      message: `Usuário id: #${updatedUser.id} atualizado com sucesso.`,
     };
   }
 
@@ -123,7 +150,7 @@ export class UsersController {
   @ApiParam({
     name: 'id',
     description: 'ID da filial.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -144,15 +171,15 @@ export class UsersController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteUserDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.userService.remove(+id, deleteUserDto);
+    const removedUser = await this.userService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Usuário id: #${id} excluído com sucesso.`,
+      data: removedUser,
+      message: `Usuário id: #${removedUser.id} excluído com sucesso.`,
     };
   }
 }

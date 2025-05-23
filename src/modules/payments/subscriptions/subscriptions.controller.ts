@@ -7,8 +7,8 @@ export class SubscriptionsController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
 
   @Post()
-  create(@Body() createSubscriptionDto: CreateSubscriptionDto) {
-    return this.subscriptionsService.create(createSubscriptionDto);
+  async create(@Body() createSubscriptionDto: CreateSubscriptionDto) {
+    return await this.subscriptionsService.create(createSubscriptionDto);
   }
 
   @Get()

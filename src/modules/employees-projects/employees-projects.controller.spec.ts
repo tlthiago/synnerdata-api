@@ -28,7 +28,7 @@ import { Warning } from '../warnings/entities/warning.entity';
 import { LaborAction } from '../labor-actions/entities/labor-action.entity';
 import { EpiDelivery } from '../epi-delivery/entities/epi-delivery.entity';
 import { Vacation } from '../vacations/entities/vacation.entity';
-import { User } from '../users/entities/user.entity';
+import { Funcao, User } from '../users/entities/user.entity';
 import {
   Escala,
   EstadoCivil,
@@ -41,19 +41,21 @@ import {
   EmployeeProjectAction,
   EmployeeProjectLogs,
 } from './entities/project-employee-logs.entity';
+import { MockUserInterceptor } from '../../common/interceptors/mock-user.interceptor';
 
 describe('LaborActionsController (E2E)', () => {
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
+  let mockUserInterceptor: MockUserInterceptor;
   let createdUser: User;
   let createdEmployee: Employee;
   let createdEmployee1: Employee;
   let createdProject: Project;
+
   const employeesProject = {
-    funcionarios: [1],
+    funcionarios: ['1'],
     dataInicio: '2025-02-17',
-    criadoPor: 1,
   };
 
   beforeAll(async () => {
@@ -101,6 +103,8 @@ describe('LaborActionsController (E2E)', () => {
         whitelist: true,
       }),
     );
+    mockUserInterceptor = new MockUserInterceptor();
+    app.useGlobalInterceptors(mockUserInterceptor);
     await app.init();
 
     dataSource = app.get(DataSource);
@@ -117,9 +121,11 @@ describe('LaborActionsController (E2E)', () => {
       nome: 'Usuário Teste',
       email: 'teste1@example.com',
       senha: 'senha123',
-      funcao: 'teste',
+      funcao: Funcao.ADMIN,
     });
     createdUser = await userRepository.save(user);
+
+    mockUserInterceptor.setUserId(createdUser.id);
 
     const company = companyRepository.create({
       nomeFantasia: 'Tech Solutions',
@@ -133,34 +139,23 @@ describe('LaborActionsController (E2E)', () => {
       estado: 'SP',
       cep: '01000-000',
       dataFundacao: '2010-05-15',
-      telefone: '(11) 99999-9999',
-      faturamento: 1200000.5,
-      regimeTributario: 'Simples Nacional',
-      inscricaoEstadual: '1234567890',
-      cnaePrincipal: '6201500',
-      segmento: 'Tecnologia',
-      ramoAtuacao: 'Desenvolvimento de Software',
-      logoUrl: 'https://example.com/logo.png',
-      status: 'A',
-      criadoPor: createdUser,
+      email: 'contato@techsolutions.com.br',
+      celular: '+5531991897926',
     });
     const createdCompany = await companyRepository.save(company);
 
     const role = roleRepository.create({
       nome: 'Função Teste',
-      criadoPor: createdUser,
     });
     const createdRole = await roleRepository.save(role);
 
     const department = departmentRepository.create({
       nome: 'Departamento Teste',
-      criadoPor: createdUser,
     });
     const createdDepartment = await departmentRepository.save(department);
 
     const cbo = cboRepository.create({
       nome: 'Cbo Teste',
-      criadoPor: user,
     });
     const createdCbo = await cboRepository.save(cbo);
 
@@ -188,9 +183,6 @@ describe('LaborActionsController (E2E)', () => {
       dataUltimoASO: '2025-02-12',
       funcao: createdRole,
       setor: createdDepartment,
-      vencimentoExperiencia1: '2025-02-12',
-      vencimentoExperiencia2: '2025-05-12',
-      dataExameDemissional: '2025-05-12',
       grauInstrucao: GrauInstrucao.SUPERIOR,
       necessidadesEspeciais: false,
       filhos: false,
@@ -207,14 +199,15 @@ describe('LaborActionsController (E2E)', () => {
       cargaHoraria: 60,
       escala: Escala.SEIS_UM,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
     createdEmployee = await employeeRepository.save(employee);
+
+    employeesProject.funcionarios = [createdEmployee.id];
 
     const employee1 = employeeRepository.create({
       nome: 'Funcionário Teste',
       carteiraIdentidade: 'MG-18.821.128',
-      cpf: '13420162526',
+      cpf: '13420162627',
       sexo: Sexo.MASCULINO,
       dataNascimento: '1996-10-15',
       estadoCivil: EstadoCivil.SOLTEIRO,
@@ -235,9 +228,6 @@ describe('LaborActionsController (E2E)', () => {
       dataUltimoASO: '2025-02-12',
       funcao: createdRole,
       setor: createdDepartment,
-      vencimentoExperiencia1: '2025-02-12',
-      vencimentoExperiencia2: '2025-05-12',
-      dataExameDemissional: '2025-05-12',
       grauInstrucao: GrauInstrucao.SUPERIOR,
       necessidadesEspeciais: false,
       filhos: false,
@@ -254,7 +244,6 @@ describe('LaborActionsController (E2E)', () => {
       cargaHoraria: 60,
       escala: Escala.SEIS_UM,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
     createdEmployee1 = await employeeRepository.save(employee1);
 
@@ -263,7 +252,6 @@ describe('LaborActionsController (E2E)', () => {
       descricao: 'Descrição Teste',
       dataInicio: '2025-01-29',
       cno: '123456734032',
-      criadoPor: createdUser,
       funcionarios: [createdEmployee],
     });
     createdProject = await projectRepository.save(project);
@@ -284,10 +272,18 @@ describe('LaborActionsController (E2E)', () => {
       .expect(201);
 
     expect(response.status).toBe(201);
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       succeeded: true,
-      data: null,
-      message: `Funcionário(s) cadastrado(s) com sucesso no projeto, id: #1.`,
+      data: expect.objectContaining({
+        funcionarios: expect.arrayContaining([
+          expect.objectContaining({
+            id: createdEmployee.id,
+          }),
+        ]),
+      }),
+      message: expect.stringContaining(
+        'Funcionário(s) cadastrado(s) com sucesso no projeto, id: #',
+      ),
     });
 
     const logsRepository = dataSource.getRepository(EmployeeProjectLogs);
@@ -315,10 +311,7 @@ describe('LaborActionsController (E2E)', () => {
     expect(response.body).toHaveProperty('message');
     expect(Array.isArray(response.body.message)).toBe(true);
     expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'dataInicio should not be empty',
-        'criadoPor should not be empty',
-      ]),
+      expect.arrayContaining(['dataInicio should not be empty']),
     );
   });
 
@@ -338,10 +331,9 @@ describe('LaborActionsController (E2E)', () => {
 
   it('/v1/funcionarios/projetos/:projetoId (POST) - Deve retornar erro caso o ID do projeto não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/projetos/999`)
+      .post(`/v1/funcionarios/projetos/86f226c4-38b0-464c-987e-35293033faf6`)
       .send({
         ...employeesProject,
-        criadoPor: createdUser.id,
       })
       .expect(404);
 
@@ -357,8 +349,7 @@ describe('LaborActionsController (E2E)', () => {
       .post(`/v1/funcionarios/projetos/${createdProject.id}`)
       .send({
         ...employeesProject,
-        funcionarios: [999],
-        criadoPor: createdUser.id,
+        funcionarios: ['86f226c4-38b0-464c-987e-35293033faf6'],
       })
       .expect(404);
 
@@ -369,35 +360,19 @@ describe('LaborActionsController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/projetos/:projetoId (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
+  it('/v1/funcionarios/projetos/:projetoId (POST) - Deve retornar erro caso o ID do funcionário seja inválido', async () => {
     const response = await request(app.getHttpServer())
       .post(`/v1/funcionarios/projetos/${createdProject.id}`)
       .send({
         ...employeesProject,
-        criadoPor: 'Teste',
+        funcionarios: ['999'],
       })
       .expect(400);
 
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'criadoPor must be a number conforming to the specified constraints',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/projetos/:projetoId (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
-    const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/projetos/${createdProject.id}`)
-      .send({
-        ...employeesProject,
-        criadoPor: 999,
-      })
-      .expect(404);
-
     expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
+      statusCode: 400,
+      message: ['each value in funcionarios must be a UUID'],
+      error: 'Bad Request',
     });
   });
 
@@ -406,7 +381,6 @@ describe('LaborActionsController (E2E)', () => {
     await projectRepository.save({
       ...createdProject,
       funcionarios: [createdEmployee],
-      criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
@@ -419,7 +393,7 @@ describe('LaborActionsController (E2E)', () => {
 
   it('/v1/funcionarios/:funcionarioId/projetos (GET) - Deve retornar erro ao buscar um funcionário inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .get(`/v1/funcionarios/999/projetos`)
+      .get(`/v1/funcionarios/86f226c4-38b0-464c-987e-35293033faf6/projetos`)
       .expect(404);
 
     expect(response.body).toEqual({
@@ -431,12 +405,12 @@ describe('LaborActionsController (E2E)', () => {
 
   it('/v1/funcionarios/:funcionarioId/projetos (GET) - Deve retornar erro ao buscar um funcionário em projeto com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/funcionarios/teste/projetos')
+      .get('/v1/funcionarios/999/projetos')
       .expect(400);
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
@@ -445,7 +419,6 @@ describe('LaborActionsController (E2E)', () => {
     const updateData = {
       funcionarios: [createdEmployee1.id],
       dataInicio: '2025-02-18',
-      atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
@@ -455,7 +428,13 @@ describe('LaborActionsController (E2E)', () => {
 
     expect(response.body).toMatchObject({
       succeeded: true,
-      data: null,
+      data: expect.objectContaining({
+        funcionarios: expect.arrayContaining([
+          expect.objectContaining({
+            id: createdEmployee1.id,
+          }),
+        ]),
+      }),
       message: `Funcionário(s) do projeto id: #${createdProject.id} atualizado(s) com sucesso.`,
     });
 
@@ -481,9 +460,8 @@ describe('LaborActionsController (E2E)', () => {
 
   it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar um erro ao atualizar um funcionário em projeto com tipo de dado inválido', async () => {
     const updateData = {
-      funcionarios: 1,
+      funcionarios: '999',
       dataInicio: '2025-02-18',
-      atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
@@ -501,9 +479,8 @@ describe('LaborActionsController (E2E)', () => {
     const response = await request(app.getHttpServer())
       .patch(`/v1/funcionarios/projetos/${createdProject.id}`)
       .send({
-        funcionarios: [999],
+        funcionarios: ['86f226c4-38b0-464c-987e-35293033faf6'],
         dataInicio: '2025-02-18',
-        atualizadoPor: 999,
       })
       .expect(404);
 
@@ -514,86 +491,28 @@ describe('LaborActionsController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
-    const updateData = {
-      funcionarios: [createdEmployee1.id],
-      dataInicio: '2025-02-18',
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/projetos/${createdProject.id}`)
-      .send(updateData)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O usuário responsável pela atualização deve ser informado.',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
-    const updateData = {
-      funcionarios: [createdEmployee1.id],
-      dataInicio: '2025-02-18',
-      atualizadoPor: 'Teste',
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/projetos/${createdProject.id}`)
-      .send(updateData)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O identificador do usuário deve ser um número.',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
-    const updateData = {
-      funcionarios: [createdEmployee1.id],
-      dataInicio: '2025-02-18',
-      atualizadoPor: 999,
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/projetos/${createdProject.id}`)
-      .send(updateData)
-      .expect(404);
-
-    expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
-    });
-  });
-
   it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro ao atualizar um funcionário em projeto com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/projetos/teste`)
+      .patch(`/v1/funcionarios/projetos/999`)
       .send({
         funcionarios: [createdEmployee1.id],
         dataInicio: '2025-02-18',
-        atualizadoPor: 999,
       })
       .expect(400);
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
 
   it('/v1/funcionarios/acoes-trabalhistas/:id (PATCH) - Deve retornar erro ao atualizar um funcionário em projeto inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/funcionarios/projetos/9999')
+      .patch('/v1/funcionarios/projetos/86f226c4-38b0-464c-987e-35293033faf6')
       .send({
         funcionarios: [createdEmployee1.id],
         dataInicio: '2025-02-18',
-        atualizadoPor: 999,
       })
       .expect(404);
 

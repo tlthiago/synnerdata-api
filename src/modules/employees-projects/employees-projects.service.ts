@@ -27,8 +27,9 @@ export class EmployeesProjectsService {
   ) {}
 
   async create(
-    projectId: number,
+    projectId: string,
     createEmployeesProjectDto: CreateEmployeesProjectDto,
+    createdBy: string,
   ) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -51,9 +52,7 @@ export class EmployeesProjectsService {
       project.funcionarios = employees;
       await queryRunner.manager.save(project);
 
-      const user = await this.usersService.findOne(
-        createEmployeesProjectDto.criadoPor,
-      );
+      const user = await this.usersService.findOne(createdBy);
 
       const logs = employees.map((employee) => ({
         projeto: project,
@@ -67,7 +66,15 @@ export class EmployeesProjectsService {
       await queryRunner.manager.save(EmployeeProjectLogs, logs);
 
       await queryRunner.commitTransaction();
-      return project.id;
+
+      return plainToInstance(EmployeeProjectsResponseDto, {
+        ...project,
+        funcionarios: plainToInstance(
+          EmployeesProjectResponseDto,
+          project.funcionarios,
+          { excludeExtraneousValues: true },
+        ),
+      });
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -76,7 +83,7 @@ export class EmployeesProjectsService {
     }
   }
 
-  async findAll(employeeId: number) {
+  async findAll(employeeId: string) {
     const employee = await this.employeesService.findOne(employeeId);
 
     const projects = await this.projectRepository.find({
@@ -108,8 +115,9 @@ export class EmployeesProjectsService {
   }
 
   async update(
-    projectId: number,
+    projectId: string,
     updateEmployeeProjectDto: UpdateEmployeesProjectDto,
+    updatedBy: string,
   ) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -143,9 +151,7 @@ export class EmployeesProjectsService {
       project.funcionarios = newEmployees;
       await queryRunner.manager.save(project);
 
-      const user = await this.usersService.findOne(
-        updateEmployeeProjectDto.atualizadoPor,
-      );
+      const user = await this.usersService.findOne(updatedBy);
 
       const removedEmployeesLogs = removedEmployees.map((employee) => ({
         projeto: project,
@@ -170,7 +176,20 @@ export class EmployeesProjectsService {
       await queryRunner.manager.save(EmployeeProjectLogs, addedEmployeesLogs);
 
       await queryRunner.commitTransaction();
-      return `O projeto #${project.id} foi atualizado.`;
+
+      const updatedProject = await queryRunner.manager.findOne(Project, {
+        where: { id: projectId },
+        relations: ['funcionarios'],
+      });
+
+      return plainToInstance(EmployeeProjectsResponseDto, {
+        ...updatedProject,
+        funcionarios: plainToInstance(
+          EmployeesProjectResponseDto,
+          updatedProject.funcionarios,
+          { excludeExtraneousValues: true },
+        ),
+      });
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;

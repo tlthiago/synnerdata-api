@@ -3,10 +3,12 @@ import {
   IsString,
   IsNotEmpty,
   IsOptional,
-  IsNumber,
   Length,
   Matches,
   IsDateString,
+  IsMobilePhone,
+  IsPhoneNumber,
+  IsPostalCode,
 } from 'class-validator';
 
 export class CreateBranchDto {
@@ -60,10 +62,7 @@ export class CreateBranchDto {
   estado: string;
 
   @ApiProperty({ description: 'CEP.' })
-  @IsString()
-  @IsNotEmpty()
-  @Length(8, 10)
-  @Matches(/^\d{5}-?\d{3}$/, {
+  @IsPostalCode('BR', {
     message: 'CEP deve estar no formato 00000-000 ou 00000000',
   })
   cep: string;
@@ -74,13 +73,11 @@ export class CreateBranchDto {
   dataFundacao: string;
 
   @ApiProperty({ description: 'Telefone.' })
-  @IsString()
-  @IsNotEmpty()
-  @Length(1, 20)
-  telefone: string;
+  @IsOptional()
+  @IsPhoneNumber('BR')
+  telefone?: string;
 
-  @ApiProperty({ description: 'Usuário responsável pela criação da filial.' })
-  @IsNotEmpty()
-  @IsNumber()
-  criadoPor: number;
+  @ApiProperty({ description: 'Telefone.' })
+  @IsMobilePhone('pt-BR')
+  celular: string;
 }

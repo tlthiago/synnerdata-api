@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MailService } from './mail.service';
 import { MailController } from './mail.controller';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { UsersModule } from '../../../modules/users/users.module';
 
 @Module({
   imports: [
@@ -16,8 +17,10 @@ import { MailerModule } from '@nestjs-modules/mailer';
         from: '"No Reply" <noreply@synerdata.com>',
       },
     }),
+    UsersModule,
   ],
   controllers: [MailController],
   providers: [MailService],
+  exports: [MailService],
 })
 export class MailModule {}

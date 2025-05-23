@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { Funcao } from '../entities/user.entity';
 
 export class UpdateUserDto {
   @ApiProperty({ description: 'Nome do usuário.' })
@@ -7,15 +8,8 @@ export class UpdateUserDto {
   @IsString()
   nome?: string;
 
-  @ApiProperty({ description: 'Função do usuário.' })
+  @ApiProperty({ description: 'Função do usuário.', enum: Funcao })
+  @IsEnum(Funcao)
   @IsOptional()
-  @IsString()
-  funcao?: string;
-
-  @ApiProperty({
-    description: 'Usuário responsável pela atualização do usuário.',
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  atualizadoPor: number;
+  funcao?: Funcao;
 }

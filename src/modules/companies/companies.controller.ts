@@ -6,8 +6,8 @@ import {
   Patch,
   Param,
   UseGuards,
-  ParseIntPipe,
   Delete,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
@@ -22,7 +22,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CompanyResponseDto } from './dto/company-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Empresas')
@@ -57,12 +56,12 @@ export class CompaniesController {
   })
   @UseGuards(JwtAuthGuard)
   async create(@Body() createCompanyDto: CreateCompanyDto) {
-    const companyId = await this.companiesService.create(createCompanyDto);
+    const company = await this.companiesService.create(createCompanyDto);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Empresa cadastrada com sucesso, id: #${companyId}.`,
+      data: company,
+      message: `Empresa cadastrada com sucesso, id: #${company.id}.`,
     };
   }
 
@@ -92,7 +91,7 @@ export class CompaniesController {
   @ApiParam({
     name: 'id',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -101,7 +100,7 @@ export class CompaniesController {
     type: CompanyResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.companiesService.findOne(id);
   }
 
@@ -114,7 +113,7 @@ export class CompaniesController {
   @ApiParam({
     name: 'id',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -139,7 +138,7 @@ export class CompaniesController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCompanyDto: UpdateCompanyDto,
   ) {
     const company = await this.companiesService.update(id, updateCompanyDto);
@@ -160,7 +159,7 @@ export class CompaniesController {
   @ApiParam({
     name: 'id',
     description: 'ID da empresa.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -180,16 +179,13 @@ export class CompaniesController {
     },
   })
   @UseGuards(JwtAuthGuard)
-  async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteCompanyDto: BaseDeleteDto,
-  ) {
-    await this.companiesService.remove(id, deleteCompanyDto);
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    const company = await this.companiesService.remove(id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Empresa id: #${id} excluída com sucesso.`,
+      data: company,
+      message: `Empresa id: #${company.id} excluída com sucesso.`,
     };
   }
 }

@@ -15,8 +15,8 @@ export enum RoleEpiAction {
 
 @Entity('funcao_epi_logs')
 export class RoleEpiLogs {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @ManyToOne(() => Role)
   funcao: Role;
@@ -30,8 +30,8 @@ export class RoleEpiLogs {
   @Column({ name: 'descricao', type: 'varchar' })
   descricao: string;
 
-  @Column({ name: 'criado_por', type: 'integer' })
-  criadoPor: number;
+  @Column({ name: 'criado_por', type: 'uuid' })
+  criadoPor: string;
 
   @CreateDateColumn({
     name: 'criado_em',

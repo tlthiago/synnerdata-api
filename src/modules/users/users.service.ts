@@ -1,39 +1,79 @@
 import {
-  BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
+import { EntityManager, Repository } from 'typeorm';
+import { Funcao, User } from './entities/user.entity';
 import { UsersResponseDto } from './dto/user-response.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { plainToInstance } from 'class-transformer';
+import { CreateInitialUserDto } from './dto/create-initial-user.dto';
+import { CompaniesService } from '../companies/companies.service';
+import { Company } from '../companies/entities/company.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    private readonly companiesService: CompaniesService,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    let createdBy = null;
-
-    if (createUserDto.criadoPor) {
-      createdBy = await this.findOne(createUserDto.criadoPor);
-    }
+    createUserDto.email = createUserDto.email.trim().toLowerCase();
 
     const user = this.usersRepository.create({
       ...createUserDto,
-      criadoPor: createdBy,
+      funcao: Funcao.SUPER_ADMIN,
     });
-    return await this.usersRepository.save(user);
+
+    await this.usersRepository.save(user);
+
+    return plainToInstance(UsersResponseDto, user, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findAll(): Promise<UsersResponseDto[]> {
+  async createInitialUser(
+    createInitialUserDto: CreateInitialUserDto,
+    manager?: EntityManager,
+  ) {
+    const userRepository = manager
+      ? manager.getRepository(User)
+      : this.usersRepository;
+
+    const userExists = await userRepository.findOne({
+      where: { email: createInitialUserDto.email.trim().toLowerCase() },
+    });
+
+    if (userExists) {
+      throw new ConflictException('Já existe um usuário com o mesmo email.');
+    }
+
+    const companyRepository = await manager.getRepository(Company);
+
+    const company = await companyRepository.findOne({
+      where: { id: createInitialUserDto.empresaId },
+    });
+
+    createInitialUserDto.email = createInitialUserDto.email
+      .trim()
+      .toLowerCase();
+
+    const user = userRepository.create({
+      ...createInitialUserDto,
+      status: 'P',
+      funcao: Funcao.ADMIN,
+      empresa: company.id,
+    });
+
+    return await userRepository.save(user);
+  }
+
+  async findAll() {
     const users = await this.usersRepository.find();
 
     return plainToInstance(UsersResponseDto, users, {
@@ -41,7 +81,19 @@ export class UsersService {
     });
   }
 
-  async findOne(id: number): Promise<UsersResponseDto> {
+  async findAllByCompany(id: string) {
+    const company = await this.companiesService.findById(id);
+
+    const users = await this.usersRepository.find({
+      where: { empresa: company.id },
+    });
+
+    return plainToInstance(UsersResponseDto, users, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async findOne(id: string) {
     const user = await this.usersRepository.findOne({
       where: {
         id,
@@ -57,7 +109,7 @@ export class UsersService {
     });
   }
 
-  async findById(id: number): Promise<User> {
+  async findById(id: string) {
     const user = await this.usersRepository.findOne({
       where: {
         id,
@@ -73,40 +125,15 @@ export class UsersService {
 
   async findOneByEmail(email: string) {
     const user = await this.usersRepository.findOne({
-      where: { email },
+      where: { email: email.trim().toLowerCase() },
     });
 
     return user;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
-    const updatedBy = await this.usersRepository.findOne({
-      where: { id: updateUserDto.atualizadoPor },
-    });
-
-    if (!updatedBy) {
-      throw new NotFoundException('Usuário não encontrado.');
-    }
-
-    const result = await this.usersRepository.update(id, {
-      ...updateUserDto,
-      atualizadoPor: updatedBy.id,
-    });
-
-    if (result.affected === 0) {
-      throw new NotFoundException('Usuário não encontrado.');
-    }
-  }
-
-  async remove(id: number, deleteUserDto: BaseDeleteDto) {
-    if (!deleteUserDto.excluidoPor) {
-      throw new BadRequestException(
-        'O usuário responsável pela exclusão deve ser informado.',
-      );
-    }
-
+  async update(id: string, updateUserDto: UpdateUserDto, updatedBy: string) {
     const user = await this.usersRepository.findOne({
-      where: { id: deleteUserDto.excluidoPor },
+      where: { id: updatedBy },
     });
 
     if (!user) {
@@ -114,14 +141,126 @@ export class UsersService {
     }
 
     const result = await this.usersRepository.update(id, {
-      status: 'E',
-      atualizadoPor: deleteUserDto.excluidoPor,
+      ...updateUserDto,
+      atualizadoPor: user.id,
     });
 
     if (result.affected === 0) {
       throw new NotFoundException('Usuário não encontrado.');
     }
 
-    return `O usuário #${id} foi excluído.`;
+    const updatedUser = await this.findOne(id);
+
+    return updatedUser;
+  }
+
+  async remove(id: string, deletedBy: string) {
+    const user = await this.usersRepository.findOne({
+      where: { id: deletedBy },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    const result = await this.usersRepository.update(
+      { id, status: 'A' },
+      {
+        status: 'E',
+        atualizadoPor: user.id,
+      },
+    );
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    const removedUser = await this.usersRepository.findOne({
+      where: { id },
+    });
+
+    return plainToInstance(UsersResponseDto, removedUser, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async activateUser(
+    id: string,
+    nome: string,
+    email: string,
+    password: string,
+  ) {
+    const user = await this.usersRepository.findOne({ where: { id } });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    const result = await this.usersRepository.update(id, {
+      nome,
+      email,
+      senha: password,
+      status: 'A',
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    return `O usuário foi ativado.`;
+  }
+
+  async updateUsername(id: string, nome: string) {
+    const user = await this.usersRepository.findOne({ where: { id } });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    const result = await this.usersRepository.update(id, {
+      nome,
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    return `O nome do usuário foi atualizado.`;
+  }
+
+  async updatePassword(id: string, password: string) {
+    const user = await this.usersRepository.findOne({ where: { id } });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    const result = await this.usersRepository.update(id, {
+      senha: password,
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    return `A senha do usuário foi atualizada.`;
+  }
+
+  async markAsActive(id: string) {
+    const user = await this.usersRepository.findOne({ where: { id } });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    const result = await this.usersRepository.update(id, {
+      status: 'A',
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    return `O status do usuário foi atualizado.`;
   }
 }

@@ -7,7 +7,6 @@ import { Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { CpfAnalysisResponseDto } from './dto/cpf-analysis-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -19,25 +18,29 @@ export class CpfAnalysisService {
     private readonly usersService: UsersService,
   ) {}
 
-  async create(employeeId: number, createCpfAnalysisDto: CreateCpfAnalysisDto) {
+  async create(
+    employeeId: string,
+    createCpfAnalysisDto: CreateCpfAnalysisDto,
+    createdBy: string,
+  ) {
     const employee = await this.employeesService.findOne(employeeId);
 
-    const user = await this.usersService.findOne(
-      createCpfAnalysisDto.criadoPor,
-    );
+    const user = await this.usersService.findOne(createdBy);
 
     const cpfAnalysis = this.cpfAnalysisRepository.create({
       ...createCpfAnalysisDto,
-      funcionario: employee,
+      funcionario: { id: employee.id },
       criadoPor: user,
     });
 
     await this.cpfAnalysisRepository.save(cpfAnalysis);
 
-    return cpfAnalysis.id;
+    return plainToInstance(CpfAnalysisResponseDto, cpfAnalysis, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findAll(employeeId: number) {
+  async findAll(employeeId: string) {
     const employee = await this.employeesService.findOne(employeeId);
 
     const cpfAnalysis = await this.cpfAnalysisRepository.find({
@@ -52,7 +55,7 @@ export class CpfAnalysisService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const cpfAnalysis = await this.cpfAnalysisRepository.findOne({
       where: {
         id,
@@ -69,10 +72,12 @@ export class CpfAnalysisService {
     });
   }
 
-  async update(id: number, updateCpfAnalysisDto: UpdateCpfAnalysisDto) {
-    const user = await this.usersService.findOne(
-      updateCpfAnalysisDto.atualizadoPor,
-    );
+  async update(
+    id: string,
+    updateCpfAnalysisDto: UpdateCpfAnalysisDto,
+    updatedBy: string,
+  ) {
+    const user = await this.usersService.findOne(updatedBy);
 
     const result = await this.cpfAnalysisRepository.update(id, {
       ...updateCpfAnalysisDto,
@@ -83,23 +88,37 @@ export class CpfAnalysisService {
       throw new NotFoundException('Análise de CPF não encontrada.');
     }
 
-    return this.findOne(id);
+    const updatedCpfAnalysis = await this.findOne(id);
+
+    return updatedCpfAnalysis;
   }
 
-  async remove(id: number, deleteCpfAnalysisDto: BaseDeleteDto) {
-    const user = await this.usersService.findOne(
-      deleteCpfAnalysisDto.excluidoPor,
+  async remove(id: string, deletedBy: string) {
+    const user = await this.usersService.findOne(deletedBy);
+
+    const result = await this.cpfAnalysisRepository.update(
+      {
+        id,
+        status: 'A',
+      },
+      {
+        status: 'E',
+        atualizadoPor: user,
+      },
     );
 
-    const result = await this.cpfAnalysisRepository.update(id, {
-      status: 'E',
-      atualizadoPor: user,
-    });
-
     if (result.affected === 0) {
-      throw new NotFoundException('Análise de CPF não encontrada.');
+      throw new NotFoundException(
+        'Análise de CPF já excluída ou não encontrada.',
+      );
     }
 
-    return { id, status: 'E' };
+    const removedCpfAnalysis = await this.cpfAnalysisRepository.findOne({
+      where: { id },
+    });
+
+    return plainToInstance(CpfAnalysisResponseDto, removedCpfAnalysis, {
+      excludeExtraneousValues: true,
+    });
   }
 }

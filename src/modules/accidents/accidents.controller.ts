@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { AccidentsService } from './accidents.service';
 import { CreateAccidentDto } from './dto/create-accident.dto';
@@ -21,8 +21,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { AccidentResponseDto } from './dto/accidents-response.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/funcionarios')
 @ApiTags('Acidentes')
@@ -38,7 +39,7 @@ export class AccidentsController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -63,18 +64,20 @@ export class AccidentsController {
   })
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('funcionarioId', ParseIntPipe) employeeId: number,
+    @Param('funcionarioId', ParseUUIDPipe) employeeId: string,
     @Body() createAccidentDto: CreateAccidentDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const id = await this.accidentsService.create(
+    const accident = await this.accidentsService.create(
       employeeId,
       createAccidentDto,
+      user.id,
     );
 
     return {
       succeeded: true,
-      data: null,
-      message: `Acidente cadastrado com sucesso, id: #${id}.`,
+      data: accident,
+      message: `Acidente cadastrado com sucesso, id: #${accident.id}.`,
     };
   }
 
@@ -88,7 +91,7 @@ export class AccidentsController {
   @ApiParam({
     name: 'funcionarioId',
     description: 'ID do funcionário.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -97,7 +100,7 @@ export class AccidentsController {
     type: [AccidentResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('funcionarioId', ParseIntPipe) employeeId: number) {
+  findAll(@Param('funcionarioId', ParseUUIDPipe) employeeId: string) {
     return this.accidentsService.findAll(employeeId);
   }
 
@@ -110,7 +113,7 @@ export class AccidentsController {
   @ApiParam({
     name: 'id',
     description: 'ID da acidente.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiResponse({
@@ -119,7 +122,7 @@ export class AccidentsController {
     type: AccidentResponseDto,
   })
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.accidentsService.findOne(id);
   }
 
@@ -132,7 +135,7 @@ export class AccidentsController {
   @ApiParam({
     name: 'id',
     description: 'ID da acidente.',
-    type: 'number',
+    type: 'string',
     required: true,
   })
   @ApiBody({
@@ -157,10 +160,15 @@ export class AccidentsController {
   })
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateAccidentDto: UpdateAccidentDto,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    const accident = await this.accidentsService.update(id, updateAccidentDto);
+    const accident = await this.accidentsService.update(
+      id,
+      updateAccidentDto,
+      user.id,
+    );
 
     return {
       succeeded: true,
@@ -178,12 +186,8 @@ export class AccidentsController {
   @ApiParam({
     name: 'id',
     description: 'ID da acidente.',
-    type: 'number',
+    type: 'string',
     required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para atualizar os dados da acidente',
-    type: BaseDeleteDto,
   })
   @ApiResponse({
     status: 200,
@@ -203,15 +207,15 @@ export class AccidentsController {
   })
   @UseGuards(JwtAuthGuard)
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deleteAccidentDto: BaseDeleteDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: CurrentUserDto,
   ) {
-    await this.accidentsService.remove(id, deleteAccidentDto);
+    const accident = await this.accidentsService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: null,
-      message: `Acidente id: #${id} excluído com sucesso.`,
+      data: accident,
+      message: `Acidente id: #${accident.id} excluído com sucesso.`,
     };
   }
 }

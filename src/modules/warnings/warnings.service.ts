@@ -7,7 +7,6 @@ import { Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { WarningResponseDto } from './dto/warning-response.dto';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -19,23 +18,29 @@ export class WarningsService {
     private readonly usersService: UsersService,
   ) {}
 
-  async create(employeeId: number, createWarningDto: CreateWarningDto) {
+  async create(
+    employeeId: string,
+    createWarningDto: CreateWarningDto,
+    createdBy: string,
+  ) {
     const employee = await this.employeesService.findOne(employeeId);
 
-    const user = await this.usersService.findOne(createWarningDto.criadoPor);
+    const user = await this.usersService.findOne(createdBy);
 
     const warning = this.warningRepository.create({
       ...createWarningDto,
-      funcionario: employee,
+      funcionario: { id: employee.id },
       criadoPor: user,
     });
 
     await this.warningRepository.save(warning);
 
-    return warning.id;
+    return plainToInstance(WarningResponseDto, warning, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  async findAll(employeeId: number) {
+  async findAll(employeeId: string) {
     const employee = await this.employeesService.findOne(employeeId);
 
     const warnings = await this.warningRepository.find({
@@ -50,7 +55,7 @@ export class WarningsService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const warning = await this.warningRepository.findOne({
       where: {
         id,
@@ -67,10 +72,12 @@ export class WarningsService {
     });
   }
 
-  async update(id: number, updateWarningDto: UpdateWarningDto) {
-    const user = await this.usersService.findOne(
-      updateWarningDto.atualizadoPor,
-    );
+  async update(
+    id: string,
+    updateWarningDto: UpdateWarningDto,
+    updatedBy: string,
+  ) {
+    const user = await this.usersService.findOne(updatedBy);
 
     const result = await this.warningRepository.update(id, {
       ...updateWarningDto,
@@ -81,21 +88,31 @@ export class WarningsService {
       throw new NotFoundException('Advertência não encontrada.');
     }
 
-    return this.findOne(id);
+    const updatedWarning = await this.findOne(id);
+    return updatedWarning;
   }
 
-  async remove(id: number, deleteWarningDto: BaseDeleteDto) {
-    const user = await this.usersService.findOne(deleteWarningDto.excluidoPor);
+  async remove(id: string, deletedBy: string) {
+    const user = await this.usersService.findOne(deletedBy);
 
-    const result = await this.warningRepository.update(id, {
-      status: 'E',
-      atualizadoPor: user,
-    });
+    const result = await this.warningRepository.update(
+      { id, status: 'A' },
+      {
+        status: 'E',
+        atualizadoPor: user,
+      },
+    );
 
     if (result.affected === 0) {
-      throw new NotFoundException('Advertência não encontrada.');
+      throw new NotFoundException('Advertência já excluída ou não encontrada.');
     }
 
-    return { id, status: 'E' };
+    const removedWarning = await this.warningRepository.findOne({
+      where: { id },
+    });
+
+    return plainToInstance(WarningResponseDto, removedWarning, {
+      excludeExtraneousValues: true,
+    });
   }
 }

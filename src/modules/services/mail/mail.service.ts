@@ -1,13 +1,19 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { SendMailDto } from './dto/send-mail.dto';
+import { UserActivationTokenService } from '../../../modules/users/users-activation-token.service';
 
 @Injectable()
 export class MailService {
-  constructor(private readonly mailerService: MailerService) {}
+  constructor(
+    private readonly mailerService: MailerService,
+    private readonly userActivationTokenService: UserActivationTokenService,
+  ) {}
 
-  async sendAccountCreationEmail(sendMailDto: SendMailDto) {
-    const { email, link } = sendMailDto;
+  async sendActivationAccountEmail(sendMailDto: SendMailDto) {
+    const { email } = sendMailDto;
+
+    const activationToken = await this.userActivationTokenService.create(email);
 
     try {
       const response = await this.mailerService.sendMail({
@@ -18,7 +24,7 @@ export class MailService {
           <p>Parabéns! Seu pagamento foi confirmado e agora você está a um passo de acessar todos os benefícios da <strong>Synerdata</strong>. 🎉</p>
           <p>Para concluir seu cadastro e ativar sua conta, basta clicar no link abaixo:</p>
           <p style="text-align: center;">
-            <a href="${link}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            <a href="http://localhost:3000/cadastro?email=${email}&activationToken=${activationToken}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
               Finalizar Cadastro
             </a>
           </p>

@@ -28,9 +28,8 @@ import { Warning } from '../warnings/entities/warning.entity';
 import { LaborAction } from '../labor-actions/entities/labor-action.entity';
 import { EpiDelivery } from '../epi-delivery/entities/epi-delivery.entity';
 import { Vacation } from '../vacations/entities/vacation.entity';
-import { User } from '../users/entities/user.entity';
+import { Funcao, User } from '../users/entities/user.entity';
 import { EpiDeliveryModule } from './epi-delivery.module';
-import { BaseDeleteDto } from '../../common/utils/dto/base-delete.dto';
 import {
   Escala,
   EstadoCivil,
@@ -43,25 +42,25 @@ import {
   EpiDeliveryAction,
   EpiDeliveryLogs,
 } from './entities/delivery-epi-logs.entity';
+import { MockUserInterceptor } from '../../common/interceptors/mock-user.interceptor';
 
 describe('FunçãoController (E2E)', () => {
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
+  let mockUserInterceptor: MockUserInterceptor;
   let createdUser: User;
   let createdEmployee: Employee;
   let createdCompany: Company;
   let createdEpi: Epi;
   let createdEpi1: Epi;
+
   const epiDelivery = {
     data: '2025-02-19',
-    epis: [1],
+    epis: ['1'],
     motivo: 'Motivo teste',
     entreguePor: 'Responsável teste',
-    criadoPor: 1,
   };
-
-  // console.log(JSON.stringify(response.body, null, 2));
 
   beforeAll(async () => {
     pgContainer = await new PostgreSqlContainer().start();
@@ -108,6 +107,8 @@ describe('FunçãoController (E2E)', () => {
         whitelist: true,
       }),
     );
+    mockUserInterceptor = new MockUserInterceptor();
+    app.useGlobalInterceptors(mockUserInterceptor);
     await app.init();
 
     dataSource = app.get(DataSource);
@@ -124,9 +125,11 @@ describe('FunçãoController (E2E)', () => {
       nome: 'Usuário Teste',
       email: 'teste1@example.com',
       senha: 'senha123',
-      funcao: 'teste',
+      funcao: Funcao.ADMIN,
     });
     createdUser = await userRepository.save(user);
+
+    mockUserInterceptor.setUserId(createdUser.id);
 
     const company = companyRepository.create({
       nomeFantasia: 'Tech Solutions',
@@ -140,34 +143,23 @@ describe('FunçãoController (E2E)', () => {
       estado: 'SP',
       cep: '01000-000',
       dataFundacao: '2010-05-15',
-      telefone: '(11) 99999-9999',
-      faturamento: 1200000.5,
-      regimeTributario: 'Simples Nacional',
-      inscricaoEstadual: '1234567890',
-      cnaePrincipal: '6201500',
-      segmento: 'Tecnologia',
-      ramoAtuacao: 'Desenvolvimento de Software',
-      logoUrl: 'https://example.com/logo.png',
-      status: 'A',
-      criadoPor: createdUser,
+      email: 'contato@techsolutions.com.br',
+      celular: '+5531991897926',
     });
     createdCompany = await companyRepository.save(company);
 
     const role = roleRepository.create({
       nome: 'Função Teste',
-      criadoPor: createdUser,
     });
     const createdRole = await roleRepository.save(role);
 
     const department = departmentRepository.create({
       nome: 'Departamento Teste',
-      criadoPor: createdUser,
     });
     const createdDepartment = await departmentRepository.save(department);
 
     const cbo = cboRepository.create({
       nome: 'Cbo Teste',
-      criadoPor: user,
     });
     const createdCbo = await cboRepository.save(cbo);
 
@@ -195,9 +187,6 @@ describe('FunçãoController (E2E)', () => {
       dataUltimoASO: '2025-02-12',
       funcao: createdRole,
       setor: createdDepartment,
-      vencimentoExperiencia1: '2025-02-12',
-      vencimentoExperiencia2: '2025-05-12',
-      dataExameDemissional: '2025-05-12',
       grauInstrucao: GrauInstrucao.SUPERIOR,
       necessidadesEspeciais: false,
       filhos: false,
@@ -214,7 +203,6 @@ describe('FunçãoController (E2E)', () => {
       cargaHoraria: 60,
       escala: Escala.SEIS_UM,
       empresa: createdCompany,
-      criadoPor: createdUser,
     });
     createdEmployee = await employeeRepository.save(employee);
 
@@ -222,7 +210,6 @@ describe('FunçãoController (E2E)', () => {
       nome: 'Bota',
       descricao: 'Equipamento para pedreiro.',
       equipamentos: 'Exemplo',
-      criadoPor: createdUser,
     });
     createdEpi = await epiRepository.save(epi);
 
@@ -230,7 +217,6 @@ describe('FunçãoController (E2E)', () => {
       nome: 'Capacete',
       descricao: 'Equipamento para pedreiro.',
       equipamentos: 'Exemplo',
-      criadoPor: createdUser,
     });
     createdEpi1 = await epiRepository.save(epi1);
 
@@ -251,10 +237,14 @@ describe('FunçãoController (E2E)', () => {
       .expect(201);
 
     expect(response.status).toBe(201);
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       succeeded: true,
-      data: null,
-      message: `Entrega de epis cadastrada com sucesso, id: #1.`,
+      data: {
+        motivo: epiDelivery.motivo,
+      },
+      message: expect.stringContaining(
+        'Entrega de epis cadastrada com sucesso, id: #',
+      ),
     });
   });
 
@@ -267,10 +257,7 @@ describe('FunçãoController (E2E)', () => {
     expect(response.body).toHaveProperty('message');
     expect(Array.isArray(response.body.message)).toBe(true);
     expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'data should not be empty',
-        'criadoPor should not be empty',
-      ]),
+      expect.arrayContaining(['data should not be empty']),
     );
   });
 
@@ -288,10 +275,11 @@ describe('FunçãoController (E2E)', () => {
 
   it('/v1/funcionarios/:funcionarioId/entrega-de-epis (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/999/entrega-de-epis`)
+      .post(
+        `/v1/funcionarios/86f226c4-38b0-464c-987e-35293033faf6/entrega-de-epis`,
+      )
       .send({
         ...epiDelivery,
-        criadoPor: createdUser.id,
       })
       .expect(404);
 
@@ -302,13 +290,28 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
+  it('/v1/funcionarios/:funcionarioId/entrega-de-epis (POST) - Deve retornar erro caso o ID do(s) epi(s) seja(s) inválido(s)', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/v1/funcionarios/${createdEmployee.id}/entrega-de-epis`)
+      .send({
+        ...epiDelivery,
+        epis: ['999'],
+      })
+      .expect(400);
+
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: ['O identificador do(s) epi(s) deve ser um número'],
+      error: 'Bad Request',
+    });
+  });
+
   it('/v1/funcionarios/:funcionarioId/entrega-de-epis (POST) - Deve retornar erro caso o ID do(s) epi(s) não exista(m)', async () => {
     const response = await request(app.getHttpServer())
       .post(`/v1/funcionarios/${createdEmployee.id}/entrega-de-epis`)
       .send({
         ...epiDelivery,
-        epis: [999],
-        criadoPor: createdUser.id,
+        epis: ['86f226c4-38b0-464c-987e-35293033faf6'],
       })
       .expect(404);
 
@@ -319,45 +322,12 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/entrega-de-epis (POST) - Deve retornar erro caso o ID do responsável pela criação não seja um número', async () => {
-    const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/entrega-de-epis`)
-      .send({
-        ...epiDelivery,
-        criadoPor: 'Teste',
-      })
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'criadoPor must be a number conforming to the specified constraints',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/:funcionarioId/entrega-de-epis (POST) - Deve retornar erro caso o ID do responsável pela criação não exista', async () => {
-    const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/entrega-de-epis`)
-      .send({
-        ...epiDelivery,
-        criadoPor: 999,
-      })
-      .expect(404);
-
-    expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
-    });
-  });
-
   it('/v1/funcionarios/:funcionarioId/entrega-de-epis (GET) - Deve listar todas as entregas de epis de um funcionário', async () => {
     const epiDeliveryRepository = dataSource.getRepository(EpiDelivery);
     await epiDeliveryRepository.save({
       ...epiDelivery,
       epis: [createdEpi],
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
@@ -374,7 +344,6 @@ describe('FunçãoController (E2E)', () => {
       ...epiDelivery,
       epis: [createdEpi],
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
@@ -386,12 +355,19 @@ describe('FunçãoController (E2E)', () => {
       data: new Intl.DateTimeFormat('pt-BR', {
         dateStyle: 'short',
       }).format(new Date(createdEpiDelivery.data)),
+      epis: expect.arrayContaining([
+        expect.objectContaining({
+          id: createdEpi.id,
+        }),
+      ]),
     });
   });
 
   it('/v1/funcionarios/entrega-de-epis/:id (GET) - Deve retornar erro ao buscar uma entrega de epi inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/funcionarios/entrega-de-epis/999')
+      .get(
+        '/v1/funcionarios/entrega-de-epis/86f226c4-38b0-464c-987e-35293033faf6',
+      )
       .expect(404);
 
     expect(response.body).toEqual({
@@ -408,7 +384,7 @@ describe('FunçãoController (E2E)', () => {
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
@@ -419,13 +395,11 @@ describe('FunçãoController (E2E)', () => {
       ...epiDelivery,
       epis: [createdEpi],
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
 
     const updateData: UpdateEpiDeliveryDto = {
       motivo: 'Motivo teste atualizado',
       epis: [createdEpi1.id],
-      atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
@@ -436,14 +410,14 @@ describe('FunçãoController (E2E)', () => {
     expect(response.body).toMatchObject({
       succeeded: true,
       data: {
-        id: expect.any(Number),
+        id: createdEpiDelivery.id,
         motivo: updateData.motivo,
         epis: expect.arrayContaining([
           expect.objectContaining({
             id: createdEpi1.id,
           }),
         ]),
-        atualizadoPor: expect.any(String),
+        atualizadoPor: createdUser.nome,
       },
       message: `Entrega de epis id: #${createdEpiDelivery.id} atualizada com sucesso.`,
     });
@@ -471,12 +445,10 @@ describe('FunçãoController (E2E)', () => {
       ...epiDelivery,
       epis: [createdEpi],
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
 
     const updateData = {
       data: 123,
-      atualizadoPor: createdUser.id,
     };
 
     const response = await request(app.getHttpServer())
@@ -490,96 +462,17 @@ describe('FunçãoController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/entrega-de-epis/:id (PATCH) - Deve retornar erro ao não informar o ID do responsável pela atualização', async () => {
-    const epiDeliveryRepository = dataSource.getRepository(EpiDelivery);
-    const createdEpiDelivery = await epiDeliveryRepository.save({
-      ...epiDelivery,
-      epis: [createdEpi],
-      funcionario: createdEmployee,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      data: '2025-02-11',
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/entrega-de-epis/${createdEpiDelivery.id}`)
-      .send(updateData)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O usuário responsável pela atualização deve ser informado.',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/entrega-de-epis/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não seja um número', async () => {
-    const epiDeliveryRepository = dataSource.getRepository(EpiDelivery);
-    const createdEpiDelivery = await epiDeliveryRepository.save({
-      ...epiDelivery,
-      epis: [createdEpi],
-      funcionario: createdEmployee,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      data: '2025-02-11',
-      atualizadoPor: 'Teste',
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/entrega-de-epis/${createdEpiDelivery.id}`)
-      .send(updateData)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O identificador do usuário deve ser um número.',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/entrega-de-epis/:id (PATCH) - Deve retornar erro caso o ID do responsável pela atualização não exista', async () => {
-    const epiDeliveryRepository = dataSource.getRepository(EpiDelivery);
-    const createdEpiDelivery = await epiDeliveryRepository.save({
-      ...epiDelivery,
-      epis: [createdEpi],
-      funcionario: createdEmployee,
-      criadoPor: createdUser,
-    });
-
-    const updateData = {
-      data: '2025-02-11',
-      atualizadoPor: 999,
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/entrega-de-epis/${createdEpiDelivery.id}`)
-      .send(updateData)
-      .expect(404);
-
-    expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
-    });
-  });
-
   it('/v1/funcionarios/entrega-de-epis/:id (PATCH) - Deve retornar erro caso o ID do(s) epi(s) não exista(m)', async () => {
     const epiDeliveryRepository = dataSource.getRepository(EpiDelivery);
     const createdEpiDelivery = await epiDeliveryRepository.save({
       ...epiDelivery,
       epis: [createdEpi],
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
 
     const updateData = {
       data: '2025-02-11',
-      epis: [999],
-      atualizadoPor: createdUser.id,
+      epis: ['86f226c4-38b0-464c-987e-35293033faf6'],
     };
 
     const response = await request(app.getHttpServer())
@@ -599,23 +492,23 @@ describe('FunçãoController (E2E)', () => {
       .patch('/v1/funcionarios/entrega-de-epis/abc')
       .send({
         data: '2025-02-11',
-        atualizadoPor: 1,
       })
       .expect(400);
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
 
   it('/v1/funcionarios/entrega-de-epis/:id (PATCH) - Deve retornar erro ao atualizar uma entrega de epi inexistente', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/funcionarios/entrega-de-epis/9999')
+      .patch(
+        '/v1/funcionarios/entrega-de-epis/86f226c4-38b0-464c-987e-35293033faf6',
+      )
       .send({
         data: '2025-02-11',
-        atualizadoPor: 1,
       })
       .expect(404);
 
@@ -632,107 +525,46 @@ describe('FunçãoController (E2E)', () => {
       ...epiDelivery,
       epis: [createdEpi],
       funcionario: createdEmployee,
-      criadoPor: createdUser,
     });
-
-    const deleteEpiDeliveryDto: BaseDeleteDto = {
-      excluidoPor: createdUser.id,
-    };
 
     const response = await request(app.getHttpServer())
       .delete(`/v1/funcionarios/entrega-de-epis/${createdEpiDelivery.id}`)
-      .send(deleteEpiDeliveryDto)
       .expect(200);
 
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       succeeded: true,
-      data: null,
+      data: {
+        id: createdEpiDelivery.id,
+        motivo: createdEpiDelivery.motivo,
+        atualizadoPor: createdUser.nome,
+        status: 'E',
+      },
       message: `Entrega de epis id: #${createdEpiDelivery.id} excluída com sucesso.`,
-    });
-
-    const deletedEpiDelivery = await epiDeliveryRepository.findOneBy({
-      id: createdEpiDelivery.id,
-    });
-
-    expect(deletedEpiDelivery.status).toBe('E');
-  });
-
-  it('/v1/funcionarios/entrega-de-epis/:id (DELETE) - Deve retornar erro ao não informar o ID do responsável pela exclusão', async () => {
-    const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/entrega-de-epis/1`)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O usuário responsável pela exclusão deve ser informado.',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/entrega-de-epis/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não seja um número', async () => {
-    const deleteEpiDeliveryDto = {
-      excluidoPor: 'Teste',
-    };
-
-    const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/entrega-de-epis/1`)
-      .send(deleteEpiDeliveryDto)
-      .expect(400);
-
-    expect(response.body.message).toEqual(
-      expect.arrayContaining([
-        'O identificador do usuário deve ser um número.',
-      ]),
-    );
-  });
-
-  it('/v1/funcionarios/entrega-de-epis/:id (DELETE) - Deve retornar erro caso o ID do responsável pela exclusão não exista', async () => {
-    const deleteEpiDeliveryDto: BaseDeleteDto = {
-      excluidoPor: 999,
-    };
-
-    const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/entrega-de-epis/${createdEmployee.id}`)
-      .send(deleteEpiDeliveryDto)
-      .expect(404);
-
-    expect(response.body).toEqual({
-      statusCode: 404,
-      message: 'Usuário não encontrado.',
-      error: 'Not Found',
     });
   });
 
   it('/v1/funcionarios/entrega-de-epis/:id (DELETE) - Deve retornar erro ao excluir uma entrega de epi com um ID inválido', async () => {
-    const deleteEpiDeliveryDto: BaseDeleteDto = {
-      excluidoPor: 1,
-    };
-
     const response = await request(app.getHttpServer())
       .delete('/v1/funcionarios/entrega-de-epis/abc')
-      .send(deleteEpiDeliveryDto)
       .expect(400);
 
     expect(response.body).toEqual({
       statusCode: 400,
-      message: 'Validation failed (numeric string is expected)',
+      message: 'Validation failed (uuid is expected)',
       error: 'Bad Request',
     });
   });
 
   it('/v1/funcionarios/entrega-de-epis/:id (DELETE) - Deve retornar erro ao excluir uma entrega de epi inexistente', async () => {
-    const deleteEpiDeliveryDto: BaseDeleteDto = {
-      excluidoPor: createdUser.id,
-    };
-
     const response = await request(app.getHttpServer())
-      .delete('/v1/funcionarios/entrega-de-epis/9999')
-      .send(deleteEpiDeliveryDto)
+      .delete(
+        '/v1/funcionarios/entrega-de-epis/86f226c4-38b0-464c-987e-35293033faf6',
+      )
       .expect(404);
 
     expect(response.body).toEqual({
       statusCode: 404,
-      message: 'Entrega de Epi(s) não encontrada.',
+      message: 'Entrega de Epi(s) já excluída(s) ou não encontrada(s).',
       error: 'Not Found',
     });
   });

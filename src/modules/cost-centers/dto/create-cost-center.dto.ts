@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, Length } from 'class-validator';
+import { IsString, IsNotEmpty, Length } from 'class-validator';
 
 export class CreateCostCenterDto {
   @ApiProperty({ description: 'Nome.' })
@@ -7,11 +7,4 @@ export class CreateCostCenterDto {
   @IsNotEmpty()
   @Length(1, 255)
   nome: string;
-
-  @ApiProperty({
-    description: 'Usuário responsável pela criação do centro de custo.',
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  criadoPor: number;
 }
