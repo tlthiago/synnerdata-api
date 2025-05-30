@@ -12,7 +12,7 @@ export class ActivateAccountDto {
 
   @ApiProperty({ description: 'Senha do usuário.' })
   @IsStrongPassword()
-  password: string;
+  senha: string;
 
   @ApiProperty({ description: 'Token de ativação do usuário.' })
   @IsUUID()

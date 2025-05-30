@@ -18,6 +18,9 @@ import { ActivateAccountDto } from '../users/dto/activate-account.dto';
 import { UserActivationTokenService } from '../users/users-activation-token.service';
 import { MailService } from '../services/mail/mail.service';
 import { DataSource } from 'typeorm';
+import { RecoveryPasswordDto } from '../users/dto/recovery-password.dto';
+import { RecoveryPasswordTokenService } from '../users/recovery-password-token.service';
+import { ResetPasswordDto } from '../users/dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -27,6 +30,7 @@ export class AuthService {
     private readonly subscriptionsService: SubscriptionsService,
     private readonly companiesService: CompaniesService,
     private readonly userActivationTokenService: UserActivationTokenService,
+    private readonly recoveryPasswordTokenService: RecoveryPasswordTokenService,
     private readonly mailService: MailService,
     private readonly dataSource: DataSource,
   ) {}
@@ -62,8 +66,8 @@ export class AuthService {
       );
 
       if (
-        !subscriptionResponse?.id ||
-        subscriptionResponse.status !== 'active'
+        !subscriptionResponse?.id
+        // || subscriptionResponse.status !== 'active'
       ) {
         throw new BadRequestException('Erro ao criar assinatura no Pagar.me');
       }
@@ -107,22 +111,69 @@ export class AuthService {
   }
 
   async activateAccount(activateAccountDto: ActivateAccountDto) {
-    const { nome, email, password, activationToken } = activateAccountDto;
+    const { nome, email, senha, activationToken } = activateAccountDto;
 
     await this.userActivationTokenService.findOne(activationToken);
 
     const user = await this.usersService.findOneByEmail(email);
 
     if (!user || user.status !== 'P') {
-      throw new ConflictException('Usuário já ativado ou inválido');
+      throw new ConflictException('Usuário já ativado ou inválido.');
     }
 
-    const passwordHash = await bcrypt.hash(password, 6);
+    const passwordHash = await bcrypt.hash(senha, 6);
 
     await this.usersService.activateUser(user.id, nome, email, passwordHash);
     await this.userActivationTokenService.remove(activationToken);
 
     return user.id;
+  }
+
+  async recoveryPassword(recoveryPasswordDto: RecoveryPasswordDto) {
+    const { email } = recoveryPasswordDto;
+
+    const user = await this.usersService.findOneByEmail(email);
+
+    if (!user) {
+      return;
+    }
+
+    const token = await this.recoveryPasswordTokenService.create(user.email);
+
+    await this.mailService.sendRecoveryPasswordEmail({
+      email: user.email,
+      recoveryToken: token,
+    });
+
+    return;
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const { recoveryToken, novaSenha } = resetPasswordDto;
+
+    const recoveryData =
+      await this.recoveryPasswordTokenService.findOne(recoveryToken);
+
+    const user = await this.usersService.findOneByEmail(recoveryData.email);
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    const samePassword = await bcrypt.compare(novaSenha, user.senha);
+
+    if (samePassword) {
+      throw new BadRequestException(
+        'A nova senha não pode ser igual a anterior.',
+      );
+    }
+
+    const passwordHash = await bcrypt.hash(novaSenha, 6);
+
+    await this.usersService.updatePassword(user.id, passwordHash);
+    await this.recoveryPasswordTokenService.remove(recoveryToken);
+
+    return user.email;
   }
 
   async signIn(authDto: AuthDto): Promise<SignInResponseDto> {
