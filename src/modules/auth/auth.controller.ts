@@ -6,6 +6,8 @@ import { SignInResponseDto } from './dto/sign-in-response.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { CreateSubscriptionDto } from '../payments/subscriptions/dto/create-subscription.dto';
 import { ActivateAccountDto } from '../users/dto/activate-account.dto';
+import { RecoveryPasswordDto } from '../users/dto/recovery-password.dto';
+import { ResetPasswordDto } from '../users/dto/reset-password.dto';
 
 @Controller('v1/auth')
 @ApiTags('Autenticação')
@@ -101,7 +103,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description:
-      'Retorna uma mensagem de sucesso caso o cadastro seja bem sucedido.',
+      'Retorna uma mensagem de sucesso caso a ativação seja bem sucedida.',
     schema: {
       type: 'object',
       properties: {
@@ -121,6 +123,80 @@ export class AuthController {
       succeeded: true,
       data: null,
       message: `A conta do usuário #ID: ${userId} foi ativada com sucesso!`,
+    };
+  }
+
+  @Post('recovery-password')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Recuperar senha',
+    description:
+      'Endpoint responsável por enviar um email para recuperação de senha.',
+  })
+  @ApiBody({
+    description: 'Dados necessários para recuperar a senha do usuário',
+    type: RecoveryPasswordDto,
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Retorna uma mensagem de sucesso caso a recuperação seja bem sucedida.',
+    schema: {
+      type: 'object',
+      properties: {
+        succeeded: { type: 'boolean' },
+        data: { type: 'string', nullable: true },
+        message: {
+          type: 'string',
+          description: 'A conta do usuário foi ativada com sucesso.',
+        },
+      },
+    },
+  })
+  async recoveryPassword(@Body() recoveryPasswordDto: RecoveryPasswordDto) {
+    await this.authService.recoveryPassword(recoveryPasswordDto);
+
+    return {
+      succeeded: true,
+      data: null,
+      message:
+        'Se o e-mail estiver cadastrado, você receberá instruções em breve.',
+    };
+  }
+
+  @Post('reset-password')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Redefinir senha',
+    description: 'Endpoint responsável por redefinir a senha de um usuário.',
+  })
+  @ApiBody({
+    description: 'Dados necessários para redefinir a senha do usuário',
+    type: ResetPasswordDto,
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Retorna uma mensagem de sucesso caso a recuperação seja bem sucedida.',
+    schema: {
+      type: 'object',
+      properties: {
+        succeeded: { type: 'boolean' },
+        data: { type: 'string', nullable: true },
+        message: {
+          type: 'string',
+          description: 'A conta do usuário foi ativada com sucesso.',
+        },
+      },
+    },
+  })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    const userEmail = await this.authService.resetPassword(resetPasswordDto);
+
+    return {
+      succeeded: true,
+      data: null,
+      message: `A senha do usuário ${userEmail} foi redefinida com sucesso.`,
     };
   }
 

@@ -6,14 +6,28 @@ import { User } from './entities/user.entity';
 import { CompaniesModule } from '../companies/companies.module';
 import { UserActivationToken } from './entities/user-activation-token.entity';
 import { UserActivationTokenService } from './users-activation-token.service';
+import { RecoveryPasswordTokenService } from './recovery-password-token.service';
+import { RecoveryPasswordToken } from './entities/recovery-password-token.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserActivationToken]),
+    TypeOrmModule.forFeature([
+      User,
+      UserActivationToken,
+      RecoveryPasswordToken,
+    ]),
     CompaniesModule,
   ],
   controllers: [UsersController],
-  providers: [UsersService, UserActivationTokenService],
-  exports: [UsersService, UserActivationTokenService],
+  providers: [
+    UsersService,
+    UserActivationTokenService,
+    RecoveryPasswordTokenService,
+  ],
+  exports: [
+    UsersService,
+    UserActivationTokenService,
+    RecoveryPasswordTokenService,
+  ],
 })
 export class UsersModule {}

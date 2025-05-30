@@ -33,7 +33,7 @@ describe('StatusController (e2e) - TestContainers', () => {
     await app.init();
 
     dataSource = app.get(DataSource);
-  }, 20000);
+  }, 50000);
 
   beforeEach(async () => {
     if (dataSource.isInitialized) {

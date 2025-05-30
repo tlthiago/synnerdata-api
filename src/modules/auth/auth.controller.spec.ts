@@ -32,6 +32,9 @@ import { Vacation } from '../vacations/entities/vacation.entity';
 import { Warning } from '../warnings/entities/warning.entity';
 import { MailService } from '../services/mail/mail.service';
 import { SubscriptionsService } from '../payments/subscriptions/subscriptions.service';
+import { UserActivationToken } from '../users/entities/user-activation-token.entity';
+import { randomUUID } from 'crypto';
+import { RecoveryPasswordToken } from '../users/entities/recovery-password-token.entity';
 
 describe('AuthController (e2e) - Sign-Up', () => {
   let app: INestApplication;
@@ -40,6 +43,7 @@ describe('AuthController (e2e) - Sign-Up', () => {
 
   const mailServiceMock = {
     sendActivationAccountEmail: jest.fn().mockResolvedValue(undefined),
+    sendRecoveryPasswordEmail: jest.fn().mockResolvedValue(undefined),
   };
 
   const subscriptionServiceMock = {
@@ -56,7 +60,7 @@ describe('AuthController (e2e) - Sign-Up', () => {
   const user = {
     nome: 'Usuário Teste',
     email: 'teste@example.com',
-    senha: '$3nh4F0rt3',
+    senha: '$3h4F0rt3',
   };
 
   const companyUser = {
@@ -371,6 +375,298 @@ describe('AuthController (e2e) - Sign-Up', () => {
         'card_token must be a string',
       ]),
     );
+  });
+
+  it('/v1/auth/activate-account (POST) - Deve ativar a conta de um usuário', async () => {
+    const usersRepository = dataSource.getRepository(User);
+    const usersActivationTokenRepository =
+      dataSource.getRepository(UserActivationToken);
+    const createdUser = await usersRepository.save({
+      ...user,
+      status: 'P',
+      funcao: Funcao.SUPER_ADMIN,
+    });
+
+    const token = randomUUID();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
+
+    await usersActivationTokenRepository.save({
+      email: user.email,
+      token,
+      expiresAt,
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/v1/auth/activate-account')
+      .send({
+        ...user,
+        activationToken: token,
+      })
+      .expect(200);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        succeeded: true,
+        data: null,
+        message: `A conta do usuário #ID: ${createdUser.id} foi ativada com sucesso!`,
+      }),
+    );
+  });
+
+  it('/v1/auth/activate-account (POST) - Deve retornar um erro caso a conta do usuário já esteja ativa', async () => {
+    const usersRepository = dataSource.getRepository(User);
+    const usersActivationTokenRepository =
+      dataSource.getRepository(UserActivationToken);
+    await usersRepository.save({
+      ...user,
+      funcao: Funcao.SUPER_ADMIN,
+    });
+
+    const token = randomUUID();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
+
+    await usersActivationTokenRepository.save({
+      email: user.email,
+      token,
+      expiresAt,
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/v1/auth/activate-account')
+      .send({
+        ...user,
+        activationToken: token,
+      })
+      .expect(409);
+
+    expect(response.status).toBe(409);
+    expect(response.body).toEqual({
+      statusCode: 409,
+      message: 'Usuário já ativado ou inválido.',
+      error: 'Conflict',
+    });
+  });
+
+  it('/v1/auth/activate-account (POST) - Deve retornar um erro caso o email não seja válido', async () => {
+    const token = randomUUID();
+
+    const response = await request(app.getHttpServer())
+      .post('/v1/auth/activate-account')
+      .send({
+        ...user,
+        email: 123,
+        activationToken: token,
+      })
+      .expect(400);
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: ['email must be an email'],
+      error: 'Bad Request',
+    });
+  });
+
+  it('/v1/auth/activate-account (POST) - Deve retornar um erro caso a senha seja fraca', async () => {
+    const token = randomUUID();
+
+    const response = await request(app.getHttpServer())
+      .post('/v1/auth/activate-account')
+      .send({
+        ...user,
+        senha: 123,
+        activationToken: token,
+      })
+      .expect(400);
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: ['senha is not strong enough'],
+      error: 'Bad Request',
+    });
+  });
+
+  it('/v1/auth/activate-account (POST) - Deve retornar um erro caso o token não exista', async () => {
+    const token = randomUUID();
+
+    const response = await request(app.getHttpServer())
+      .post('/v1/auth/activate-account')
+      .send({
+        ...user,
+        activationToken: token,
+      })
+      .expect(400);
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: 'Token inválido ou expirado.',
+      error: 'Bad Request',
+    });
+  });
+
+  it('/v1/auth/recovery-password (POST) - Deve enviar um email com um link de recuperação de senha', async () => {
+    const usersRepository = dataSource.getRepository(User);
+    await usersRepository.save({
+      ...user,
+      funcao: Funcao.ADMIN,
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/v1/auth/recovery-password')
+      .send({ email: user.email })
+      .expect(200);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        succeeded: true,
+        data: null,
+        message: `Se o e-mail estiver cadastrado, você receberá instruções em breve.`,
+      }),
+    );
+  });
+
+  it('/v1/auth/recovery-password (POST) - Deve retornar OK caso o endereço de email não seja encontrado', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/v1/auth/recovery-password')
+      .send({ email: user.email })
+      .expect(200);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        succeeded: true,
+        data: null,
+        message: `Se o e-mail estiver cadastrado, você receberá instruções em breve.`,
+      }),
+    );
+  });
+
+  it('/v1/auth/reset-password (POST) - Deve redefinir a senha de um usuário', async () => {
+    const usersRepository = dataSource.getRepository(User);
+    const recoveryPasswordTokenRepository = dataSource.getRepository(
+      RecoveryPasswordToken,
+    );
+    const createdUser = await usersRepository.save({
+      ...user,
+      funcao: Funcao.ADMIN,
+    });
+
+    const token = randomUUID();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
+
+    await recoveryPasswordTokenRepository.save({
+      email: user.email,
+      token,
+      expiresAt,
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/v1/auth/reset-password')
+      .send({ recoveryToken: token, novaSenha: user.senha })
+      .expect(200);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        succeeded: true,
+        data: null,
+        message: `A senha do usuário ${createdUser.email} foi redefinida com sucesso.`,
+      }),
+    );
+  });
+
+  it('/v1/auth/reset-password (POST) - Deve retornar um erro caso o token não seja um UUID', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/v1/auth/reset-password')
+      .send({
+        recoveryToken: 'invalid-token',
+        novaSenha: user.senha,
+      })
+      .expect(400);
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: ['recoveryToken must be a UUID'],
+      error: 'Bad Request',
+    });
+  });
+
+  it('/v1/auth/reset-password (POST) - Deve retornar um erro caso a nova senha seja fraca', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/v1/auth/reset-password')
+      .send({
+        recoveryToken: 'e625864c-bdf8-4fd3-afb3-b6bf5f274ba9',
+        novaSenha: 'senha-fraca',
+      })
+      .expect(400);
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: ['novaSenha is not strong enough'],
+      error: 'Bad Request',
+    });
+  });
+
+  it('/v1/auth/reset-password (POST) - Deve retornar um erro caso o token seja inválido ou esteja expirado', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/v1/auth/reset-password')
+      .send({
+        recoveryToken: 'e625864c-bdf8-4fd3-afb3-b6bf5f274ba9',
+        novaSenha: user.senha,
+      })
+      .expect(400);
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: 'Token inválido ou expirado.',
+      error: 'Bad Request',
+    });
+  });
+
+  it('/v1/auth/reset-password (POST) - Deve retornar um erro caso o token seja inválido ou esteja expirado', async () => {
+    const usersRepository = dataSource.getRepository(User);
+    const recoveryPasswordTokenRepository = dataSource.getRepository(
+      RecoveryPasswordToken,
+    );
+
+    const passwordHash = await bcrypt.hash(user.senha, 1);
+
+    await usersRepository.save({
+      ...user,
+      senha: passwordHash,
+      funcao: Funcao.ADMIN,
+    });
+
+    const token = randomUUID();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
+
+    await recoveryPasswordTokenRepository.save({
+      email: user.email,
+      token,
+      expiresAt,
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/v1/auth/reset-password')
+      .send({
+        recoveryToken: token,
+        novaSenha: user.senha,
+      })
+      .expect(400);
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: 'A nova senha não pode ser igual a anterior.',
+      error: 'Bad Request',
+    });
   });
 
   it('/v1/auth/sign-in (POST) - Deve autenticar um usuário', async () => {

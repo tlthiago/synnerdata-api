@@ -14,7 +14,7 @@ import { UsersModule } from '../../../modules/users/users.module';
         auth: undefined,
       },
       defaults: {
-        from: '"No Reply" <noreply@synerdata.com>',
+        from: '"No Reply - Synerdata" <noreply@synerdata.com>',
       },
     }),
     UsersModule,
