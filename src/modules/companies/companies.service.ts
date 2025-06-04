@@ -171,4 +171,22 @@ export class CompaniesService {
       excludeExtraneousValues: true,
     });
   }
+
+  async findPbUrl(id: string) {
+    const company = await this.companiesRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!company) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+
+    if (company.pbUrl === null) {
+      throw new NotFoundException('A empresa não possui URL do Power BI.');
+    }
+
+    return company.pbUrl;
+  }
 }

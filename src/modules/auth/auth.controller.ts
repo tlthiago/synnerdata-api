@@ -1,6 +1,19 @@
-import { Controller, Post, Body, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthDto } from './dto/auth.dto';
 import { SignInResponseDto } from './dto/sign-in-response.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
@@ -8,6 +21,8 @@ import { CreateSubscriptionDto } from '../payments/subscriptions/dto/create-subs
 import { ActivateAccountDto } from '../users/dto/activate-account.dto';
 import { RecoveryPasswordDto } from '../users/dto/recovery-password.dto';
 import { ResetPasswordDto } from '../users/dto/reset-password.dto';
+import { InviteUserDto } from '../users/dto/invite-user-dto';
+import { ResendInviteUserDto } from '../users/dto/resend-invite-user-dto';
 
 @Controller('v1/auth')
 @ApiTags('Autenticação')
@@ -87,6 +102,90 @@ export class AuthController {
       succeeded: true,
       data: createdUser,
       message: `Usuário cadastrado com sucesso, id: #${createdUser.id}.`,
+    };
+  }
+
+  @Post('invite/:empresaId')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Convidar um usuário',
+    description:
+      'Endpoint responsável por convidar um usuário para a organização.',
+  })
+  @ApiParam({
+    name: 'empresaId',
+    description: 'ID da empresa.',
+    type: 'string',
+    required: true,
+  })
+  @ApiBody({
+    description: 'Dados necessários para convidar o usuário',
+    type: InviteUserDto,
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Retorna uma mensagem de sucesso caso o envio do convite seja bem sucedido.',
+    schema: {
+      type: 'object',
+      properties: {
+        succeeded: { type: 'boolean' },
+        data: { type: 'string', nullable: true },
+        message: {
+          type: 'string',
+          description:
+            'Um convite para fazer parte da organização foi enviado para o email: example@email.com!',
+        },
+      },
+    },
+  })
+  async inviteUser(
+    @Param('empresaId', ParseUUIDPipe) companyId: string,
+    @Body() inviteUserDto: InviteUserDto,
+  ) {
+    const user = await this.authService.inviteUser(companyId, inviteUserDto);
+
+    return {
+      succeeded: true,
+      data: null,
+      message: `Um convite para fazer parte da organização foi enviado para o email: ${user.email}!`,
+    };
+  }
+
+  @Post('resend-invite')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Reenviar convite para um usuário',
+    description: 'Endpoint responsável por reenviar um convite a um usuário.',
+  })
+  @ApiBody({
+    description: 'Dados necessários para reenviar um convite para o usuário',
+    type: ResendInviteUserDto,
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Retorna uma mensagem de sucesso caso o reenvio do convite seja bem sucedido.',
+    schema: {
+      type: 'object',
+      properties: {
+        succeeded: { type: 'boolean' },
+        data: { type: 'string', nullable: true },
+        message: {
+          type: 'string',
+          description:
+            'Um convite para fazer parte da organização foi reenviado para o email: example@email.com!',
+        },
+      },
+    },
+  })
+  async resendInviteUser(@Body() resendInviteUserDto: ResendInviteUserDto) {
+    const user = await this.authService.resendInviteUser(resendInviteUserDto);
+
+    return {
+      succeeded: true,
+      data: null,
+      message: `Um convite para fazer parte da organização foi reenviado para o email: ${user.email}!`,
     };
   }
 

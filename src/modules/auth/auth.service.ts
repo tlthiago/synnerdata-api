@@ -21,6 +21,8 @@ import { DataSource } from 'typeorm';
 import { RecoveryPasswordDto } from '../users/dto/recovery-password.dto';
 import { RecoveryPasswordTokenService } from '../users/recovery-password-token.service';
 import { ResetPasswordDto } from '../users/dto/reset-password.dto';
+import { InviteUserDto } from '../users/dto/invite-user-dto';
+import { ResendInviteUserDto } from '../users/dto/resend-invite-user-dto';
 
 @Injectable()
 export class AuthService {
@@ -110,6 +112,58 @@ export class AuthService {
     }
   }
 
+  async inviteUser(companyId: string, inviteUserDto: InviteUserDto) {
+    const { email, funcao } = inviteUserDto;
+
+    const company = await this.companiesService.findById(companyId);
+
+    const availableUsers = company.quantidadeUsuarios;
+
+    const currentUsers = await this.usersService.findAllByCompany(company.id);
+
+    if (currentUsers.length === availableUsers) {
+      throw new BadRequestException(
+        'A organização já possui a quantidade máxima de usuários cadastrados.',
+      );
+    }
+
+    const user = await this.usersService.createInvitedUser({
+      email,
+      funcao,
+      empresaId: company.id,
+    });
+
+    await this.mailService.sendUserInvitationEmail({
+      email,
+      companyName: company.nomeFantasia,
+    });
+
+    return this.usersService.findOne(user.id);
+  }
+
+  async resendInviteUser(resendInviteUserDto: ResendInviteUserDto) {
+    const { email } = resendInviteUserDto;
+
+    const user = await this.usersService.findOneByEmail(email);
+
+    if (!user || user.status !== 'P') {
+      throw new ConflictException('Usuário já aceitou o convite ou inválido.');
+    }
+
+    const token = await this.userActivationTokenService.findOneByEmail(email);
+
+    await this.userActivationTokenService.remove(token);
+
+    const company = await this.companiesService.findById(user.empresa);
+
+    await this.mailService.sendUserInvitationEmail({
+      email,
+      companyName: company.nomeFantasia,
+    });
+
+    return this.usersService.findOne(user.id);
+  }
+
   async activateAccount(activateAccountDto: ActivateAccountDto) {
     const { nome, email, senha, activationToken } = activateAccountDto;
 
@@ -183,6 +237,10 @@ export class AuthService {
 
     if (!user) {
       throw new NotFoundException('Usuário ou senha inválidos.');
+    }
+
+    if (user.status !== 'A') {
+      throw new BadRequestException('Usuário não autorizado.');
     }
 
     const passwordIsValid = await compare(senha, user.senha);

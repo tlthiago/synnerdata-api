@@ -40,6 +40,18 @@ export class UserActivationTokenService {
     return activation;
   }
 
+  async findOneByEmail(email: string) {
+    const activation = await this.userActivationTokenRepository.findOne({
+      where: { email },
+    });
+
+    if (!activation) {
+      throw new BadRequestException('Token não encontrado.');
+    }
+
+    return activation.token;
+  }
+
   async remove(token: string) {
     const result = await this.userActivationTokenRepository.delete({
       token,

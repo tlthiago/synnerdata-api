@@ -52,6 +52,10 @@ export class CompanyResponseDto extends BaseResponseDto {
   )
   dataFundacao: string;
 
+  @ApiProperty({ description: 'Email.' })
+  @Expose()
+  email: string;
+
   @ApiProperty({ description: 'Telefone.' })
   @Expose()
   telefone: string;
@@ -87,4 +91,12 @@ export class CompanyResponseDto extends BaseResponseDto {
   @ApiProperty({ description: 'Logotipo.' })
   @Expose()
   logoUrl: string;
+
+  @ApiProperty({ description: 'Power BI URL.' })
+  @Expose()
+  pbUrl: string;
+
+  @ApiProperty({ description: 'Quantidade de usuários' })
+  @Expose()
+  quantidadeUsuarios: string;
 }
