@@ -3,6 +3,7 @@ import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { SendMailDto } from './dto/send-mail.dto';
 import { UserActivationTokenService } from '../../../modules/users/users-activation-token.service';
 import { SendRecoveryPasswordMailDto } from './dto/send-recovery-password-mail.dto';
+import { SendUserInvitationMailDto } from './dto/send-user-invitation-mail.dto';
 
 @Injectable()
 export class MailService {
@@ -34,6 +35,41 @@ export class MailService {
           <p>Atenciosamente,</p>
           <p><strong>Equipe Synerdata</strong></p>
         `,
+      });
+
+      return { success: true, messageId: response.messageId };
+    } catch (error) {
+      throw new ServiceUnavailableException(
+        `Erro ao enviar e-mail: ${error.message}`,
+      );
+    }
+  }
+
+  async sendUserInvitationEmail(
+    sendUserInvitationMailDto: SendUserInvitationMailDto,
+  ) {
+    const { email, companyName } = sendUserInvitationMailDto;
+
+    const activationToken = await this.userActivationTokenService.create(email);
+
+    try {
+      const response = await this.mailerService.sendMail({
+        to: email,
+        subject: `Convite para fazer parte da organização ${companyName}`,
+        html: `
+        <p><strong>Olá,</strong></p>
+        <p>Você foi convidado para fazer parte da organização <strong>${companyName}</strong> na plataforma <strong>Synerdata</strong>.</p>
+        <p>Para aceitar o convite e finalizar seu cadastro, basta clicar no botão abaixo:</p>
+        <p style="text-align: center;">
+          <a href="http://localhost:3000/ativacao?email=${email}&activationToken=${activationToken}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            Aceitar Convite
+          </a>
+        </p>
+        <p>Se você não reconhece essa solicitação, pode ignorar este e-mail com segurança.</p>
+        <p>Estamos ansiosos para te receber na equipe da <strong>${companyName}</strong>!</p>
+        <p>Atenciosamente,</p>
+        <p><strong>Equipe Synerdata</strong></p>
+      `,
       });
 
       return { success: true, messageId: response.messageId };

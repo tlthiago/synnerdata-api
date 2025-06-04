@@ -188,4 +188,43 @@ export class CompaniesController {
       message: `Empresa id: #${company.id} excluída com sucesso.`,
     };
   }
+
+  @Get('pburl/:id')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Buscar URL do Power BI',
+    description: 'Endpoint responsável por retornar a URL do Power BI.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID da empresa.',
+    type: 'string',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Retorna uma mensagem de sucesso caso a busca seja bem sucedida.',
+    schema: {
+      type: 'object',
+      properties: {
+        succeeded: { type: 'boolean' },
+        data: { type: 'string', nullable: true },
+        message: {
+          type: 'string',
+          description: 'URL do Power BI encontrada com sucesso.',
+        },
+      },
+    },
+  })
+  @UseGuards(JwtAuthGuard)
+  async findPbUrl(@Param('id', ParseUUIDPipe) id: string) {
+    const pbUrl = await this.companiesService.findPbUrl(id);
+
+    return {
+      succeeded: true,
+      data: pbUrl,
+      message: `URL do Power BI encontrada com sucesso.`,
+    };
+  }
 }

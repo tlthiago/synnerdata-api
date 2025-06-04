@@ -23,6 +23,10 @@ export class UsersResponseDto {
   @Expose()
   status: string;
 
+  @ApiProperty({ description: 'ID empresa' })
+  @Expose()
+  empresa: string;
+
   @ApiProperty({ description: 'Criado por' })
   @Expose()
   criadoPor: string;

@@ -68,6 +68,23 @@ export class UsersController {
     return await this.userService.findAllByCompany(companyId);
   }
 
+  @Get('perfil')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Buscar dados de um usuário',
+    description: 'Endpoint responsável por retornar os dados de um usuário.',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Retorna um usuário conforme token enviado no cabeçalho da requisição.',
+    type: UsersResponseDto,
+  })
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@CurrentUser() user: CurrentUserDto) {
+    return await this.userService.findOne(user.id);
+  }
+
   @Get(':id')
   @ApiBearerAuth()
   @ApiOperation({

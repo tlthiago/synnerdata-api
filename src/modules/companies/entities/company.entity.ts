@@ -107,10 +107,13 @@ export class Company {
   })
   ramoAtuacao: string;
 
-  @Column({ name: 'logo_url', type: 'varchar', length: 500, nullable: true })
+  @Column({ name: 'logo_url', type: 'varchar', nullable: true })
   logoUrl?: string;
 
-  @Column({ name: 'qt_usuarios', type: 'int', default: 3 })
+  @Column({ name: 'pb_url', type: 'varchar', nullable: true })
+  pbUrl?: string;
+
+  @Column({ name: 'qt_usuarios', type: 'int', default: 4 })
   quantidadeUsuarios?: number;
 
   @Column({

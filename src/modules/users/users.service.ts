@@ -1,10 +1,11 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, In, Repository } from 'typeorm';
 import { Funcao, User } from './entities/user.entity';
 import { UsersResponseDto } from './dto/user-response.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -13,6 +14,7 @@ import { plainToInstance } from 'class-transformer';
 import { CreateInitialUserDto } from './dto/create-initial-user.dto';
 import { CompaniesService } from '../companies/companies.service';
 import { Company } from '../companies/entities/company.entity';
+import { CreateInvitedUserDto } from './dto/create-invited-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -73,6 +75,31 @@ export class UsersService {
     return await userRepository.save(user);
   }
 
+  async createInvitedUser(createInvitedUserDto: CreateInvitedUserDto) {
+    const { email, funcao, empresaId } = createInvitedUserDto;
+
+    const userExists = await this.usersRepository.findOne({
+      where: { email: email.trim().toLowerCase() },
+    });
+
+    if (userExists) {
+      throw new ConflictException('Já existe um usuário com o mesmo email.');
+    }
+
+    if (!Object.values(Funcao).includes(funcao as Funcao)) {
+      throw new BadRequestException('Função inválida.');
+    }
+
+    const user = this.usersRepository.create({
+      ...createInvitedUserDto,
+      funcao: funcao as Funcao,
+      status: 'P',
+      empresa: empresaId,
+    });
+
+    return await this.usersRepository.save(user);
+  }
+
   async findAll() {
     const users = await this.usersRepository.find();
 
@@ -85,7 +112,7 @@ export class UsersService {
     const company = await this.companiesService.findById(id);
 
     const users = await this.usersRepository.find({
-      where: { empresa: company.id },
+      where: { empresa: company.id, status: In(['A', 'P']) },
     });
 
     return plainToInstance(UsersResponseDto, users, {
