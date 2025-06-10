@@ -46,6 +46,8 @@ export class AccidentsService {
     const accidents = await this.accidentRepository
       .createQueryBuilder('acidente')
       .innerJoinAndSelect('acidente.funcionario', 'funcionario')
+      .innerJoinAndSelect('acidente.criadoPor', 'criadoPor')
+      .leftJoinAndSelect('acidente.atualizadoPor', 'atualizadoPor')
       .innerJoin('funcionario.empresa', 'empresa')
       .where('empresa.id = :companyId', { companyId: company.id })
       .andWhere('acidente.status = :status', { status: 'A' })

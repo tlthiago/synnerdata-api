@@ -265,6 +265,7 @@ describe('AbsenceController (E2E)', () => {
     await absenceRepository.save({
       ...absence,
       funcionario: createdEmployee,
+      criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())

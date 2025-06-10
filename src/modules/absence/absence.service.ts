@@ -46,6 +46,8 @@ export class AbsenceService {
     const absences = await this.absenceRepository
       .createQueryBuilder('falta')
       .innerJoinAndSelect('falta.funcionario', 'funcionario')
+      .innerJoinAndSelect('falta.criadoPor', 'criadoPor')
+      .leftJoinAndSelect('falta.atualizadoPor', 'atualizadoPor')
       .innerJoin('funcionario.empresa', 'empresa')
       .where('empresa.id = :companyId', { companyId: company.id })
       .andWhere('falta.status = :status', { status: 'A' })
