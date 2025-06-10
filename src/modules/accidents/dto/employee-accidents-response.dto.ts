@@ -1,15 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseResponseDto } from '../../../common/utils/dto/base-response.dto';
-import { Expose, Transform, Type } from 'class-transformer';
-import { EmployeeResponseDto } from '../../../modules/employees/dto/employee-response.dto';
+import { Expose, Transform } from 'class-transformer';
 
-export class AccidentResponseDto extends BaseResponseDto {
-  @ApiProperty({ description: 'Nome do funcionário' })
-  @Expose()
-  @Type(() => EmployeeResponseDto)
-  @Transform(({ value }) => value?.nome)
-  funcionario: string;
-
+export class EmployeeAccidentResponseDto extends BaseResponseDto {
   @ApiProperty({ description: 'Descrição do acidente.' })
   @Expose()
   descricao: string;

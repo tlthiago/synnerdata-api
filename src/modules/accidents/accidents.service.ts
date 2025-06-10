@@ -7,7 +7,9 @@ import { Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { AccidentResponseDto } from './dto/accidents-response.dto';
+import { EmployeeAccidentResponseDto } from './dto/employee-accidents-response.dto';
 import { UsersService } from '../users/users.service';
+import { CompaniesService } from '../companies/companies.service';
 
 @Injectable()
 export class AccidentsService {
@@ -16,6 +18,7 @@ export class AccidentsService {
     private readonly accidentRepository: Repository<Accident>,
     private readonly employeesService: EmployeesService,
     private readonly usersService: UsersService,
+    private readonly companiesService: CompaniesService,
   ) {}
 
   async create(
@@ -35,7 +38,23 @@ export class AccidentsService {
 
     await this.accidentRepository.save(accident);
 
-    return plainToInstance(AccidentResponseDto, accident, {
+    return plainToInstance(EmployeeAccidentResponseDto, accident, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async findAllByCompany(companyId: string) {
+    const company = await this.companiesService.findById(companyId);
+
+    const accidents = await this.accidentRepository
+      .createQueryBuilder('acidente')
+      .innerJoinAndSelect('acidente.funcionario', 'funcionario')
+      .innerJoin('funcionario.empresa', 'empresa')
+      .where('empresa.id = :companyId', { companyId: company.id })
+      .andWhere('acidente.status = :status', { status: 'A' })
+      .getMany();
+
+    return plainToInstance(AccidentResponseDto, accidents, {
       excludeExtraneousValues: true,
     });
   }
@@ -50,7 +69,7 @@ export class AccidentsService {
       },
     });
 
-    return plainToInstance(AccidentResponseDto, accidents, {
+    return plainToInstance(EmployeeAccidentResponseDto, accidents, {
       excludeExtraneousValues: true,
     });
   }
@@ -67,7 +86,7 @@ export class AccidentsService {
       throw new NotFoundException('Acidente não encontrado.');
     }
 
-    return plainToInstance(AccidentResponseDto, accident, {
+    return plainToInstance(EmployeeAccidentResponseDto, accident, {
       excludeExtraneousValues: true,
     });
   }
@@ -111,7 +130,7 @@ export class AccidentsService {
       where: { id },
     });
 
-    return plainToInstance(AccidentResponseDto, removedAccident, {
+    return plainToInstance(EmployeeAccidentResponseDto, removedAccident, {
       excludeExtraneousValues: true,
     });
   }
