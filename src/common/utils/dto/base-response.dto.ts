@@ -33,7 +33,7 @@ export class BaseResponseDto {
   @ApiProperty({ description: 'Atualizado por' })
   @Expose()
   @Type(() => UsersResponseDto)
-  @Transform(({ value }) => value?.nome)
+  @Transform(({ value }) => value?.nome ?? null)
   atualizadoPor: UsersResponseDto;
 
   @ApiProperty({ description: 'Atualizado em' })

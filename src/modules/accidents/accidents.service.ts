@@ -7,7 +7,6 @@ import { Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { AccidentResponseDto } from './dto/accidents-response.dto';
-import { EmployeeAccidentResponseDto } from './dto/employee-accidents-response.dto';
 import { UsersService } from '../users/users.service';
 import { CompaniesService } from '../companies/companies.service';
 
@@ -38,9 +37,7 @@ export class AccidentsService {
 
     await this.accidentRepository.save(accident);
 
-    return plainToInstance(EmployeeAccidentResponseDto, accident, {
-      excludeExtraneousValues: true,
-    });
+    return await this.findOne(accident.id);
   }
 
   async findAllByCompany(companyId: string) {
@@ -67,9 +64,10 @@ export class AccidentsService {
         funcionario: { id: employee.id },
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
-    return plainToInstance(EmployeeAccidentResponseDto, accidents, {
+    return plainToInstance(AccidentResponseDto, accidents, {
       excludeExtraneousValues: true,
     });
   }
@@ -80,13 +78,14 @@ export class AccidentsService {
         id,
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
     if (!accident) {
       throw new NotFoundException('Acidente não encontrado.');
     }
 
-    return plainToInstance(EmployeeAccidentResponseDto, accident, {
+    return plainToInstance(AccidentResponseDto, accident, {
       excludeExtraneousValues: true,
     });
   }
@@ -107,8 +106,7 @@ export class AccidentsService {
       throw new NotFoundException('Acidente não encontrado.');
     }
 
-    const updatedAccident = await this.findOne(id);
-    return updatedAccident;
+    return await this.findOne(id);
   }
 
   async remove(id: string, deletedBy: string) {
@@ -128,9 +126,10 @@ export class AccidentsService {
 
     const removedAccident = await this.accidentRepository.findOne({
       where: { id },
+      relations: ['funcionario'],
     });
 
-    return plainToInstance(EmployeeAccidentResponseDto, removedAccident, {
+    return plainToInstance(AccidentResponseDto, removedAccident, {
       excludeExtraneousValues: true,
     });
   }
