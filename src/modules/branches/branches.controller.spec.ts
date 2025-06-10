@@ -329,6 +329,31 @@ describe('BranchesController (E2E)', () => {
     });
   });
 
+  it('/v1/empresas/filiais/:id (PATCH) - Deve atualizar o CNPJ de uma filial caso o novo CNPJ seja o mesmo da empresa já cadastrada', async () => {
+    const branchesRepository = dataSource.getRepository(Branch);
+    const createdBranch = await branchesRepository.save({
+      ...branch,
+      empresa: createdCompany,
+    });
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/empresas/filiais/${createdBranch.id}`)
+      .send({
+        ...branch,
+      })
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      succeeded: true,
+      data: {
+        id: createdBranch.id,
+        cnpj: createdBranch.cnpj,
+        atualizadoPor: createdUser.nome,
+      },
+      message: `Filial id: #${createdBranch.id} atualizada com sucesso.`,
+    });
+  });
+
   it('/v1/empresas/filiais/:id (PATCH) - Deve retornar erro ao atualizar uma filial com tipo de dado inválido', async () => {
     const branchesRepository = dataSource.getRepository(Branch);
     const createdBranch = await branchesRepository.save({
@@ -384,6 +409,7 @@ describe('BranchesController (E2E)', () => {
       .patch(`/v1/empresas/filiais/${createdBranch.id}`)
       .send({
         ...branch,
+        cnpj: createdCompany.cnpj,
       })
       .expect(409);
 
