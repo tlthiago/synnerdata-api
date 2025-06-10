@@ -89,14 +89,14 @@ export class BranchesService {
     });
   }
 
-  async findByCnpj(cnpj: string): Promise<boolean> {
+  async findByCnpj(cnpj: string) {
     const branch = await this.branchesRepository.findOne({
       where: {
         cnpj,
       },
     });
 
-    return !!branch;
+    return branch;
   }
 
   async update(
@@ -107,12 +107,14 @@ export class BranchesService {
     const user = await this.usersService.findOne(updatedBy);
 
     if (updateBranchDto.cnpj) {
-      const companyExists = await this.companiesService.findByCnpj(
-        updateBranchDto.cnpj,
-      );
-      const branchExists = await this.findByCnpj(updateBranchDto.cnpj);
+      const [companyExists, branchExists] = await Promise.all([
+        this.companiesService.findByCnpj(updateBranchDto.cnpj),
+        this.findByCnpj(updateBranchDto.cnpj),
+      ]);
 
-      if (companyExists || branchExists) {
+      const isSameBranch = branchExists?.id === id;
+
+      if (companyExists || (branchExists && !isSameBranch)) {
         throw new ConflictException(
           'Já existe uma organização com o mesmo CNPJ.',
         );
