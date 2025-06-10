@@ -109,14 +109,14 @@ export class CompaniesService {
     return company;
   }
 
-  async findByCnpj(cnpj: string): Promise<boolean> {
+  async findByCnpj(cnpj: string) {
     const company = await this.companiesRepository.findOne({
       where: {
         cnpj,
       },
     });
 
-    return !!company;
+    return company;
   }
 
   async findByEmail(email: string): Promise<boolean> {
