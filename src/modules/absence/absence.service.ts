@@ -8,6 +8,7 @@ import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { AbsenceResponseDto } from './dto/absence-response.dto';
 import { UsersService } from '../users/users.service';
+import { CompaniesService } from '../companies/companies.service';
 
 @Injectable()
 export class AbsenceService {
@@ -16,6 +17,7 @@ export class AbsenceService {
     private readonly absenceRepository: Repository<Absence>,
     private readonly employeesService: EmployeesService,
     private readonly usersService: UsersService,
+    private readonly companiesService: CompaniesService,
   ) {}
 
   async create(
@@ -35,7 +37,21 @@ export class AbsenceService {
 
     await this.absenceRepository.save(absence);
 
-    return plainToInstance(AbsenceResponseDto, absence, {
+    return await this.findOne(absence.id);
+  }
+
+  async findAllByCompany(companyId: string) {
+    const company = await this.companiesService.findById(companyId);
+
+    const absences = await this.absenceRepository
+      .createQueryBuilder('falta')
+      .innerJoinAndSelect('falta.funcionario', 'funcionario')
+      .innerJoin('funcionario.empresa', 'empresa')
+      .where('empresa.id = :companyId', { companyId: company.id })
+      .andWhere('falta.status = :status', { status: 'A' })
+      .getMany();
+
+    return plainToInstance(AbsenceResponseDto, absences, {
       excludeExtraneousValues: true,
     });
   }
@@ -48,6 +64,7 @@ export class AbsenceService {
         funcionario: { id: employee.id },
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
     return plainToInstance(AbsenceResponseDto, absences, {
@@ -61,6 +78,7 @@ export class AbsenceService {
         id,
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
     if (!absence) {
@@ -88,9 +106,7 @@ export class AbsenceService {
       throw new NotFoundException('Falta não encontrada.');
     }
 
-    const updatedAbsence = await this.findOne(id);
-
-    return updatedAbsence;
+    return await this.findOne(id);
   }
 
   async remove(id: string, deletedBy: string) {
@@ -110,6 +126,7 @@ export class AbsenceService {
 
     const removedAbsence = await this.absenceRepository.findOne({
       where: { id },
+      relations: ['funcionario'],
     });
 
     return plainToInstance(AbsenceResponseDto, removedAbsence, {

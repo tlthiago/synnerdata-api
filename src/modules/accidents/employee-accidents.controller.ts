@@ -84,9 +84,9 @@ export class EmployeeAccidentsController {
   @Get(':funcionarioId/acidentes')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Buscar todos as acidentes',
+    summary: 'Buscar todos os acidentes de um funcionário',
     description:
-      'Endpoint responsável por listar todos as acidentes cadastrados de um funcionário.',
+      'Endpoint responsável por listar todos os acidentes cadastrados de um funcionário.',
   })
   @ApiParam({
     name: 'funcionarioId',
@@ -107,9 +107,9 @@ export class EmployeeAccidentsController {
   @Get(':funcionarioId/acidentes')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Buscar todos as acidentes',
+    summary: 'Buscar todos os acidentes',
     description:
-      'Endpoint responsável por listar todos as acidentes cadastrados de um funcionário.',
+      'Endpoint responsável por listar todos os acidentes cadastrados de um funcionário.',
   })
   @ApiParam({
     name: 'funcionarioId',
@@ -162,7 +162,7 @@ export class EmployeeAccidentsController {
     required: true,
   })
   @ApiBody({
-    description: 'Dados necessários para atualizar os dados da acidente',
+    description: 'Dados necessários para atualizar os dados do acidente',
     type: UpdateAccidentDto,
   })
   @ApiResponse({
