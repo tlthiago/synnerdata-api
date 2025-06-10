@@ -269,6 +269,7 @@ describe('AccidentsController (E2E)', () => {
     await accidentRepository.save({
       ...accident,
       funcionario: createdEmployee,
+      criadoPor: createdUser,
     });
 
     const response = await request(app.getHttpServer())
