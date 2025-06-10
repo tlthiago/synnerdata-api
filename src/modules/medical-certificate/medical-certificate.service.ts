@@ -12,6 +12,7 @@ import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { MedicalCertificateResponseDto } from './dto/medical-certificate-response.dto';
 import { UsersService } from '../users/users.service';
+import { CompaniesService } from '../companies/companies.service';
 
 @Injectable()
 export class MedicalCertificateService {
@@ -20,6 +21,7 @@ export class MedicalCertificateService {
     private readonly medicalCertificateRepository: Repository<MedicalCertificate>,
     private readonly employeesService: EmployeesService,
     private readonly usersService: UsersService,
+    private readonly companiesService: CompaniesService,
   ) {}
 
   async create(
@@ -52,7 +54,23 @@ export class MedicalCertificateService {
 
     await this.medicalCertificateRepository.save(medicalCertificate);
 
-    return plainToInstance(MedicalCertificateResponseDto, medicalCertificate, {
+    return await this.findOne(medicalCertificate.id);
+  }
+
+  async findAllByCompany(companyId: string) {
+    const company = await this.companiesService.findById(companyId);
+
+    const absences = await this.medicalCertificateRepository
+      .createQueryBuilder('atestado')
+      .innerJoinAndSelect('atestado.funcionario', 'funcionario')
+      .innerJoinAndSelect('atestado.criadoPor', 'criadoPor')
+      .leftJoinAndSelect('atestado.atualizadoPor', 'atualizadoPor')
+      .innerJoin('funcionario.empresa', 'empresa')
+      .where('empresa.id = :companyId', { companyId: company.id })
+      .andWhere('atestado.status = :status', { status: 'A' })
+      .getMany();
+
+    return plainToInstance(MedicalCertificateResponseDto, absences, {
       excludeExtraneousValues: true,
     });
   }
@@ -65,6 +83,7 @@ export class MedicalCertificateService {
         funcionario: { id: employee.id },
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
     return plainToInstance(MedicalCertificateResponseDto, medicalCertificates, {
@@ -78,6 +97,7 @@ export class MedicalCertificateService {
         id,
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
     if (!medicalCertificate) {
@@ -118,9 +138,7 @@ export class MedicalCertificateService {
       throw new NotFoundException('Atestado não encontrado.');
     }
 
-    const updatedMedicalCertificate = await this.findOne(id);
-
-    return updatedMedicalCertificate;
+    return await this.findOne(id);
   }
 
   async remove(id: string, deletedBy: string) {
@@ -141,6 +159,7 @@ export class MedicalCertificateService {
     const removedMedicalCertificate =
       await this.medicalCertificateRepository.findOne({
         where: { id },
+        relations: ['funcionario'],
       });
 
     return plainToInstance(

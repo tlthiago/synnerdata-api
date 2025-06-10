@@ -46,6 +46,7 @@ describe('MedicalCertificateController (E2E)', () => {
   let mockUserInterceptor: MockUserInterceptor;
   let createdUser: User;
   let createdEmployee: Employee;
+  let createdCompany: Company;
 
   const medicalCertificate = {
     dataInicio: '2025-02-10',
@@ -136,7 +137,7 @@ describe('MedicalCertificateController (E2E)', () => {
       email: 'contato@techsolutions.com.br',
       celular: '+5531991897926',
     });
-    const createdCompany = await companyRepository.save(company);
+    createdCompany = await companyRepository.save(company);
 
     const role = roleRepository.create({
       nome: 'Função Teste',
@@ -279,6 +280,35 @@ describe('MedicalCertificateController (E2E)', () => {
     });
   });
 
+  it('/v1/empresas/:empresaId/atestados (GET) - Deve listar todos os atestados de uma empresa', async () => {
+    const medicalCertificateRepository =
+      dataSource.getRepository(MedicalCertificate);
+    await medicalCertificateRepository.save({
+      ...medicalCertificate,
+      funcionario: createdEmployee,
+      criadoPor: createdUser,
+    });
+
+    const response = await request(app.getHttpServer())
+      .get(`/v1/empresas/${createdCompany.id}/atestados`)
+      .expect(200);
+
+    expect(response.body).toBeInstanceOf(Array);
+    expect(response.body.length).toBeGreaterThan(0);
+  });
+
+  it('/v1/empresas/:empresaId/atestados (GET) - Deve retornar erro caso o ID da empresa não exista', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/v1/empresas/86f226c4-38b0-464c-987e-35293033faf6/atestados`)
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Empresa não encontrada.',
+      error: 'Not Found',
+    });
+  });
+
   it('/v1/funcionarios/:funcionarioId/atestados (GET) - Deve listar todos os atestados de um funcionário', async () => {
     const medicalCertificateRepository =
       dataSource.getRepository(MedicalCertificate);
@@ -293,6 +323,18 @@ describe('MedicalCertificateController (E2E)', () => {
 
     expect(response.body).toBeInstanceOf(Array);
     expect(response.body.length).toBeGreaterThan(0);
+  });
+
+  it('/v1/funcionarios/:funcionarioId/atestados (GET) - Deve retornar erro caso o ID do funcionário não exista', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/v1/funcionarios/86f226c4-38b0-464c-987e-35293033faf6/atestados`)
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Funcionário não encontrado.',
+      error: 'Not Found',
+    });
   });
 
   it('/v1/funcionarios/atestados/:id (GET) - Deve retonar um atestado específico', async () => {
