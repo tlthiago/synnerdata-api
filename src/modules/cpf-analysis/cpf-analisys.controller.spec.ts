@@ -45,6 +45,7 @@ describe('CpfAnalysisController (E2E)', () => {
   let dataSource: DataSource;
   let mockUserInterceptor: MockUserInterceptor;
   let createdUser: User;
+  let createdCompany: Company;
   let createdEmployee: Employee;
 
   const cpfAnalysis = {
@@ -134,7 +135,7 @@ describe('CpfAnalysisController (E2E)', () => {
       email: 'contato@techsolutions.com.br',
       celular: '+5531991897926',
     });
-    const createdCompany = await companyRepository.save(company);
+    createdCompany = await companyRepository.save(company);
 
     const role = roleRepository.create({
       nome: 'Função Teste',
@@ -261,6 +262,34 @@ describe('CpfAnalysisController (E2E)', () => {
     });
   });
 
+  it('/v1/empresas/:empresaId/analises-de-cpf (GET) - Deve listar todas as análises de cpf de uma empresa', async () => {
+    const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
+    await cpfAnalysisRepository.save({
+      ...cpfAnalysis,
+      funcionario: createdEmployee,
+      criadoPor: createdUser,
+    });
+
+    const response = await request(app.getHttpServer())
+      .get(`/v1/empresas/${createdCompany.id}/analises-de-cpf`)
+      .expect(200);
+
+    expect(response.body).toBeInstanceOf(Array);
+    expect(response.body.length).toBeGreaterThan(0);
+  });
+
+  it('/v1/empresas/:empresaId/analises-de-cpf (GET) - Deve retornar erro caso o ID da empresa não exista', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/v1/empresas/86f226c4-38b0-464c-987e-35293033faf6/analises-de-cpf`)
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Empresa não encontrada.',
+      error: 'Not Found',
+    });
+  });
+
   it('/v1/funcionarios/:funcionarioId/analises-de-cpf (GET) - Deve listar todas as análises de cpf de um funcionário', async () => {
     const cpfAnalysisRepository = dataSource.getRepository(CpfAnalysis);
     await cpfAnalysisRepository.save({
@@ -274,6 +303,20 @@ describe('CpfAnalysisController (E2E)', () => {
 
     expect(response.body).toBeInstanceOf(Array);
     expect(response.body.length).toBeGreaterThan(0);
+  });
+
+  it('/v1/funcionarios/:funcionarioId/analises-de-cpf (GET) - Deve retornar erro caso o ID do funcionário não exista', async () => {
+    const response = await request(app.getHttpServer())
+      .get(
+        `/v1/funcionarios/86f226c4-38b0-464c-987e-35293033faf6/analises-de-cpf`,
+      )
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Funcionário não encontrado.',
+      error: 'Not Found',
+    });
   });
 
   it('/v1/funcionarios/analises-de-cpf/:id (GET) - Deve retonar uma análise de cpf específica', async () => {
