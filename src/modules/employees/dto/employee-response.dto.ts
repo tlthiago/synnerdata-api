@@ -9,10 +9,10 @@ import {
   Sexo,
   StatusFuncionario,
 } from '../enums/employees.enum';
-import { RoleResponseDto } from '../../../modules/roles/dto/role-response.dto';
-import { DepartmentResponseDto } from '../../../modules/departments/dto/department-response.dto';
-import { CostCenterResponseDto } from '../../../modules/cost-centers/dto/cost-center-response.dto';
-import { CboResponseDto } from '../../../modules/cbos/dto/cbo-response.dto';
+import { RoleShortDto } from '../../roles/dto/role-short.dto';
+import { DepartmentShortDto } from '../../departments/dto/department-short.dto';
+import { CostCenterShortDto } from '../../cost-centers/dto/cost-center-short.dto';
+import { CboShortDto } from '../../cbos/dto/cbo-short.dto';
 
 export class EmployeeResponseDto extends BaseResponseDto {
   @ApiProperty({ description: 'Nome' })
@@ -119,17 +119,15 @@ export class EmployeeResponseDto extends BaseResponseDto {
   )
   dataUltimoASO: string;
 
-  @ApiProperty({ description: 'Função' })
+  @ApiProperty({ type: RoleShortDto })
   @Expose()
-  @Type(() => RoleResponseDto)
-  @Transform(({ value }) => value?.nome)
-  funcao: RoleResponseDto;
+  @Type(() => RoleShortDto)
+  funcao: RoleShortDto;
 
-  @ApiProperty({ description: 'Setor' })
+  @ApiProperty({ type: DepartmentShortDto })
   @Expose()
-  @Type(() => DepartmentResponseDto)
-  @Transform(({ value }) => value?.nome)
-  setor: DepartmentResponseDto;
+  @Type(() => DepartmentShortDto)
+  setor: DepartmentShortDto;
 
   @ApiProperty({
     description: 'Data do vencimento do 1º período de experiência',
@@ -168,11 +166,10 @@ export class EmployeeResponseDto extends BaseResponseDto {
   )
   dataExameDemissional: string;
 
-  @ApiProperty({ description: 'Centro de Custo' })
+  @ApiProperty({ type: CostCenterShortDto })
   @Expose()
-  @Type(() => CostCenterResponseDto)
-  @Transform(({ value }) => value?.nome)
-  centroCusto: CostCenterResponseDto;
+  @Type(() => CostCenterShortDto)
+  centroCusto: CostCenterShortDto;
 
   @ApiProperty({ description: 'Grau de Instrução', enum: GrauInstrucao })
   @Expose()
@@ -206,11 +203,10 @@ export class EmployeeResponseDto extends BaseResponseDto {
   @Expose()
   gestor: string;
 
-  @ApiProperty({ description: 'Cbo' })
+  @ApiProperty({ type: CboShortDto })
   @Expose()
-  @Type(() => CboResponseDto)
-  @Transform(({ value }) => value?.nome)
-  cbo: CboResponseDto;
+  @Type(() => CboShortDto)
+  cbo: CboShortDto;
 
   @ApiProperty({ description: 'Rua' })
   @Expose()

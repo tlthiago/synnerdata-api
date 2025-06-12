@@ -86,7 +86,7 @@ export class EmployeeMedicalCertificateController {
   @Get(':funcionarioId/atestados')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Buscar todos os atestados',
+    summary: 'Buscar todos os atestados de um funcionário',
     description:
       'Endpoint responsável por listar todos os atestados cadastrados de um funcionário.',
   })
