@@ -8,6 +8,7 @@ import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { WarningResponseDto } from './dto/warning-response.dto';
 import { UsersService } from '../users/users.service';
+import { CompaniesService } from '../companies/companies.service';
 
 @Injectable()
 export class WarningsService {
@@ -16,6 +17,7 @@ export class WarningsService {
     private readonly warningRepository: Repository<Warning>,
     private readonly employeesService: EmployeesService,
     private readonly usersService: UsersService,
+    private readonly companiesService: CompaniesService,
   ) {}
 
   async create(
@@ -35,7 +37,23 @@ export class WarningsService {
 
     await this.warningRepository.save(warning);
 
-    return plainToInstance(WarningResponseDto, warning, {
+    return await this.findOne(warning.id);
+  }
+
+  async findAllByCompany(companyId: string) {
+    const company = await this.companiesService.findById(companyId);
+
+    const absences = await this.warningRepository
+      .createQueryBuilder('advertencia')
+      .innerJoinAndSelect('advertencia.funcionario', 'funcionario')
+      .innerJoinAndSelect('advertencia.criadoPor', 'criadoPor')
+      .leftJoinAndSelect('advertencia.atualizadoPor', 'atualizadoPor')
+      .innerJoin('funcionario.empresa', 'empresa')
+      .where('empresa.id = :companyId', { companyId: company.id })
+      .andWhere('advertencia.status = :status', { status: 'A' })
+      .getMany();
+
+    return plainToInstance(WarningResponseDto, absences, {
       excludeExtraneousValues: true,
     });
   }
@@ -48,6 +66,7 @@ export class WarningsService {
         funcionario: { id: employee.id },
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
     return plainToInstance(WarningResponseDto, warnings, {
@@ -61,6 +80,7 @@ export class WarningsService {
         id,
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
     if (!warning) {
@@ -88,8 +108,7 @@ export class WarningsService {
       throw new NotFoundException('Advertência não encontrada.');
     }
 
-    const updatedWarning = await this.findOne(id);
-    return updatedWarning;
+    return await this.findOne(id);
   }
 
   async remove(id: string, deletedBy: string) {
@@ -109,6 +128,7 @@ export class WarningsService {
 
     const removedWarning = await this.warningRepository.findOne({
       where: { id },
+      relations: ['funcionario'],
     });
 
     return plainToInstance(WarningResponseDto, removedWarning, {
