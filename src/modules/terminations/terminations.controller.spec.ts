@@ -45,6 +45,7 @@ describe('TerminationsController (E2E)', () => {
   let dataSource: DataSource;
   let mockUserInterceptor: MockUserInterceptor;
   let createdUser: User;
+  let createdCompany: Company;
   let createdEmployee: Employee;
 
   const termination = {
@@ -138,7 +139,7 @@ describe('TerminationsController (E2E)', () => {
       email: 'contato@techsolutions.com.br',
       celular: '+5531991897926',
     });
-    const createdCompany = await companyRepository.save(company);
+    createdCompany = await companyRepository.save(company);
 
     const role = roleRepository.create({
       nome: 'Função Teste',
@@ -230,6 +231,26 @@ describe('TerminationsController (E2E)', () => {
     expect(updatedEmployee.statusFuncionario).toBe('DEMITIDO');
   });
 
+  it('/v1/funcionarios/:funcionarioId/demissoes (POST) - Deve retornar erro ao criar uma demissão para um funcionário já demitido', async () => {
+    const terminationRepository = dataSource.getRepository(Termination);
+    terminationRepository.save({
+      ...termination,
+      funcionario: createdEmployee,
+      criadoPor: createdUser,
+    });
+
+    const response = await request(app.getHttpServer())
+      .post(`/v1/funcionarios/${createdEmployee.id}/demissoes`)
+      .send(termination)
+      .expect(409);
+
+    expect(response.body).toEqual({
+      statusCode: 409,
+      message: 'O funcionário já foi demitido.',
+      error: 'Conflict',
+    });
+  });
+
   it('/v1/funcionarios/:funcionarioId/demissoes (POST) - Deve retornar erro ao criar uma demissão sem informações obrigatórias', async () => {
     const response = await request(app.getHttpServer())
       .post(`/v1/funcionarios/${createdEmployee.id}/demissoes`)
@@ -271,6 +292,34 @@ describe('TerminationsController (E2E)', () => {
     });
   });
 
+  it('/v1/empresas/:empresaId/demissoes (GET) - Deve listar todas as demissões de uma empresa', async () => {
+    const terminationRepository = dataSource.getRepository(Termination);
+    await terminationRepository.save({
+      ...termination,
+      funcionario: createdEmployee,
+      criadoPor: createdUser,
+    });
+
+    const response = await request(app.getHttpServer())
+      .get(`/v1/empresas/${createdCompany.id}/demissoes`)
+      .expect(200);
+
+    expect(response.body).toBeInstanceOf(Array);
+    expect(response.body.length).toBeGreaterThan(0);
+  });
+
+  it('/v1/empresas/:empresaId/demissoes (GET) - Deve retornar erro caso o ID da empresa não exista', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/v1/empresas/86f226c4-38b0-464c-987e-35293033faf6/demissoes`)
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Empresa não encontrada.',
+      error: 'Not Found',
+    });
+  });
+
   it('/v1/funcionarios/:funcionarioId/demissoes (GET) - Deve listar todas as demissões de um funcionário', async () => {
     const terminationRepository = dataSource.getRepository(Termination);
     await terminationRepository.save({
@@ -284,6 +333,18 @@ describe('TerminationsController (E2E)', () => {
 
     expect(response.body).toBeInstanceOf(Array);
     expect(response.body.length).toBeGreaterThan(0);
+  });
+
+  it('/v1/funcionarios/:funcionarioId/demissoes (GET) - Deve retornar erro caso o ID do funcionário não exista', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/v1/funcionarios/86f226c4-38b0-464c-987e-35293033faf6/demissoes`)
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Funcionário não encontrado.',
+      error: 'Not Found',
+    });
   });
 
   it('/v1/funcionarios/demissoes/:id (GET) - Deve retonar uma demissão específica', async () => {

@@ -256,7 +256,10 @@ export class EmployeeResponseDto extends BaseResponseDto {
   @Expose()
   escala: Escala;
 
-  @ApiProperty({ description: 'Escala de trabalho', enum: StatusFuncionario })
+  @ApiProperty({
+    description: 'Status do Funcionário',
+    enum: StatusFuncionario,
+  })
   @Expose()
-  status: StatusFuncionario;
+  statusFuncionario: StatusFuncionario;
 }
