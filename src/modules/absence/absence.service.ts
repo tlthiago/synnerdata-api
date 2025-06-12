@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateAbsenceDto } from './dto/create-absence.dto';
 import { UpdateAbsenceDto } from './dto/update-absence.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -28,6 +32,22 @@ export class AbsenceService {
     const employee = await this.employeesService.findOne(employeeId);
 
     const user = await this.usersService.findOne(createdBy);
+
+    const absenceDate = new Date(createAbsenceDto.data);
+    absenceDate.setHours(0, 0, 0, 0);
+
+    const existingAbsence = await this.absenceRepository.findOne({
+      where: {
+        funcionario: { id: employeeId },
+        data: absenceDate,
+      },
+    });
+
+    if (existingAbsence) {
+      throw new ConflictException(
+        'O funcionário já possui uma falta registrada para este dia.',
+      );
+    }
 
     const absence = this.absenceRepository.create({
       ...createAbsenceDto,
@@ -98,6 +118,33 @@ export class AbsenceService {
     updatedBy: string,
   ) {
     const user = await this.usersService.findOne(updatedBy);
+
+    if (updateAbsenceDto.data) {
+      const absenceDate = new Date(updateAbsenceDto.data);
+      absenceDate.setHours(0, 0, 0, 0);
+
+      const currentAbsence = await this.absenceRepository.findOne({
+        where: { id },
+        relations: ['funcionario'],
+      });
+
+      if (!currentAbsence) {
+        throw new NotFoundException('Falta não encontrada.');
+      }
+
+      const existingAbsence = await this.absenceRepository.findOne({
+        where: {
+          funcionario: { id: currentAbsence.funcionario.id },
+          data: absenceDate,
+        },
+      });
+
+      if (existingAbsence && existingAbsence.id !== id) {
+        throw new ConflictException(
+          'O funcionário já possui uma falta registrada para este dia.',
+        );
+      }
+    }
 
     const result = await this.absenceRepository.update(id, {
       ...updateAbsenceDto,
