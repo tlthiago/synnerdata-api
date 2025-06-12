@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateTerminationDto } from './dto/create-termination.dto';
 import { UpdateTerminationDto } from './dto/update-termination.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,6 +14,7 @@ import { TerminationResponseDto } from './dto/termination-response.dto';
 import { UsersService } from '../users/users.service';
 import { UpdateStatusDto } from '../employees/dto/update-status-employee.dto';
 import { StatusFuncionario } from '../employees/enums/employees.enum';
+import { CompaniesService } from '../companies/companies.service';
 
 @Injectable()
 export class TerminationsService {
@@ -18,6 +23,7 @@ export class TerminationsService {
     private readonly terminationRepository: Repository<Termination>,
     private readonly employeesService: EmployeesService,
     private readonly usersService: UsersService,
+    private readonly companiesService: CompaniesService,
   ) {}
 
   async create(
@@ -26,6 +32,10 @@ export class TerminationsService {
     createdBy: string,
   ) {
     const employee = await this.employeesService.findOne(employeeId);
+
+    if (employee.statusFuncionario === StatusFuncionario.DEMITIDO) {
+      throw new ConflictException('O funcionário já foi demitido.');
+    }
 
     const user = await this.usersService.findOne(createdBy);
 
@@ -47,7 +57,23 @@ export class TerminationsService {
       user.id,
     );
 
-    return plainToInstance(TerminationResponseDto, termination, {
+    return await this.findOne(termination.id);
+  }
+
+  async findAllByCompany(companyId: string) {
+    const company = await this.companiesService.findById(companyId);
+
+    const absences = await this.terminationRepository
+      .createQueryBuilder('demissao')
+      .innerJoinAndSelect('demissao.funcionario', 'funcionario')
+      .innerJoinAndSelect('demissao.criadoPor', 'criadoPor')
+      .leftJoinAndSelect('demissao.atualizadoPor', 'atualizadoPor')
+      .innerJoin('funcionario.empresa', 'empresa')
+      .where('empresa.id = :companyId', { companyId: company.id })
+      .andWhere('demissao.status = :status', { status: 'A' })
+      .getMany();
+
+    return plainToInstance(TerminationResponseDto, absences, {
       excludeExtraneousValues: true,
     });
   }
@@ -60,6 +86,7 @@ export class TerminationsService {
         funcionario: { id: employee.id },
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
     return plainToInstance(TerminationResponseDto, terminations, {
@@ -73,6 +100,7 @@ export class TerminationsService {
         id,
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
     if (!termination) {
@@ -117,9 +145,7 @@ export class TerminationsService {
       throw new NotFoundException('Demissão não encontrada.');
     }
 
-    const updatedTermination = await this.findOne(id);
-
-    return updatedTermination;
+    return await this.findOne(id);
   }
 
   async remove(id: string, deletedBy: string) {
@@ -151,6 +177,7 @@ export class TerminationsService {
 
     const removedTermination = await this.terminationRepository.findOne({
       where: { id },
+      relations: ['funcionario'],
     });
 
     return plainToInstance(TerminationResponseDto, removedTermination, {
