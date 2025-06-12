@@ -220,6 +220,27 @@ describe('AbsenceController (E2E)', () => {
     });
   });
 
+  it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve retornar erro ao tentar cadastrar outra falta para um dia que já possui falta cadastrada', async () => {
+    const absenceRepository = dataSource.getRepository(Absence);
+    await absenceRepository.save({
+      ...absence,
+      data: new Date(absence.data + 'T00:00:00.000Z'),
+      funcionario: createdEmployee,
+      criadoPor: createdUser,
+    });
+
+    const response = await request(app.getHttpServer())
+      .post(`/v1/funcionarios/${createdEmployee.id}/faltas`)
+      .send(absence)
+      .expect(409);
+
+    expect(response.body).toEqual({
+      statusCode: 409,
+      message: 'O funcionário já possui uma falta registrada para este dia.',
+      error: 'Conflict',
+    });
+  });
+
   it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve retornar erro ao criar uma falta sem informações obrigatórias', async () => {
     const response = await request(app.getHttpServer())
       .post(`/v1/funcionarios/${createdEmployee.id}/faltas`)
@@ -384,6 +405,34 @@ describe('AbsenceController (E2E)', () => {
         atualizadoPor: createdUser.nome,
       },
       message: `Falta id: #${createdAbsence.id} atualizada com sucesso.`,
+    });
+  });
+
+  it('/v1/funcionarios/faltas/:id (PATCH) - Deve retornar erro ao atualizar a data de uma falta para um dia que já possui falta cadastrada', async () => {
+    const absenceRepository = dataSource.getRepository(Absence);
+    await absenceRepository.save({
+      ...absence,
+      data: new Date(absence.data + 'T00:00:00.000Z'),
+      funcionario: createdEmployee,
+    });
+
+    const createdAbsence = await absenceRepository.save({
+      ...absence,
+      data: new Date('2025-01-30T00:00:00.000Z'),
+      funcionario: createdEmployee,
+    });
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/funcionarios/faltas/${createdAbsence.id}`)
+      .send({
+        data: absence.data,
+      })
+      .expect(409);
+
+    expect(response.body).toEqual({
+      statusCode: 409,
+      message: 'O funcionário já possui uma falta registrada para este dia.',
+      error: 'Conflict',
     });
   });
 
