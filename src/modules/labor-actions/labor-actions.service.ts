@@ -8,6 +8,7 @@ import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { LaborActionResponseDto } from './dto/labor-action-response.dto';
 import { UsersService } from '../users/users.service';
+import { CompaniesService } from '../companies/companies.service';
 
 @Injectable()
 export class LaborActionsService {
@@ -16,6 +17,7 @@ export class LaborActionsService {
     private readonly laborActionRepository: Repository<LaborAction>,
     private readonly employeesService: EmployeesService,
     private readonly usersService: UsersService,
+    private readonly companiesService: CompaniesService,
   ) {}
 
   async create(
@@ -35,7 +37,23 @@ export class LaborActionsService {
 
     await this.laborActionRepository.save(laborAction);
 
-    return plainToInstance(LaborActionResponseDto, laborAction, {
+    return await this.findOne(laborAction.id);
+  }
+
+  async findAllByCompany(companyId: string) {
+    const company = await this.companiesService.findById(companyId);
+
+    const absences = await this.laborActionRepository
+      .createQueryBuilder('acoes_trabalhistas')
+      .innerJoinAndSelect('acoes_trabalhistas.funcionario', 'funcionario')
+      .innerJoinAndSelect('acoes_trabalhistas.criadoPor', 'criadoPor')
+      .leftJoinAndSelect('acoes_trabalhistas.atualizadoPor', 'atualizadoPor')
+      .innerJoin('funcionario.empresa', 'empresa')
+      .where('empresa.id = :companyId', { companyId: company.id })
+      .andWhere('acoes_trabalhistas.status = :status', { status: 'A' })
+      .getMany();
+
+    return plainToInstance(LaborActionResponseDto, absences, {
       excludeExtraneousValues: true,
     });
   }
@@ -48,6 +66,7 @@ export class LaborActionsService {
         funcionario: { id: employee.id },
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
     return plainToInstance(LaborActionResponseDto, laborActions, {
@@ -61,6 +80,7 @@ export class LaborActionsService {
         id,
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
     if (!laborAction) {
@@ -88,9 +108,7 @@ export class LaborActionsService {
       throw new NotFoundException('Ação trabalhista não encontrada.');
     }
 
-    const updatedLaborAction = await this.findOne(id);
-
-    return updatedLaborAction;
+    return await this.findOne(id);
   }
 
   async remove(id: string, deletedBy: string) {
@@ -112,6 +130,7 @@ export class LaborActionsService {
 
     const removedLaborAction = await this.laborActionRepository.findOne({
       where: { id },
+      relations: ['funcionario'],
     });
 
     return plainToInstance(LaborActionResponseDto, removedLaborAction, {
