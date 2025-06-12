@@ -36,7 +36,7 @@ export class MedicalCertificateService {
     const dataInicioDate = new Date(dataInicio);
     const dataFimDate = new Date(dataFim);
 
-    if (dataFimDate <= dataInicioDate) {
+    if (dataFimDate < dataInicioDate) {
       throw new BadRequestException(
         'A data fim deve ser posterior à data início.',
       );
@@ -119,7 +119,7 @@ export class MedicalCertificateService {
     const dataInicioDate = new Date(dataInicio);
     const dataFimDate = new Date(dataFim);
 
-    if (dataFimDate <= dataInicioDate) {
+    if (dataFimDate < dataInicioDate) {
       throw new BadRequestException(
         'A data fim deve ser posterior à data início.',
       );
