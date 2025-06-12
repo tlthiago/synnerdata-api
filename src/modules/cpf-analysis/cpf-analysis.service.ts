@@ -8,6 +8,7 @@ import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { CpfAnalysisResponseDto } from './dto/cpf-analysis-response.dto';
 import { UsersService } from '../users/users.service';
+import { CompaniesService } from '../companies/companies.service';
 
 @Injectable()
 export class CpfAnalysisService {
@@ -16,6 +17,7 @@ export class CpfAnalysisService {
     private readonly cpfAnalysisRepository: Repository<CpfAnalysis>,
     private readonly employeesService: EmployeesService,
     private readonly usersService: UsersService,
+    private readonly companiesService: CompaniesService,
   ) {}
 
   async create(
@@ -35,7 +37,23 @@ export class CpfAnalysisService {
 
     await this.cpfAnalysisRepository.save(cpfAnalysis);
 
-    return plainToInstance(CpfAnalysisResponseDto, cpfAnalysis, {
+    return await this.findOne(cpfAnalysis.id);
+  }
+
+  async findAllByCompany(companyId: string) {
+    const company = await this.companiesService.findById(companyId);
+
+    const absences = await this.cpfAnalysisRepository
+      .createQueryBuilder('analise_de_cpf')
+      .innerJoinAndSelect('analise_de_cpf.funcionario', 'funcionario')
+      .innerJoinAndSelect('analise_de_cpf.criadoPor', 'criadoPor')
+      .leftJoinAndSelect('analise_de_cpf.atualizadoPor', 'atualizadoPor')
+      .innerJoin('funcionario.empresa', 'empresa')
+      .where('empresa.id = :companyId', { companyId: company.id })
+      .andWhere('analise_de_cpf.status = :status', { status: 'A' })
+      .getMany();
+
+    return plainToInstance(CpfAnalysisResponseDto, absences, {
       excludeExtraneousValues: true,
     });
   }
@@ -48,6 +66,7 @@ export class CpfAnalysisService {
         funcionario: { id: employee.id },
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
     return plainToInstance(CpfAnalysisResponseDto, cpfAnalysis, {
@@ -61,6 +80,7 @@ export class CpfAnalysisService {
         id,
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
     if (!cpfAnalysis) {
@@ -88,9 +108,7 @@ export class CpfAnalysisService {
       throw new NotFoundException('Análise de CPF não encontrada.');
     }
 
-    const updatedCpfAnalysis = await this.findOne(id);
-
-    return updatedCpfAnalysis;
+    return await this.findOne(id);
   }
 
   async remove(id: string, deletedBy: string) {
@@ -115,6 +133,7 @@ export class CpfAnalysisService {
 
     const removedCpfAnalysis = await this.cpfAnalysisRepository.findOne({
       where: { id },
+      relations: ['funcionario'],
     });
 
     return plainToInstance(CpfAnalysisResponseDto, removedCpfAnalysis, {
