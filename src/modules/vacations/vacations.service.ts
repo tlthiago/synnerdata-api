@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -7,11 +8,12 @@ import { CreateVacationDto } from './dto/create-vacation.dto';
 import { UpdateVacationDto } from './dto/update-vacation.dto';
 import { Vacation } from './entities/vacation.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThanOrEqual, MoreThanOrEqual, Not, Repository } from 'typeorm';
 import { EmployeesService } from '../employees/employees.service';
 import { plainToInstance } from 'class-transformer';
 import { VacationResponseDto } from './dto/vacation-response.dto';
 import { UsersService } from '../users/users.service';
+import { CompaniesService } from '../companies/companies.service';
 
 @Injectable()
 export class VacationsService {
@@ -20,6 +22,7 @@ export class VacationsService {
     private readonly vacationRepository: Repository<Vacation>,
     private readonly employeesService: EmployeesService,
     private readonly usersService: UsersService,
+    private readonly companiesService: CompaniesService,
   ) {}
 
   async create(
@@ -40,6 +43,20 @@ export class VacationsService {
       );
     }
 
+    const overlappingVacation = await this.vacationRepository.findOne({
+      where: {
+        funcionario: { id: employeeId },
+        dataInicio: LessThanOrEqual(dataFimDate),
+        dataFim: MoreThanOrEqual(dataInicioDate),
+      },
+    });
+
+    if (overlappingVacation) {
+      throw new ConflictException(
+        'Já existe uma férias cadastrada que colide com o período informado.',
+      );
+    }
+
     const user = await this.usersService.findOne(createdBy);
 
     const vacation = this.vacationRepository.create({
@@ -51,7 +68,23 @@ export class VacationsService {
 
     await this.vacationRepository.save(vacation);
 
-    return plainToInstance(VacationResponseDto, vacation, {
+    return await this.findOne(vacation.id);
+  }
+
+  async findAllByCompany(companyId: string) {
+    const company = await this.companiesService.findById(companyId);
+
+    const absences = await this.vacationRepository
+      .createQueryBuilder('ferias')
+      .innerJoinAndSelect('ferias.funcionario', 'funcionario')
+      .innerJoinAndSelect('ferias.criadoPor', 'criadoPor')
+      .leftJoinAndSelect('ferias.atualizadoPor', 'atualizadoPor')
+      .innerJoin('funcionario.empresa', 'empresa')
+      .where('empresa.id = :companyId', { companyId: company.id })
+      .andWhere('ferias.status = :status', { status: 'A' })
+      .getMany();
+
+    return plainToInstance(VacationResponseDto, absences, {
       excludeExtraneousValues: true,
     });
   }
@@ -64,6 +97,7 @@ export class VacationsService {
         funcionario: { id: employee.id },
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
     return plainToInstance(VacationResponseDto, vacations, {
@@ -77,6 +111,7 @@ export class VacationsService {
         id,
         status: 'A',
       },
+      relations: ['funcionario'],
     });
 
     if (!vacation) {
@@ -93,6 +128,15 @@ export class VacationsService {
     updateVacationDto: UpdateVacationDto,
     updatedBy: string,
   ) {
+    const existingVacation = await this.vacationRepository.findOne({
+      where: { id },
+      relations: ['funcionario'],
+    });
+
+    if (!existingVacation) {
+      throw new NotFoundException('Férias não encontrada.');
+    }
+
     const { dataInicio, dataFim } = updateVacationDto;
 
     const dataInicioDate = new Date(dataInicio);
@@ -101,6 +145,21 @@ export class VacationsService {
     if (dataFimDate <= dataInicioDate) {
       throw new BadRequestException(
         'A data fim deve ser posterior à data início.',
+      );
+    }
+
+    const overlappingVacation = await this.vacationRepository.findOne({
+      where: {
+        id: Not(id),
+        funcionario: { id: existingVacation.funcionario.id },
+        dataInicio: LessThanOrEqual(dataFimDate),
+        dataFim: MoreThanOrEqual(dataInicioDate),
+      },
+    });
+
+    if (overlappingVacation) {
+      throw new ConflictException(
+        'Já existe uma férias cadastrada que colide com o período informado.',
       );
     }
 
@@ -115,9 +174,7 @@ export class VacationsService {
       throw new NotFoundException('Férias não encontrada.');
     }
 
-    const updatedVacation = await this.findOne(id);
-
-    return updatedVacation;
+    return await this.findOne(id);
   }
 
   async remove(id: string, deletedBy: string) {
@@ -137,6 +194,7 @@ export class VacationsService {
 
     const removedVacation = this.vacationRepository.findOne({
       where: { id },
+      relations: ['funcionario'],
     });
 
     return plainToInstance(VacationResponseDto, removedVacation, {
