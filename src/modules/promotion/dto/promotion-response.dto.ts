@@ -1,11 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseResponseDto } from '../../../common/utils/dto/base-response.dto';
-import { Expose, Transform } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
+import { EmployeeShortDto } from '../../../modules/employees/dto/employee-short.dto';
+import { RoleShortDto } from '../../../modules/roles/dto/role-short.dto';
 
 export class PromotionResponseDto extends BaseResponseDto {
-  @ApiProperty({ description: 'Nova função.' })
+  @ApiProperty({ type: EmployeeShortDto })
   @Expose()
-  funcaoId: number;
+  @Type(() => EmployeeShortDto)
+  funcionario: EmployeeShortDto;
+
+  @ApiProperty({ type: RoleShortDto })
+  @Expose()
+  @Type(() => RoleShortDto)
+  funcao: RoleShortDto;
 
   @ApiProperty({ description: 'Novo salário.' })
   @Expose()

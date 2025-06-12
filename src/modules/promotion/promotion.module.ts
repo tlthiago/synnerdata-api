@@ -6,6 +6,8 @@ import { Promotion } from './entities/promotion.entity';
 import { EmployeesModule } from '../employees/employees.module';
 import { RolesModule } from '../roles/roles.module';
 import { UsersModule } from '../users/users.module';
+import { EmployeePromotionController } from './employee-promotion.controller';
+import { CompaniesModule } from '../companies/companies.module';
 
 @Module({
   imports: [
@@ -13,8 +15,9 @@ import { UsersModule } from '../users/users.module';
     EmployeesModule,
     RolesModule,
     UsersModule,
+    CompaniesModule,
   ],
-  controllers: [PromotionController],
+  controllers: [PromotionController, EmployeePromotionController],
   providers: [PromotionService],
 })
 export class PromotionModule {}

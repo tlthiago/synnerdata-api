@@ -9,9 +9,9 @@ import {
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { MedicalCertificateService } from './medical-certificate.service';
-import { CreateMedicalCertificateDto } from './dto/create-medical-certificate.dto';
-import { UpdateMedicalCertificateDto } from './dto/update-medical-certificate.dto';
+import { PromotionService } from './promotion.service';
+import { CreatePromotionDto } from './dto/create-promotion.dto';
+import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -21,22 +21,20 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { MedicalCertificateResponseDto } from './dto/medical-certificate-response.dto';
+import { PromotionResponseDto } from './dto/promotion-response.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
 @Controller('v1/funcionarios')
-@ApiTags('Atestados')
-export class EmployeeMedicalCertificateController {
-  constructor(
-    private readonly medicalCertificateService: MedicalCertificateService,
-  ) {}
+@ApiTags('Promoções')
+export class EmployeePromotionController {
+  constructor(private readonly promotionService: PromotionService) {}
 
-  @Post(':funcionarioId/atestados')
+  @Post(':funcionarioId/promocoes')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Cadastrar um atestado',
-    description: 'Endpoint responsável por cadastrar um atestado.',
+    summary: 'Cadastrar uma promoção',
+    description: 'Endpoint responsável por cadastrar uma promoção.',
   })
   @ApiParam({
     name: 'funcionarioId',
@@ -45,8 +43,8 @@ export class EmployeeMedicalCertificateController {
     required: true,
   })
   @ApiBody({
-    description: 'Dados necessários para cadastrar o atestado.',
-    type: CreateMedicalCertificateDto,
+    description: 'Dados necessários para cadastrar a promoção.',
+    type: CreatePromotionDto,
   })
   @ApiResponse({
     status: 200,
@@ -59,7 +57,7 @@ export class EmployeeMedicalCertificateController {
         data: { type: 'string', nullable: true },
         message: {
           type: 'string',
-          description: 'Atestado cadastrado com sucesso.',
+          description: 'Promoção cadastrada com sucesso.',
         },
       },
     },
@@ -67,28 +65,28 @@ export class EmployeeMedicalCertificateController {
   @UseGuards(JwtAuthGuard)
   async create(
     @Param('funcionarioId', ParseUUIDPipe) employeeId: string,
-    @Body() createMedicalCertificateDto: CreateMedicalCertificateDto,
+    @Body() createPromotionDto: CreatePromotionDto,
     @CurrentUser() user: CurrentUserDto,
   ) {
-    const medicalCertificate = await this.medicalCertificateService.create(
+    const promotion = await this.promotionService.create(
       employeeId,
-      createMedicalCertificateDto,
+      createPromotionDto,
       user.id,
     );
 
     return {
       succeeded: true,
-      data: medicalCertificate,
-      message: `Atestado cadastrado com sucesso, id: #${medicalCertificate.id}.`,
+      data: promotion,
+      message: `Promoção cadastrada com sucesso, id: #${promotion.id}.`,
     };
   }
 
-  @Get(':funcionarioId/atestados')
+  @Get(':funcionarioId/promocoes')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Buscar todos os atestados de um funcionário',
+    summary: 'Buscar todas as promoções de um funcionário',
     description:
-      'Endpoint responsável por listar todos os atestados cadastrados de um funcionário.',
+      'Endpoint responsável por listar todas as promoções cadastradas de um funcionário.',
   })
   @ApiParam({
     name: 'funcionarioId',
@@ -98,51 +96,51 @@ export class EmployeeMedicalCertificateController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Retorna um lista de atestados em casos de sucesso.',
-    type: [MedicalCertificateResponseDto],
+    description: 'Retorna um lista de promoções em casos de sucesso.',
+    type: [PromotionResponseDto],
   })
   @UseGuards(JwtAuthGuard)
   findAll(@Param('funcionarioId', ParseUUIDPipe) employeeId: string) {
-    return this.medicalCertificateService.findAll(employeeId);
+    return this.promotionService.findAll(employeeId);
   }
 
-  @Get('atestados/:id')
+  @Get('promocoes/:id')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Buscar atestado',
-    description: 'Endpoint responsável por listar dados de um atestado.',
+    summary: 'Buscar promoção',
+    description: 'Endpoint responsável por listar dados de um promoção.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID da atestado.',
+    description: 'ID da promoção.',
     type: 'string',
     required: true,
   })
   @ApiResponse({
     status: 200,
-    description: 'Retorna os dados da atestado em casos de sucesso.',
-    type: MedicalCertificateResponseDto,
+    description: 'Retorna os dados da promoção em casos de sucesso.',
+    type: PromotionResponseDto,
   })
   @UseGuards(JwtAuthGuard)
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.medicalCertificateService.findOne(id);
+    return this.promotionService.findOne(id);
   }
 
-  @Patch('atestados/:id')
+  @Patch('promocoes/:id')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Atualizar dados de um atestado',
-    description: 'Endpoint responsável por atualizar os dados de um atestado.',
+    summary: 'Atualizar dados de um promoção',
+    description: 'Endpoint responsável por atualizar os dados de um promoção.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID da atestado.',
+    description: 'ID da promoção.',
     type: 'string',
     required: true,
   })
   @ApiBody({
-    description: 'Dados necessários para atualizar os dados da atestado',
-    type: UpdateMedicalCertificateDto,
+    description: 'Dados necessários para atualizar os dados da promoção',
+    type: UpdatePromotionDto,
   })
   @ApiResponse({
     status: 200,
@@ -155,7 +153,7 @@ export class EmployeeMedicalCertificateController {
         data: { type: 'string', nullable: true },
         message: {
           type: 'string',
-          description: 'Atestado atualizada com sucesso.',
+          description: 'Promoção atualizada com sucesso.',
         },
       },
     },
@@ -163,31 +161,31 @@ export class EmployeeMedicalCertificateController {
   @UseGuards(JwtAuthGuard)
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateMedicalCertificateDto: UpdateMedicalCertificateDto,
+    @Body() updatePromotionDto: UpdatePromotionDto,
     @CurrentUser() user: CurrentUserDto,
   ) {
-    const medicalCertificate = await this.medicalCertificateService.update(
+    const promotion = await this.promotionService.update(
       id,
-      updateMedicalCertificateDto,
+      updatePromotionDto,
       user.id,
     );
 
     return {
       succeeded: true,
-      data: medicalCertificate,
-      message: `Atestado id: #${medicalCertificate.id} atualizada com sucesso.`,
+      data: promotion,
+      message: `Promoção id: #${promotion.id} atualizada com sucesso.`,
     };
   }
 
-  @Delete('atestados/:id')
+  @Delete('promocoes/:id')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Excluir um atestado',
-    description: 'Endpoint responsável por excluir um atestado.',
+    summary: 'Excluir um promoção',
+    description: 'Endpoint responsável por excluir um promoção.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID da atestado.',
+    description: 'ID da promoção.',
     type: 'string',
     required: true,
   })
@@ -202,7 +200,7 @@ export class EmployeeMedicalCertificateController {
         data: { type: 'string', nullable: true },
         message: {
           type: 'string',
-          description: 'Atestado excluído com sucesso.',
+          description: 'Promoção excluída com sucesso.',
         },
       },
     },
@@ -212,15 +210,12 @@ export class EmployeeMedicalCertificateController {
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: CurrentUserDto,
   ) {
-    const medicalCertificate = await this.medicalCertificateService.remove(
-      id,
-      user.id,
-    );
+    const promotion = await this.promotionService.remove(id, user.id);
 
     return {
       succeeded: true,
-      data: medicalCertificate,
-      message: `Atestado id: #${medicalCertificate.id} excluído com sucesso.`,
+      data: promotion,
+      message: `Promoção id: #${promotion.id} excluída com sucesso.`,
     };
   }
 }

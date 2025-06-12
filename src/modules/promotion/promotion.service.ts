@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +13,7 @@ import { plainToInstance } from 'class-transformer';
 import { PromotionResponseDto } from './dto/promotion-response.dto';
 import { RolesService } from '../roles/roles.service';
 import { UsersService } from '../users/users.service';
+import { CompaniesService } from '../companies/companies.service';
 
 @Injectable()
 export class PromotionService {
@@ -18,6 +23,7 @@ export class PromotionService {
     private readonly employeesService: EmployeesService,
     private readonly roleService: RolesService,
     private readonly usersService: UsersService,
+    private readonly companiesService: CompaniesService,
   ) {}
 
   async create(
@@ -28,6 +34,10 @@ export class PromotionService {
     const employee = await this.employeesService.findOne(employeeId);
 
     const role = await this.roleService.findById(createPromotionDto.funcaoId);
+
+    if (employee.funcao.id === role.id) {
+      throw new ConflictException('O funcionário já possui essa função.');
+    }
 
     const user = await this.usersService.findOne(createdBy);
 
@@ -40,7 +50,26 @@ export class PromotionService {
 
     await this.promotionRepository.save(promotion);
 
-    return plainToInstance(PromotionResponseDto, promotion, {
+    await this.employeesService.updateEmployeeRole(employee.id, role, user);
+
+    return await this.findOne(promotion.id);
+  }
+
+  async findAllByCompany(companyId: string) {
+    const company = await this.companiesService.findById(companyId);
+
+    const promotions = await this.promotionRepository
+      .createQueryBuilder('promocao')
+      .innerJoinAndSelect('promocao.funcionario', 'funcionario')
+      .innerJoinAndSelect('promocao.funcao', 'funcao')
+      .innerJoinAndSelect('promocao.criadoPor', 'criadoPor')
+      .leftJoinAndSelect('promocao.atualizadoPor', 'atualizadoPor')
+      .innerJoin('funcionario.empresa', 'empresa')
+      .where('empresa.id = :companyId', { companyId: company.id })
+      .andWhere('promocao.status = :status', { status: 'A' })
+      .getMany();
+
+    return plainToInstance(PromotionResponseDto, promotions, {
       excludeExtraneousValues: true,
     });
   }
@@ -53,6 +82,7 @@ export class PromotionService {
         funcionario: { id: employee.id },
         status: 'A',
       },
+      relations: ['funcionario', 'funcao'],
     });
 
     return plainToInstance(PromotionResponseDto, promotions, {
@@ -66,6 +96,7 @@ export class PromotionService {
         id,
         status: 'A',
       },
+      relations: ['funcionario', 'funcao'],
     });
 
     if (!promotion) {
@@ -82,12 +113,14 @@ export class PromotionService {
     updatePromotionDto: UpdatePromotionDto,
     updatedBy: string,
   ) {
-    const role = await this.roleService.findById(updatePromotionDto.funcaoId);
+    const { funcaoId, ...rest } = updatePromotionDto;
+
+    const role = await this.roleService.findById(funcaoId);
 
     const user = await this.usersService.findOne(updatedBy);
 
     const result = await this.promotionRepository.update(id, {
-      ...updatePromotionDto,
+      ...rest,
       funcao: role,
       atualizadoPor: user,
     });
@@ -96,9 +129,11 @@ export class PromotionService {
       throw new NotFoundException('Promoção não encontrada.');
     }
 
-    const updatedPromotion = await this.findOne(id);
+    const { funcionario } = await this.findOne(id);
 
-    return updatedPromotion;
+    await this.employeesService.updateEmployeeRole(funcionario.id, role, user);
+
+    return await this.findOne(id);
   }
 
   async remove(id: string, deletedBy: string) {
@@ -118,6 +153,7 @@ export class PromotionService {
 
     const removedPromotion = await this.promotionRepository.findOne({
       where: { id },
+      relations: ['funcionario', 'funcao'],
     });
 
     return plainToInstance(PromotionResponseDto, removedPromotion, {

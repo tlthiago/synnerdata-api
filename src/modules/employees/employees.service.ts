@@ -22,6 +22,7 @@ import { Role } from '../roles/entities/role.entity';
 import { Department } from '../departments/entities/department.entity';
 import { CostCenter } from '../cost-centers/entities/cost-center.entity';
 import { Cbo } from '../cbos/entities/cbo.entity';
+import { UsersResponseDto } from '../users/dto/user-response.dto';
 
 @Injectable()
 export class EmployeesService {
@@ -239,6 +240,19 @@ export class EmployeesService {
 
     const result = await this.employeesRepository.update(id, {
       ...updateStatusDto,
+      atualizadoPor: user,
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Funcionário não encontrado.');
+    }
+
+    return this.findOne(id);
+  }
+
+  async updateEmployeeRole(id: string, role: Role, user: UsersResponseDto) {
+    const result = await this.employeesRepository.update(id, {
+      funcao: role,
       atualizadoPor: user,
     });
 
