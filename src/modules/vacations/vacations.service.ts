@@ -74,7 +74,7 @@ export class VacationsService {
   async findAllByCompany(companyId: string) {
     const company = await this.companiesService.findById(companyId);
 
-    const absences = await this.vacationRepository
+    const vacations = await this.vacationRepository
       .createQueryBuilder('ferias')
       .innerJoinAndSelect('ferias.funcionario', 'funcionario')
       .innerJoinAndSelect('ferias.criadoPor', 'criadoPor')
@@ -84,7 +84,7 @@ export class VacationsService {
       .andWhere('ferias.status = :status', { status: 'A' })
       .getMany();
 
-    return plainToInstance(VacationResponseDto, absences, {
+    return plainToInstance(VacationResponseDto, vacations, {
       excludeExtraneousValues: true,
     });
   }

@@ -43,7 +43,7 @@ export class CpfAnalysisService {
   async findAllByCompany(companyId: string) {
     const company = await this.companiesService.findById(companyId);
 
-    const absences = await this.cpfAnalysisRepository
+    const cpfAnalysis = await this.cpfAnalysisRepository
       .createQueryBuilder('analise_de_cpf')
       .innerJoinAndSelect('analise_de_cpf.funcionario', 'funcionario')
       .innerJoinAndSelect('analise_de_cpf.criadoPor', 'criadoPor')
@@ -53,7 +53,7 @@ export class CpfAnalysisService {
       .andWhere('analise_de_cpf.status = :status', { status: 'A' })
       .getMany();
 
-    return plainToInstance(CpfAnalysisResponseDto, absences, {
+    return plainToInstance(CpfAnalysisResponseDto, cpfAnalysis, {
       excludeExtraneousValues: true,
     });
   }

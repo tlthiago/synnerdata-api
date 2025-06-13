@@ -43,7 +43,7 @@ export class LaborActionsService {
   async findAllByCompany(companyId: string) {
     const company = await this.companiesService.findById(companyId);
 
-    const absences = await this.laborActionRepository
+    const laborActions = await this.laborActionRepository
       .createQueryBuilder('acoes_trabalhistas')
       .innerJoinAndSelect('acoes_trabalhistas.funcionario', 'funcionario')
       .innerJoinAndSelect('acoes_trabalhistas.criadoPor', 'criadoPor')
@@ -53,7 +53,7 @@ export class LaborActionsService {
       .andWhere('acoes_trabalhistas.status = :status', { status: 'A' })
       .getMany();
 
-    return plainToInstance(LaborActionResponseDto, absences, {
+    return plainToInstance(LaborActionResponseDto, laborActions, {
       excludeExtraneousValues: true,
     });
   }
