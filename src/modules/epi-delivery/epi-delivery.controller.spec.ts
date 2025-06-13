@@ -230,9 +230,9 @@ describe('FunçãoController (E2E)', () => {
     }
   });
 
-  it('/v1/funcionarios/:funcionarioId/entrega-de-epis (POST) - Deve cadastrar uma entrega de epi', async () => {
+  it('/v1/funcionarios/:funcionarioId/entregas-de-epis (POST) - Deve cadastrar uma entrega de epi', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/entrega-de-epis`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/entregas-de-epis`)
       .send(epiDelivery)
       .expect(201);
 
@@ -248,9 +248,9 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/entrega-de-epis (POST) - Deve retornar erro ao criar uma entrega de epi sem informações obrigatórias', async () => {
+  it('/v1/funcionarios/:funcionarioId/entregas-de-epis (POST) - Deve retornar erro ao criar uma entrega de epi sem informações obrigatórias', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/entrega-de-epis`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/entregas-de-epis`)
       .send({})
       .expect(400);
 
@@ -261,9 +261,9 @@ describe('FunçãoController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/entrega-de-epis (POST) - Deve retornar erro ao criar uma entrega de epi com tipo de dado inválido', async () => {
+  it('/v1/funcionarios/:funcionarioId/entregas-de-epis (POST) - Deve retornar erro ao criar uma entrega de epi com tipo de dado inválido', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/entrega-de-epis`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/entregas-de-epis`)
       .send({ ...epiDelivery, data: 123 })
       .expect(400);
 
@@ -273,10 +273,10 @@ describe('FunçãoController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/:funcionarioId/entrega-de-epis (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
+  it('/v1/funcionarios/:funcionarioId/entregas-de-epis (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
     const response = await request(app.getHttpServer())
       .post(
-        `/v1/funcionarios/86f226c4-38b0-464c-987e-35293033faf6/entrega-de-epis`,
+        `/v1/funcionarios/86f226c4-38b0-464c-987e-35293033faf6/entregas-de-epis`,
       )
       .send({
         ...epiDelivery,
@@ -290,9 +290,9 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/entrega-de-epis (POST) - Deve retornar erro caso o ID do(s) epi(s) seja(s) inválido(s)', async () => {
+  it('/v1/funcionarios/:funcionarioId/entregas-de-epis (POST) - Deve retornar erro caso o ID do(s) epi(s) seja(s) inválido(s)', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/entrega-de-epis`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/entregas-de-epis`)
       .send({
         ...epiDelivery,
         epis: ['999'],
@@ -306,9 +306,9 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/entrega-de-epis (POST) - Deve retornar erro caso o ID do(s) epi(s) não exista(m)', async () => {
+  it('/v1/funcionarios/:funcionarioId/entregas-de-epis (POST) - Deve retornar erro caso o ID do(s) epi(s) não exista(m)', async () => {
     const response = await request(app.getHttpServer())
-      .post(`/v1/funcionarios/${createdEmployee.id}/entrega-de-epis`)
+      .post(`/v1/funcionarios/${createdEmployee.id}/entregas-de-epis`)
       .send({
         ...epiDelivery,
         epis: ['86f226c4-38b0-464c-987e-35293033faf6'],
@@ -322,7 +322,36 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/:funcionarioId/entrega-de-epis (GET) - Deve listar todas as entregas de epis de um funcionário', async () => {
+  it('/v1/empresas/:empresaId/entregas-de-epis (GET) - Deve listar todas as entregas de epis de uma empresa', async () => {
+    const epiDeliveryRepository = dataSource.getRepository(EpiDelivery);
+    await epiDeliveryRepository.save({
+      ...epiDelivery,
+      epis: [createdEpi],
+      funcionario: createdEmployee,
+      criadoPor: createdUser,
+    });
+
+    const response = await request(app.getHttpServer())
+      .get(`/v1/empresas/${createdCompany.id}/entregas-de-epis`)
+      .expect(200);
+
+    expect(response.body).toBeInstanceOf(Array);
+    expect(response.body.length).toBeGreaterThan(0);
+  });
+
+  it('/v1/empresas/:empresaId/entregas-de-epis (GET) - Deve retornar erro caso o ID da empresa não exista', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/v1/empresas/86f226c4-38b0-464c-987e-35293033faf6/entregas-de-epis`)
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Empresa não encontrada.',
+      error: 'Not Found',
+    });
+  });
+
+  it('/v1/funcionarios/:funcionarioId/entregas-de-epis (GET) - Deve listar todas as entregas de epis de um funcionário', async () => {
     const epiDeliveryRepository = dataSource.getRepository(EpiDelivery);
     await epiDeliveryRepository.save({
       ...epiDelivery,
@@ -331,14 +360,28 @@ describe('FunçãoController (E2E)', () => {
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/funcionarios/${createdEmployee.id}/entrega-de-epis`)
+      .get(`/v1/funcionarios/${createdEmployee.id}/entregas-de-epis`)
       .expect(200);
 
     expect(response.body).toBeInstanceOf(Array);
     expect(response.body.length).toBeGreaterThan(0);
   });
 
-  it('/v1/funcionarios/entrega-de-epis/:id (GET) - Deve retonar uma entrega de epi específica', async () => {
+  it('/v1/funcionarios/:funcionarioId/entregas-de-epis (GET) - Deve retornar erro caso o ID do funcionário não exista', async () => {
+    const response = await request(app.getHttpServer())
+      .get(
+        `/v1/funcionarios/86f226c4-38b0-464c-987e-35293033faf6/entregas-de-epis`,
+      )
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Funcionário não encontrado.',
+      error: 'Not Found',
+    });
+  });
+
+  it('/v1/funcionarios/entregas-de-epis/:id (GET) - Deve retonar uma entrega de epi específica', async () => {
     const epiDeliveryRepository = dataSource.getRepository(EpiDelivery);
     const createdEpiDelivery = await epiDeliveryRepository.save({
       ...epiDelivery,
@@ -347,7 +390,7 @@ describe('FunçãoController (E2E)', () => {
     });
 
     const response = await request(app.getHttpServer())
-      .get(`/v1/funcionarios/entrega-de-epis/${createdEpiDelivery.id}`)
+      .get(`/v1/funcionarios/entregas-de-epis/${createdEpiDelivery.id}`)
       .expect(200);
 
     expect(response.body).toMatchObject({
@@ -363,10 +406,10 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/entrega-de-epis/:id (GET) - Deve retornar erro ao buscar uma entrega de epi inexistente', async () => {
+  it('/v1/funcionarios/entregas-de-epis/:id (GET) - Deve retornar erro ao buscar uma entrega de epi inexistente', async () => {
     const response = await request(app.getHttpServer())
       .get(
-        '/v1/funcionarios/entrega-de-epis/86f226c4-38b0-464c-987e-35293033faf6',
+        '/v1/funcionarios/entregas-de-epis/86f226c4-38b0-464c-987e-35293033faf6',
       )
       .expect(404);
 
@@ -377,9 +420,9 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/entrega-de-epis/:id (GET) - Deve retornar erro ao buscar uma entrega de epi com um ID inválido', async () => {
+  it('/v1/funcionarios/entregas-de-epis/:id (GET) - Deve retornar erro ao buscar uma entrega de epi com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .get('/v1/funcionarios/entrega-de-epis/abc')
+      .get('/v1/funcionarios/entregas-de-epis/abc')
       .expect(400);
 
     expect(response.body).toEqual({
@@ -389,7 +432,7 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/entrega-de-epis/:id (PATCH) - Deve atualizar os dados de uma entrega de epi', async () => {
+  it('/v1/funcionarios/entregas-de-epis/:id (PATCH) - Deve atualizar os dados de uma entrega de epi', async () => {
     const epiDeliveryRepository = dataSource.getRepository(EpiDelivery);
     const createdEpiDelivery = await epiDeliveryRepository.save({
       ...epiDelivery,
@@ -403,7 +446,7 @@ describe('FunçãoController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/entrega-de-epis/${createdEpiDelivery.id}`)
+      .patch(`/v1/funcionarios/entregas-de-epis/${createdEpiDelivery.id}`)
       .send(updateData)
       .expect(200);
 
@@ -439,7 +482,7 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/entrega-de-epis/:id (PATCH) - Deve retornar um erro ao atualizar uma entrega de epi com tipo de dado inválido', async () => {
+  it('/v1/funcionarios/entregas-de-epis/:id (PATCH) - Deve retornar um erro ao atualizar uma entrega de epi com tipo de dado inválido', async () => {
     const epiDeliveryRepository = dataSource.getRepository(EpiDelivery);
     const createdEpiDelivery = await epiDeliveryRepository.save({
       ...epiDelivery,
@@ -452,7 +495,7 @@ describe('FunçãoController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/entrega-de-epis/${createdEpiDelivery.id}`)
+      .patch(`/v1/funcionarios/entregas-de-epis/${createdEpiDelivery.id}`)
       .send(updateData)
       .expect(400);
 
@@ -462,7 +505,7 @@ describe('FunçãoController (E2E)', () => {
     );
   });
 
-  it('/v1/funcionarios/entrega-de-epis/:id (PATCH) - Deve retornar erro caso o ID do(s) epi(s) não exista(m)', async () => {
+  it('/v1/funcionarios/entregas-de-epis/:id (PATCH) - Deve retornar erro caso o ID do(s) epi(s) não exista(m)', async () => {
     const epiDeliveryRepository = dataSource.getRepository(EpiDelivery);
     const createdEpiDelivery = await epiDeliveryRepository.save({
       ...epiDelivery,
@@ -476,7 +519,7 @@ describe('FunçãoController (E2E)', () => {
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/funcionarios/entrega-de-epis/${createdEpiDelivery.id}`)
+      .patch(`/v1/funcionarios/entregas-de-epis/${createdEpiDelivery.id}`)
       .send(updateData)
       .expect(404);
 
@@ -487,9 +530,9 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/entrega-de-epis/:id (PATCH) - Deve retornar erro ao atualizar uma entrega de epi com um ID inválido', async () => {
+  it('/v1/funcionarios/entregas-de-epis/:id (PATCH) - Deve retornar erro ao atualizar uma entrega de epi com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .patch('/v1/funcionarios/entrega-de-epis/abc')
+      .patch('/v1/funcionarios/entregas-de-epis/abc')
       .send({
         data: '2025-02-11',
       })
@@ -502,10 +545,10 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/entrega-de-epis/:id (PATCH) - Deve retornar erro ao atualizar uma entrega de epi inexistente', async () => {
+  it('/v1/funcionarios/entregas-de-epis/:id (PATCH) - Deve retornar erro ao atualizar uma entrega de epi inexistente', async () => {
     const response = await request(app.getHttpServer())
       .patch(
-        '/v1/funcionarios/entrega-de-epis/86f226c4-38b0-464c-987e-35293033faf6',
+        '/v1/funcionarios/entregas-de-epis/86f226c4-38b0-464c-987e-35293033faf6',
       )
       .send({
         data: '2025-02-11',
@@ -519,7 +562,7 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/entrega-de-epis/:id (DELETE) - Deve excluir uma entrega de epi', async () => {
+  it('/v1/funcionarios/entregas-de-epis/:id (DELETE) - Deve excluir uma entrega de epi', async () => {
     const epiDeliveryRepository = dataSource.getRepository(EpiDelivery);
     const createdEpiDelivery = await epiDeliveryRepository.save({
       ...epiDelivery,
@@ -528,7 +571,7 @@ describe('FunçãoController (E2E)', () => {
     });
 
     const response = await request(app.getHttpServer())
-      .delete(`/v1/funcionarios/entrega-de-epis/${createdEpiDelivery.id}`)
+      .delete(`/v1/funcionarios/entregas-de-epis/${createdEpiDelivery.id}`)
       .expect(200);
 
     expect(response.body).toMatchObject({
@@ -543,9 +586,9 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/entrega-de-epis/:id (DELETE) - Deve retornar erro ao excluir uma entrega de epi com um ID inválido', async () => {
+  it('/v1/funcionarios/entregas-de-epis/:id (DELETE) - Deve retornar erro ao excluir uma entrega de epi com um ID inválido', async () => {
     const response = await request(app.getHttpServer())
-      .delete('/v1/funcionarios/entrega-de-epis/abc')
+      .delete('/v1/funcionarios/entregas-de-epis/abc')
       .expect(400);
 
     expect(response.body).toEqual({
@@ -555,10 +598,10 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
-  it('/v1/funcionarios/entrega-de-epis/:id (DELETE) - Deve retornar erro ao excluir uma entrega de epi inexistente', async () => {
+  it('/v1/funcionarios/entregas-de-epis/:id (DELETE) - Deve retornar erro ao excluir uma entrega de epi inexistente', async () => {
     const response = await request(app.getHttpServer())
       .delete(
-        '/v1/funcionarios/entrega-de-epis/86f226c4-38b0-464c-987e-35293033faf6',
+        '/v1/funcionarios/entregas-de-epis/86f226c4-38b0-464c-987e-35293033faf6',
       )
       .expect(404);
 

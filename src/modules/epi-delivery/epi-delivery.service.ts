@@ -16,6 +16,7 @@ import {
   EpiDeliveryLogs,
 } from './entities/delivery-epi-logs.entity';
 import { UsersService } from '../users/users.service';
+import { CompaniesService } from '../companies/companies.service';
 
 @Injectable()
 export class EpiDeliveryService {
@@ -25,6 +26,7 @@ export class EpiDeliveryService {
     private readonly employeesService: EmployeesService,
     private readonly episService: EpisService,
     private readonly usersService: UsersService,
+    private readonly companiesService: CompaniesService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -48,16 +50,26 @@ export class EpiDeliveryService {
 
     await this.epiDeliveryRepository.save(epiDelivery);
 
-    return plainToInstance(
-      EpiDeliveryResponseDto,
-      {
-        ...epiDelivery,
-        epis: plainToInstance(EpisResponseDto, epiDelivery.epis, {
-          excludeExtraneousValues: true,
-        }),
-      },
-      { excludeExtraneousValues: true },
-    );
+    return await this.findOne(epiDelivery.id);
+  }
+
+  async findAllByCompany(companyId: string) {
+    const company = await this.companiesService.findById(companyId);
+
+    const epiDeliveries = await this.epiDeliveryRepository
+      .createQueryBuilder('entregas_de_epis')
+      .innerJoinAndSelect('entregas_de_epis.epis', 'epis')
+      .innerJoinAndSelect('entregas_de_epis.funcionario', 'funcionario')
+      .innerJoinAndSelect('entregas_de_epis.criadoPor', 'criadoPor')
+      .leftJoinAndSelect('entregas_de_epis.atualizadoPor', 'atualizadoPor')
+      .innerJoin('funcionario.empresa', 'empresa')
+      .where('empresa.id = :companyId', { companyId: company.id })
+      .andWhere('entregas_de_epis.status = :status', { status: 'A' })
+      .getMany();
+
+    return plainToInstance(EpiDeliveryResponseDto, epiDeliveries, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findAll(employeeId: string) {
@@ -68,7 +80,7 @@ export class EpiDeliveryService {
         funcionario: { id: employee.id },
         status: 'A',
       },
-      relations: ['epis'],
+      relations: ['epis', 'funcionario'],
     });
 
     const epiDeliveriesWithTransformedEpis = epiDeliveries.map(
@@ -95,7 +107,7 @@ export class EpiDeliveryService {
         id,
         status: 'A',
       },
-      relations: ['epis'],
+      relations: ['epis', 'funcionario'],
     });
 
     if (!epiDelivery) {
@@ -126,7 +138,7 @@ export class EpiDeliveryService {
     try {
       const epiDelivery = await this.epiDeliveryRepository.findOne({
         where: { id, status: 'A' },
-        relations: ['epis'],
+        relations: ['epis', 'funcionario'],
       });
 
       if (!epiDelivery) {
@@ -177,9 +189,7 @@ export class EpiDeliveryService {
 
       await queryRunner.commitTransaction();
 
-      const updatedEpiDelivery = await this.findOne(id);
-
-      return updatedEpiDelivery;
+      return await this.findOne(id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -207,7 +217,7 @@ export class EpiDeliveryService {
 
     const removedEpiDelivery = await this.epiDeliveryRepository.findOne({
       where: { id },
-      relations: ['epis'],
+      relations: ['epis', 'funcionario'],
     });
 
     return plainToInstance(

@@ -7,6 +7,8 @@ import { EmployeesModule } from '../employees/employees.module';
 import { EpiDeliveryLogs } from './entities/delivery-epi-logs.entity';
 import { EpisModule } from '../epis/epis.module';
 import { UsersModule } from '../users/users.module';
+import { EmployeeEpiDeliveryController } from './employee-epi-delivery.controller';
+import { CompaniesModule } from '../companies/companies.module';
 
 @Module({
   imports: [
@@ -14,8 +16,9 @@ import { UsersModule } from '../users/users.module';
     EmployeesModule,
     EpisModule,
     UsersModule,
+    CompaniesModule,
   ],
-  controllers: [EpiDeliveryController],
+  controllers: [EpiDeliveryController, EmployeeEpiDeliveryController],
   providers: [EpiDeliveryService],
 })
 export class EpiDeliveryModule {}
