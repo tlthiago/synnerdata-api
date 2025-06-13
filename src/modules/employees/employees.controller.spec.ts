@@ -54,7 +54,7 @@ describe('FuncionárioController (E2E)', () => {
   const employee = {
     nome: 'Funcionário Teste',
     carteiraIdentidade: 'MG-18.821.128',
-    cpf: '13420162626',
+    cpf: '64693184799',
     sexo: Sexo.MASCULINO,
     dataNascimento: '1996-10-15',
     estadoCivil: EstadoCivil.SOLTEIRO,
@@ -742,7 +742,7 @@ describe('FuncionárioController (E2E)', () => {
 
   it('/v1/empresas/funcionarios/:id (PATCH) - Deve retornar um erro ao atualizar um funcionário caso o CPF já exista', async () => {
     const employeeRepository = dataSource.getRepository(Employee);
-    const createdEmployee = await employeeRepository.save({
+    await employeeRepository.save({
       ...employee,
       funcao: createdRole,
       setor: createdDepartment,
@@ -750,12 +750,21 @@ describe('FuncionárioController (E2E)', () => {
       empresa: createdCompany,
     });
 
+    const updateEmployee = await employeeRepository.save({
+      ...employee,
+      cpf: '95339472507',
+      funcao: createdRole,
+      setor: createdDepartment,
+      cbo: createdCbo,
+      empresa: createdCompany,
+    });
+
     const updateData = {
-      cpf: '13420162626',
+      cpf: '64693184799',
     };
 
     const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/funcionarios/${createdEmployee.id}`)
+      .patch(`/v1/empresas/funcionarios/${updateEmployee.id}`)
       .send(updateData)
       .expect(409);
 
