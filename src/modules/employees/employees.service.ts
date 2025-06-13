@@ -59,9 +59,9 @@ export class EmployeesService {
 
     const user = await this.usersService.findOne(createdBy);
 
-    const cpfExists = await this.findByCpf(createEmployeeDto.cpf);
+    const existingEmployee = await this.findByCpf(createEmployeeDto.cpf);
 
-    if (cpfExists) {
+    if (existingEmployee) {
       throw new ConflictException(
         'Já existe um funcionário cadastrado com o mesmo número de CPF.',
       );
@@ -104,6 +104,7 @@ export class EmployeesService {
     const employees = await this.employeesRepository.find({
       where: {
         empresa: { id: company.id },
+        status: 'A',
       },
     });
 
@@ -116,6 +117,7 @@ export class EmployeesService {
     const employee = await this.employeesRepository.findOne({
       where: {
         id,
+        status: 'A',
       },
     });
 
@@ -128,14 +130,14 @@ export class EmployeesService {
     });
   }
 
-  async findByCpf(cpf: string): Promise<boolean> {
+  async findByCpf(cpf: string) {
     const employee = await this.employeesRepository.findOne({
       where: {
         cpf,
       },
     });
 
-    return !!employee;
+    return employee;
   }
 
   async findByIds(ids: string[]) {
@@ -183,9 +185,9 @@ export class EmployeesService {
     }
 
     if (updateEmployeeDto.cpf) {
-      const cpfExists = await this.findByCpf(updateEmployeeDto.cpf);
+      const existingEmployee = await this.findByCpf(updateEmployeeDto.cpf);
 
-      if (cpfExists) {
+      if (existingEmployee && existingEmployee.id !== id) {
         throw new ConflictException(
           'Já existe um funcionário cadastrado com o mesmo número de CPF.',
         );

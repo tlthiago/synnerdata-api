@@ -54,10 +54,12 @@ export class EmployeeResponseDto extends BaseResponseDto {
 
   @ApiProperty({ description: 'Altura' })
   @Expose()
+  @Transform(({ value }) => parseFloat(value))
   altura: number;
 
   @ApiProperty({ description: 'Peso' })
   @Expose()
+  @Transform(({ value }) => parseFloat(value))
   peso: number;
 
   @ApiProperty({ description: 'Nome do Pai' })
@@ -106,6 +108,7 @@ export class EmployeeResponseDto extends BaseResponseDto {
 
   @ApiProperty({ description: 'Salário' })
   @Expose()
+  @Transform(({ value }) => parseFloat(value))
   salario: number;
 
   @ApiProperty({ description: 'Data do último ASO' })
@@ -238,10 +241,12 @@ export class EmployeeResponseDto extends BaseResponseDto {
 
   @ApiProperty({ description: 'Latitude' })
   @Expose()
+  @Transform(({ value }) => parseFloat(value))
   latitude: number;
 
   @ApiProperty({ description: 'Longitude' })
   @Expose()
+  @Transform(({ value }) => parseFloat(value))
   longitude: number;
 
   @ApiProperty({ description: 'Quantidade de ônibus' })
@@ -250,6 +255,7 @@ export class EmployeeResponseDto extends BaseResponseDto {
 
   @ApiProperty({ description: 'Carga horária mensal' })
   @Expose()
+  @Transform(({ value }) => parseFloat(value))
   cargaHoraria: number;
 
   @ApiProperty({ description: 'Escala de trabalho', enum: Escala })
