@@ -63,7 +63,7 @@ export class TerminationsService {
   async findAllByCompany(companyId: string) {
     const company = await this.companiesService.findById(companyId);
 
-    const absences = await this.terminationRepository
+    const terminations = await this.terminationRepository
       .createQueryBuilder('demissao')
       .innerJoinAndSelect('demissao.funcionario', 'funcionario')
       .innerJoinAndSelect('demissao.criadoPor', 'criadoPor')
@@ -73,7 +73,7 @@ export class TerminationsService {
       .andWhere('demissao.status = :status', { status: 'A' })
       .getMany();
 
-    return plainToInstance(TerminationResponseDto, absences, {
+    return plainToInstance(TerminationResponseDto, terminations, {
       excludeExtraneousValues: true,
     });
   }

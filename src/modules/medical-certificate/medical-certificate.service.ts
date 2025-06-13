@@ -60,7 +60,7 @@ export class MedicalCertificateService {
   async findAllByCompany(companyId: string) {
     const company = await this.companiesService.findById(companyId);
 
-    const absences = await this.medicalCertificateRepository
+    const medicalCertificates = await this.medicalCertificateRepository
       .createQueryBuilder('atestado')
       .innerJoinAndSelect('atestado.funcionario', 'funcionario')
       .innerJoinAndSelect('atestado.criadoPor', 'criadoPor')
@@ -70,7 +70,7 @@ export class MedicalCertificateService {
       .andWhere('atestado.status = :status', { status: 'A' })
       .getMany();
 
-    return plainToInstance(MedicalCertificateResponseDto, absences, {
+    return plainToInstance(MedicalCertificateResponseDto, medicalCertificates, {
       excludeExtraneousValues: true,
     });
   }

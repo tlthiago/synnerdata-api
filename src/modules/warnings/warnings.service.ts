@@ -43,7 +43,7 @@ export class WarningsService {
   async findAllByCompany(companyId: string) {
     const company = await this.companiesService.findById(companyId);
 
-    const absences = await this.warningRepository
+    const warnings = await this.warningRepository
       .createQueryBuilder('advertencia')
       .innerJoinAndSelect('advertencia.funcionario', 'funcionario')
       .innerJoinAndSelect('advertencia.criadoPor', 'criadoPor')
@@ -53,7 +53,7 @@ export class WarningsService {
       .andWhere('advertencia.status = :status', { status: 'A' })
       .getMany();
 
-    return plainToInstance(WarningResponseDto, absences, {
+    return plainToInstance(WarningResponseDto, warnings, {
       excludeExtraneousValues: true,
     });
   }
