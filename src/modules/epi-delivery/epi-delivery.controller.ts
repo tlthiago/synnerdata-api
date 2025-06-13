@@ -1,20 +1,13 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
-  Patch,
   Param,
-  Delete,
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { EpiDeliveryService } from './epi-delivery.service';
-import { CreateEpiDeliveryDto } from './dto/create-epi-delivery.dto';
-import { UpdateEpiDeliveryDto } from './dto/update-epi-delivery.dto';
 import {
   ApiBearerAuth,
-  ApiBody,
   ApiOperation,
   ApiParam,
   ApiResponse,
@@ -22,201 +15,32 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { EpiDeliveryResponseDto } from './dto/epi-delivery-response.dto';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { CurrentUserDto } from '../../common/decorators/dto/current-user.dto';
 
-@Controller('v1/funcionarios')
+@Controller('v1/empresas')
 @ApiTags('Entregas de Epis')
 export class EpiDeliveryController {
   constructor(private readonly epiDeliveryService: EpiDeliveryService) {}
 
-  @Post(':funcionarioId/entrega-de-epis')
+  @Get(':empresaId/entregas-de-epis')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Cadastrar uma entrega de epis',
-    description: 'Endpoint responsável por cadastrar uma entrega de epis.',
+    summary: 'Buscar todos as entregas de epis',
+    description:
+      'Endpoint responsável por listar todas as entregas de epis cadastradas de uma empresa.',
   })
   @ApiParam({
-    name: 'funcionarioId',
-    description: 'ID do funcionário.',
-    type: 'string',
-    required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para cadastrar a entrega de epis.',
-    type: CreateEpiDeliveryDto,
-  })
-  @ApiResponse({
-    status: 200,
-    description:
-      'Retorna um mensagem de sucesso caso a criação seja bem sucedida.',
-    schema: {
-      type: 'object',
-      properties: {
-        succeeded: { type: 'boolean' },
-        data: { type: 'string', nullable: true },
-        message: {
-          type: 'string',
-          description: 'Entrega de epis cadastrada com sucesso.',
-        },
-      },
-    },
-  })
-  @UseGuards(JwtAuthGuard)
-  async create(
-    @Param('funcionarioId', ParseUUIDPipe) employeeId: string,
-    @Body() createEpiDeliveryDto: CreateEpiDeliveryDto,
-    @CurrentUser() user: CurrentUserDto,
-  ) {
-    const epiDelivery = await this.epiDeliveryService.create(
-      employeeId,
-      createEpiDeliveryDto,
-      user.id,
-    );
-
-    return {
-      succeeded: true,
-      data: epiDelivery,
-      message: `Entrega de epis cadastrada com sucesso, id: #${epiDelivery.id}.`,
-    };
-  }
-
-  @Get(':funcionarioId/entrega-de-epis')
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Buscar todos as entrega de epis',
-    description:
-      'Endpoint responsável por listar todos as entrega de epis cadastradas de um funcionário.',
-  })
-  @ApiParam({
-    name: 'funcionarioId',
-    description: 'ID do funcionário.',
+    name: 'empresaId',
+    description: 'ID da empresa.',
     type: 'string',
     required: true,
   })
   @ApiResponse({
     status: 200,
-    description: 'Retorna um lista de entrega de epis em casos de sucesso.',
+    description: 'Retorna um lista de entregas de epi em casos de sucesso.',
     type: [EpiDeliveryResponseDto],
   })
   @UseGuards(JwtAuthGuard)
-  findAll(@Param('funcionarioId', ParseUUIDPipe) employeeId: string) {
-    return this.epiDeliveryService.findAll(employeeId);
-  }
-
-  @Get('entrega-de-epis/:id')
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Buscar entrega de epis',
-    description: 'Endpoint responsável por listar dados de um entrega de epis.',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'ID da entrega de epis.',
-    type: 'string',
-    required: true,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Retorna os dados da entrega de epis em casos de sucesso.',
-    type: EpiDeliveryResponseDto,
-  })
-  @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.epiDeliveryService.findOne(id);
-  }
-
-  @Patch('entrega-de-epis/:id')
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Atualizar dados de uma entrega de epis',
-    description:
-      'Endpoint responsável por atualizar os dados de uma entrega de epis.',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'ID da entrega de epis.',
-    type: 'string',
-    required: true,
-  })
-  @ApiBody({
-    description: 'Dados necessários para atualizar os dados da entrega de epis',
-    type: UpdateEpiDeliveryDto,
-  })
-  @ApiResponse({
-    status: 200,
-    description:
-      'Retorna um mensagem de sucesso caso a atualização seja bem sucedida.',
-    schema: {
-      type: 'object',
-      properties: {
-        succeeded: { type: 'boolean' },
-        data: { type: 'string', nullable: true },
-        message: {
-          type: 'string',
-          description: 'Entrega de epis atualizada com sucesso.',
-        },
-      },
-    },
-  })
-  @UseGuards(JwtAuthGuard)
-  async update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateEpiDeliveryDto: UpdateEpiDeliveryDto,
-    @CurrentUser() user: CurrentUserDto,
-  ) {
-    const epiDelivery = await this.epiDeliveryService.update(
-      id,
-      updateEpiDeliveryDto,
-      user.id,
-    );
-
-    return {
-      succeeded: true,
-      data: epiDelivery,
-      message: `Entrega de epis id: #${epiDelivery.id} atualizada com sucesso.`,
-    };
-  }
-
-  @Delete('entrega-de-epis/:id')
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Excluir uma entrega de epis',
-    description: 'Endpoint responsável por excluir uma entrega de epis.',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'ID da entrega de epis.',
-    type: 'string',
-    required: true,
-  })
-  @ApiResponse({
-    status: 200,
-    description:
-      'Retorna um mensagem de sucesso caso a exclusão seja bem sucedida.',
-    schema: {
-      type: 'object',
-      properties: {
-        succeeded: { type: 'boolean' },
-        data: { type: 'string', nullable: true },
-        message: {
-          type: 'string',
-          description: 'Entrega de epis excluída com sucesso.',
-        },
-      },
-    },
-  })
-  @UseGuards(JwtAuthGuard)
-  async remove(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: CurrentUserDto,
-  ) {
-    const epiDelivery = await this.epiDeliveryService.remove(id, user.id);
-
-    return {
-      succeeded: true,
-      data: epiDelivery,
-      message: `Entrega de epis id: #${epiDelivery.id} excluída com sucesso.`,
-    };
+  findAll(@Param('empresaId', ParseUUIDPipe) companyId: string) {
+    return this.epiDeliveryService.findAllByCompany(companyId);
   }
 }
