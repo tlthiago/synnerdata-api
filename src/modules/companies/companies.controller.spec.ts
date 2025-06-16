@@ -58,6 +58,21 @@ describe('CompaniesController (E2E)', () => {
     ramoAtuacao: 'Desenvolvimento de Software',
   };
 
+  const partialCompany = {
+    razaoSocial: 'Tech Solutions LTDA',
+    nomeFantasia: 'Tech Solutions',
+    cnpj: '12345678004175',
+    email: 'contato@techsolutions.com.br',
+    celular: '+5531991897926',
+    rua: 'Rua da Tecnologia',
+    numero: '123',
+    complemento: 'Sala 45',
+    bairro: 'Centro',
+    cidade: 'São Paulo',
+    estado: 'SP',
+    cep: '01000-000',
+  };
+
   beforeAll(async () => {
     pgContainer = await new PostgreSqlContainer().start();
 
@@ -308,6 +323,111 @@ describe('CompaniesController (E2E)', () => {
       message: 'Empresa não encontrada.',
       error: 'Not Found',
     });
+  });
+
+  it('/v1/empresas/:id/finalizar-cadastro (PATCH) - Deve completar o cadastro de uma organização', async () => {
+    const companyRepository = dataSource.getRepository(Company);
+    const createdCompany = companyRepository.create(partialCompany);
+    await companyRepository.save(createdCompany);
+
+    const updateData = {
+      dataFundacao: '2010-05-15',
+      faturamento: 1200000.5,
+      regimeTributario: 'Simples Nacional',
+      inscricaoEstadual: '1234567890',
+      cnaePrincipal: '6201500',
+      segmento: 'Tecnologia',
+      ramoAtuacao: 'Desenvolvimento de Software',
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/empresas/${createdCompany.id}/finalizar-cadastro`)
+      .send(updateData)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      succeeded: true,
+      data: {
+        id: createdCompany.id,
+        regimeTributario: updateData.regimeTributario,
+        status: 'A',
+      },
+      message: `Cadastro da empresa, id: #${createdCompany.id} completado com sucesso.`,
+    });
+  });
+
+  it('/v1/empresas/:id/finalizar-cadastro (PATCH) - Deve retornar erro ao finalizar o cadastro de uma empresa com um ID inválido', async () => {
+    const updateData = {
+      dataFundacao: '2010-05-15',
+      faturamento: 1200000.5,
+      regimeTributario: 'Simples Nacional',
+      inscricaoEstadual: '1234567890',
+      cnaePrincipal: '6201500',
+      segmento: 'Tecnologia',
+      ramoAtuacao: 'Desenvolvimento de Software',
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch('/v1/empresas/abc/finalizar-cadastro')
+      .send(updateData)
+      .expect(400);
+
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: 'Validation failed (uuid is expected)',
+      error: 'Bad Request',
+    });
+  });
+
+  it('/v1/empresas/:id/finalizar-cadastro (PATCH) - Deve retornar erro ao finalizar o cadastro de uma empresa inexistente', async () => {
+    const updateData = {
+      dataFundacao: '2010-05-15',
+      faturamento: 1200000.5,
+      regimeTributario: 'Simples Nacional',
+      inscricaoEstadual: '1234567890',
+      cnaePrincipal: '6201500',
+      segmento: 'Tecnologia',
+      ramoAtuacao: 'Desenvolvimento de Software',
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(
+        '/v1/empresas/86f226c4-38b0-464c-987e-35293033faf6/finalizar-cadastro',
+      )
+      .send(updateData)
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Empresa não encontrada.',
+      error: 'Not Found',
+    });
+  });
+
+  it('/v1/empresas/:id/finalizar-cadastro (POST) - Deve retornar erro ao finalizaro cadastro de uma empresa sem informações obrigatórias', async () => {
+    const companyRepository = dataSource.getRepository(Company);
+    const createdCompany = companyRepository.create(partialCompany);
+    await companyRepository.save(createdCompany);
+
+    const updateData = {
+      dataFundacao: '2010-05-15',
+      faturamento: 1200000.5,
+      regimeTributario: 'Simples Nacional',
+      inscricaoEstadual: '1234567890',
+      segmento: 'Tecnologia',
+      ramoAtuacao: 'Desenvolvimento de Software',
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/empresas/${createdCompany.id}/finalizar-cadastro`)
+      .send(updateData)
+      .expect(400);
+
+    expect(response.body).toHaveProperty('message');
+    expect(Array.isArray(response.body.message)).toBe(true);
+    expect(response.body.message).toEqual(
+      expect.arrayContaining(['cnaePrincipal should not be empty']),
+    );
   });
 
   it('/v1/empresas/:id (DELETE) - Deve excluir uma empresa', async () => {

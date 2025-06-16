@@ -298,6 +298,56 @@ describe('UsersController (E2E)', () => {
     });
   });
 
+  it('/v1/usuarios/:id/atualizar-primeiro-acesso (PATCH) - Deve atualizar a informação de primeiro acesso de um usuário', async () => {
+    const userRepository = dataSource.getRepository(User);
+    const createdUser3 = await userRepository.save({
+      ...initialUser,
+      criadoPor: createdUser.id,
+    });
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/usuarios/${createdUser3.id}/atualizar-primeiro-acesso`)
+      .send({ primeiroAcesso: false })
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      succeeded: true,
+      data: {
+        id: createdUser3.id,
+        primeiroAcesso: false,
+      },
+      message: `Usuário id: #${createdUser3.id} atualizado com sucesso.`,
+    });
+  });
+
+  it('/v1/usuarios/:id/atualizar-primeiro-acesso (PATCH) - Deve retornar erro ao atualizar a informação de primeiro acesso um usuário com um ID inválido', async () => {
+    const response = await request(app.getHttpServer())
+      .patch('/v1/usuarios/abc/atualizar-primeiro-acesso')
+      .send({ primeiroAcesso: false })
+      .expect(400);
+
+    expect(response.body).toEqual({
+      statusCode: 400,
+      message: 'Validation failed (uuid is expected)',
+      error: 'Bad Request',
+    });
+  });
+
+  it('/v1/usuarios/:id/atualizar-primeiro-acesso (PATCH) - Deve retornar erro ao atualizar a informação de primeiro acesso um usuário com um ID inexistente', async () => {
+    const response = await request(app.getHttpServer())
+      .patch(
+        '/v1/usuarios/86f226c4-38b0-464c-987e-35293033faf6/atualizar-primeiro-acesso',
+      )
+      .send({ primeiroAcesso: false })
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Usuário não encontrado.',
+      error: 'Not Found',
+    });
+  });
+
   it('/v1/usuarios/:id (DELETE) - Deve excluir um usuário', async () => {
     const userRepository = dataSource.getRepository(User);
     const createdUser3 = await userRepository.save(initialUser);
