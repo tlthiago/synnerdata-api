@@ -22,6 +22,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CompanyResponseDto } from './dto/company-response.dto';
+import { CompleteCompanyRegistrationDto } from './dto/complete-company-registration.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Empresas')
@@ -62,6 +63,50 @@ export class CompaniesController {
       succeeded: true,
       data: company,
       message: `Empresa cadastrada com sucesso, id: #${company.id}.`,
+    };
+  }
+
+  @Patch(':id/finalizar-cadastro')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Completar o cadastro de uma organização',
+    description:
+      'Endpoint responsável por completar o cadastro de uma organização.',
+  })
+  @ApiBody({
+    description: 'Dados necessários para completar o cadastro da organização.',
+    type: CreateCompanyDto,
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Retorna uma mensagem de sucesso caso a requisição seja bem sucedida.',
+    schema: {
+      type: 'object',
+      properties: {
+        succeeded: { type: 'boolean' },
+        data: { type: 'string', nullable: true },
+        message: {
+          type: 'string',
+          description: 'Cadastro da empresa completado com sucesso',
+        },
+      },
+    },
+  })
+  @UseGuards(JwtAuthGuard)
+  async completeRegistration(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() completeCompanyRegistrationDto: CompleteCompanyRegistrationDto,
+  ) {
+    const company = await this.companiesService.completeRegistration(
+      id,
+      completeCompanyRegistrationDto,
+    );
+
+    return {
+      succeeded: true,
+      data: company,
+      message: `Cadastro da empresa, id: #${company.id} completado com sucesso.`,
     };
   }
 

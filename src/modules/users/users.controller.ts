@@ -158,6 +158,68 @@ export class UsersController {
     };
   }
 
+  @Patch(':id/atualizar-primeiro-acesso')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Atualizar informação de primeiro acesso',
+    description:
+      'Endpoint responsável por atualizar informação de primeiro acesso.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do usuário.',
+    type: 'string',
+    required: true,
+  })
+  @ApiBody({
+    description:
+      'Dados disponíveis para atualizar informação de primeiro acesso',
+    schema: {
+      type: 'object',
+      properties: {
+        primeiroAcesso: {
+          type: 'boolean',
+          example: false,
+        },
+      },
+      required: ['primeiroAcesso'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Retorna uma mensagem de sucesso caso a atualização seja bem sucedida.',
+    schema: {
+      type: 'object',
+      properties: {
+        succeeded: { type: 'boolean' },
+        data: { type: 'string', nullable: true },
+        message: {
+          type: 'string',
+          description: 'Usuário atualizado com sucesso.',
+        },
+      },
+    },
+  })
+  @UseGuards(JwtAuthGuard)
+  async updateFirstAccess(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { primeiroAcesso: boolean },
+    @CurrentUser() user: CurrentUserDto,
+  ) {
+    const updatedUser = await this.userService.updateFirstAccess(
+      id,
+      body.primeiroAcesso,
+      user.id,
+    );
+
+    return {
+      succeeded: true,
+      data: updatedUser,
+      message: `Usuário id: #${updatedUser.id} atualizado com sucesso.`,
+    };
+  }
+
   @Delete(':id')
   @ApiBearerAuth()
   @ApiOperation({

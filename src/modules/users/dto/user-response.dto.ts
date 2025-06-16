@@ -19,6 +19,10 @@ export class UsersResponseDto {
   @Expose()
   funcao: Funcao;
 
+  @ApiProperty({ description: 'Confirmação de primeiro acesso.' })
+  @Expose()
+  primeiroAcesso: boolean;
+
   @ApiProperty({ description: 'Status' })
   @Expose()
   status: string;
