@@ -11,6 +11,7 @@ import { EntityManager, Repository } from 'typeorm';
 import { CompanyResponseDto } from './dto/company-response.dto';
 import { plainToInstance } from 'class-transformer';
 import { CreateInitialCompanyDto } from './dto/create-initial-company.dto';
+import { CompleteCompanyRegistrationDto } from './dto/complete-company-registration.dto';
 
 @Injectable()
 export class CompaniesService {
@@ -73,6 +74,24 @@ export class CompaniesService {
     });
 
     return await repository.save(company);
+  }
+
+  async completeRegistration(
+    id: string,
+    completeCompanyRegistration: CompleteCompanyRegistrationDto,
+  ) {
+    const result = await this.companiesRepository.update(id, {
+      ...completeCompanyRegistration,
+      status: 'A',
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+
+    const updatedCompany = await this.findOne(id);
+
+    return updatedCompany;
   }
 
   async findAll() {

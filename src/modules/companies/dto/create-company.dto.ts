@@ -94,7 +94,7 @@ export class CreateCompanyDto {
   celular: string;
 
   @ApiProperty({ description: 'Faturamento.' })
-  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsNumber()
   @IsNotEmpty()
   faturamento: number;
 

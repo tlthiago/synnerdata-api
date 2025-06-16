@@ -65,8 +65,8 @@ export class Company {
 
   @Column({
     name: 'faturamento',
-    type: 'numeric',
-    precision: 15,
+    type: 'decimal',
+    precision: 10,
     scale: 2,
     nullable: true,
   })

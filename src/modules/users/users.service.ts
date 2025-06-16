@@ -181,6 +181,33 @@ export class UsersService {
     return updatedUser;
   }
 
+  async updateFirstAccess(
+    id: string,
+    primeiroAcesso: boolean,
+    updatedBy: string,
+  ) {
+    const user = await this.usersRepository.findOne({
+      where: { id: updatedBy },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    const result = await this.usersRepository.update(id, {
+      primeiroAcesso,
+      atualizadoPor: user.id,
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    const updatedUser = await this.findOne(id);
+
+    return updatedUser;
+  }
+
   async remove(id: string, deletedBy: string) {
     const user = await this.usersRepository.findOne({
       where: { id: deletedBy },
