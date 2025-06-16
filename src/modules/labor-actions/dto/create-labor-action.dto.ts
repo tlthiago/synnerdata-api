@@ -41,19 +41,16 @@ export class CreateLaborActionDto {
   @ApiProperty({ description: 'Advogado do reclamante.' })
   @IsString()
   @IsOptional()
-  @Length(1, 255)
   advogadoReclamante?: string;
 
   @ApiProperty({ description: 'Advogado do reclamado.' })
   @IsString()
   @IsOptional()
-  @Length(1, 255)
   advogadoReclamado?: string;
 
   @ApiProperty({ description: 'Descrição da ação.' })
   @IsString()
   @IsNotEmpty()
-  @Length(1, 255)
   descricao: string;
 
   @ApiProperty({ description: 'Valor da causa.' })
@@ -64,13 +61,11 @@ export class CreateLaborActionDto {
   @ApiProperty({ description: 'Andamento do processo.' })
   @IsString()
   @IsOptional()
-  @Length(1, 255)
   andamento?: string;
 
   @ApiProperty({ description: 'Decisões e sentenças.' })
   @IsString()
   @IsOptional()
-  @Length(1, 255)
   decisao?: string;
 
   @ApiProperty({ description: 'Data de conclusão.' })
@@ -81,7 +76,6 @@ export class CreateLaborActionDto {
   @ApiProperty({ description: 'Recursos interpostos.' })
   @IsString()
   @IsOptional()
-  @Length(1, 255)
   recursos?: string;
 
   @ApiProperty({ description: 'Custas e despesas.' })
