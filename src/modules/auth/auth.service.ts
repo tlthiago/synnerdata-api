@@ -67,6 +67,8 @@ export class AuthService {
         subscriptionSignUpDto,
       );
 
+      console.log(subscriptionResponse);
+
       if (
         !subscriptionResponse?.id
         // || subscriptionResponse.status !== 'active'
@@ -80,6 +82,7 @@ export class AuthService {
 
       const company = await this.companiesService.createInitialCompany(
         companyData,
+        subscriptionResponse.id,
         queryRunner.manager,
       );
 
@@ -292,7 +295,7 @@ export class AuthService {
       bairro: neighborhood,
       complemento: customer.address.line_2,
       cidade: customer.address.city,
-      estado: customer.address.country,
+      estado: customer.address.state,
       cep: customer.address.zip_code,
     };
   }

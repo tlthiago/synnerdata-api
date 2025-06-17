@@ -99,4 +99,8 @@ export class CompanyResponseDto extends BaseResponseDto {
   @ApiProperty({ description: 'Quantidade de usuários' })
   @Expose()
   quantidadeUsuarios: string;
+
+  @ApiProperty({ description: 'ID assinatura pagar.me' })
+  @Expose()
+  idAssinatura: string;
 }
