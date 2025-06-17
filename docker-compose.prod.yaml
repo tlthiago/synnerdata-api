@@ -17,6 +17,8 @@ services:
       - 3001
     depends_on:
       - db
+    command: >
+      sh -c "npx typeorm migration:run -d ./src/config/database/typeorm.config.ts && node dist/main"
 
   db:
     image: postgres:17-alpine
