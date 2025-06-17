@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
+import { plainToInstance } from 'class-transformer';
+import { SubscriptionResponseDto } from './dto/subscription-response.dto';
 
 @Injectable()
 export class SubscriptionsService {
@@ -65,7 +67,11 @@ export class SubscriptionsService {
       );
     }
 
-    return data;
+    const subscriptionData = plainToInstance(SubscriptionResponseDto, data, {
+      excludeExtraneousValues: true,
+    });
+
+    return subscriptionData;
   }
 
   async remove(id: string) {
