@@ -32,7 +32,11 @@ import { MailModule } from './modules/services/mail/mail.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env.development.local',
+      envFilePath:
+        process.env.NODE_ENV === 'development'
+          ? '.env.development.local'
+          : undefined,
+      ignoreEnvFile: process.env.NODE_ENV !== 'development',
     }),
     ThrottlerModule.forRoot([
       {
