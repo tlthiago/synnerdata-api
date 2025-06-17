@@ -42,6 +42,7 @@ export class CompaniesService {
 
   async createInitialCompany(
     createInitialCompanyDto: CreateInitialCompanyDto,
+    subscriptionId: string,
     manager?: EntityManager,
   ) {
     const repository = manager
@@ -71,6 +72,7 @@ export class CompaniesService {
     const company = repository.create({
       ...createInitialCompanyDto,
       status: 'P',
+      idAssinatura: subscriptionId,
     });
 
     return await repository.save(company);

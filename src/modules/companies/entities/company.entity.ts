@@ -116,6 +116,9 @@ export class Company {
   @Column({ name: 'qt_usuarios', type: 'int', default: 4 })
   quantidadeUsuarios?: number;
 
+  @Column({ name: 'id_assinatura', type: 'varchar', nullable: true })
+  idAssinatura?: string;
+
   @Column({
     name: 'status',
     type: 'enum',
