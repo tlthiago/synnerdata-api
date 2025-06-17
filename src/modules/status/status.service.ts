@@ -34,7 +34,7 @@ export class StatusService {
       name: 'API-SYNERDATA',
       description: 'API Synerdata',
       status: 'online',
-      version: '0.1',
+      version: '1.0',
       uptime: uptime,
       release_date: '2025-01-17',
       documentation: 'https://web.synerdata.com/api/docs',
