@@ -7,9 +7,11 @@
   "license": "UNLICENSED",
   "scripts": {
     "dev": "docker compose -f docker-compose.dev.yaml --profile dev up",
-    "dev:build": "docker compose -f docker-compose.dev.yaml --profile dev up --build --no-cache",
-    "prod:up": "docker compose -f docker-compose.prod.yaml up",
+    "dev:down": "docker compose -f docker-compose.dev.yaml down",
+    "dev:build": "docker compose -f docker-compose.dev.yaml --profile dev up --build",
+    "prod:up": "docker compose -f docker-compose.prod.yaml --env-file .env.prod up",
     "prod:down": "docker compose -f docker-compose.prod.yaml down",
+    "prod:build": "docker compose -f docker-compose.prod.yaml --env-file .env.prod up --build",
     "build": "nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
