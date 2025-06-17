@@ -18,7 +18,7 @@ services:
     depends_on:
       - db
     command: >
-      sh -c "npx typeorm migration:run -d ./src/config/database/typeorm.config.ts && node dist/main"
+      sh -c "npx typeorm migration:run -d dist/config/database/typeorm.config.js && node dist/main"
 
   db:
     image: postgres:17-alpine
