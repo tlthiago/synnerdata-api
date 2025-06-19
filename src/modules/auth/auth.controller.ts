@@ -94,8 +94,6 @@ export class AuthController {
   async subscriptionSignUp(
     @Body() subscriptionSignUpDto: CreateSubscriptionDto,
   ) {
-    console.log(subscriptionSignUpDto);
-
     const createdUser = await this.authService.subscriptionSignUp(
       subscriptionSignUpDto,
     );
