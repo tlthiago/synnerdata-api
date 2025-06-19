@@ -1,8 +1,15 @@
 import { Module } from '@nestjs/common';
-import { SubscriptionsModule } from './subscriptions/subscriptions.module';
-import { CustomersModule } from './customers/customers.module';
+import { PaymentsService } from './payments.service';
+import { PaymentsController } from './payments.controller';
+import { PaymentsWebhookController } from './payments-webhook.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { PaymentIntent } from './entities/payment.entity';
+import { MailModule } from '../services/mail/mail.module';
 
 @Module({
-  imports: [SubscriptionsModule, CustomersModule],
+  imports: [TypeOrmModule.forFeature([PaymentIntent]), MailModule],
+  controllers: [PaymentsController, PaymentsWebhookController],
+  providers: [PaymentsService],
+  exports: [PaymentsService],
 })
 export class PaymentsModule {}
