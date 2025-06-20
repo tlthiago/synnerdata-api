@@ -24,6 +24,11 @@ class SubscriptionCustomerDto {
       number: string;
     };
   };
+
+  @IsObject()
+  metadata: {
+    company?: string;
+  };
 }
 
 class SubscriptionPlanDto {
@@ -45,11 +50,6 @@ class SubscriptionDataDto {
   @ValidateNested()
   @Type(() => SubscriptionPlanDto)
   plan: SubscriptionPlanDto;
-
-  @IsObject()
-  metadata: {
-    company?: string;
-  };
 }
 
 export class WebhookSubscriptionCreatedDto {
