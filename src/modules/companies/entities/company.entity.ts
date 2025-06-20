@@ -30,25 +30,25 @@ export class Company {
   @Column({ name: 'cnpj', type: 'varchar', length: 14, unique: true })
   cnpj: string;
 
-  @Column({ name: 'rua', type: 'varchar', length: 255 })
+  @Column({ name: 'rua', type: 'varchar', length: 255, nullable: true })
   rua: string;
 
-  @Column({ name: 'numero', type: 'varchar', length: 10 })
+  @Column({ name: 'numero', type: 'varchar', length: 10, nullable: true })
   numero: string;
 
   @Column({ name: 'complemento', type: 'varchar', length: 100, nullable: true })
   complemento?: string;
 
-  @Column({ name: 'bairro', type: 'varchar', length: 100 })
+  @Column({ name: 'bairro', type: 'varchar', length: 100, nullable: true })
   bairro: string;
 
-  @Column({ name: 'cidade', type: 'varchar', length: 100 })
+  @Column({ name: 'cidade', type: 'varchar', length: 100, nullable: true })
   cidade: string;
 
-  @Column({ name: 'estado', type: 'varchar', length: 2 })
+  @Column({ name: 'estado', type: 'varchar', length: 2, nullable: true })
   estado: string;
 
-  @Column({ name: 'cep', type: 'varchar', length: 10 })
+  @Column({ name: 'cep', type: 'varchar', length: 10, nullable: true })
   cep: string;
 
   @Column({ name: 'data_fundacao', type: 'date', nullable: true })

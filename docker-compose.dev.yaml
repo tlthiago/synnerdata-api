@@ -13,8 +13,6 @@ services:
       - /app/node_modules
     depends_on:
       - db
-    profiles:
-      - dev
 
   db:
     image: postgres:17-alpine

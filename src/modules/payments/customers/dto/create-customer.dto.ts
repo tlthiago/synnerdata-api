@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsDateString,
   IsEmail,
@@ -5,6 +6,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
 
 enum DocumentType {
@@ -13,7 +15,7 @@ enum DocumentType {
   PASSPORT = 'PASSPORT',
 }
 
-enum Type {
+enum CustomerType {
   individual = 'individual',
   company = 'company',
 }
@@ -57,8 +59,12 @@ class PhoneObject {
 
 class Phones {
   @IsOptional()
+  @ValidateNested()
+  @Type(() => PhoneObject)
   home_phone: PhoneObject;
 
+  @ValidateNested()
+  @Type(() => PhoneObject)
   mobile_phone: PhoneObject;
 }
 
@@ -86,15 +92,19 @@ export class CreateCustomerDto {
   @IsString()
   document: string;
 
-  @IsEnum(Type)
-  type: Type;
+  @IsEnum(CustomerType)
+  type: CustomerType;
 
   @IsEnum(Gender)
   @IsOptional()
   gender: Gender;
 
+  @ValidateNested()
+  @Type(() => Address)
   address: Address;
 
+  @ValidateNested()
+  @Type(() => Phones)
   phones: Phones;
 
   @IsDateString()

@@ -67,11 +67,9 @@ export class AuthService {
         subscriptionSignUpDto,
       );
 
-      console.log(subscriptionResponse);
-
       if (
-        !subscriptionResponse?.id
-        // || subscriptionResponse.status !== 'active'
+        !subscriptionResponse?.id ||
+        subscriptionResponse.status !== 'active'
       ) {
         throw new BadRequestException('Erro ao criar assinatura no Pagar.me');
       }
