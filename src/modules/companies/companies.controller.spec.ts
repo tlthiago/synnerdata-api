@@ -338,6 +338,13 @@ describe('CompaniesController (E2E)', () => {
       cnaePrincipal: '6201500',
       segmento: 'Tecnologia',
       ramoAtuacao: 'Desenvolvimento de Software',
+      rua: 'Rua da Tecnologia',
+      numero: '123',
+      complemento: 'Sala 45',
+      bairro: 'Centro',
+      cidade: 'São Paulo',
+      estado: 'SP',
+      cep: '01000-000',
     };
 
     const response = await request(app.getHttpServer())
@@ -365,6 +372,13 @@ describe('CompaniesController (E2E)', () => {
       cnaePrincipal: '6201500',
       segmento: 'Tecnologia',
       ramoAtuacao: 'Desenvolvimento de Software',
+      rua: 'Rua da Tecnologia',
+      numero: '123',
+      complemento: 'Sala 45',
+      bairro: 'Centro',
+      cidade: 'São Paulo',
+      estado: 'SP',
+      cep: '01000-000',
     };
 
     const response = await request(app.getHttpServer())
@@ -388,6 +402,13 @@ describe('CompaniesController (E2E)', () => {
       cnaePrincipal: '6201500',
       segmento: 'Tecnologia',
       ramoAtuacao: 'Desenvolvimento de Software',
+      rua: 'Rua da Tecnologia',
+      numero: '123',
+      complemento: 'Sala 45',
+      bairro: 'Centro',
+      cidade: 'São Paulo',
+      estado: 'SP',
+      cep: '01000-000',
     };
 
     const response = await request(app.getHttpServer())

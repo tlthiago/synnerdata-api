@@ -10,5 +10,6 @@ export class PaymentsWebhookController {
   @HttpCode(200)
   async handleWebhook(@Body() body: WebhookSubscriptionCreatedDto) {
     await this.paymentsService.handleWebhook(body);
+    return { received: true };
   }
 }

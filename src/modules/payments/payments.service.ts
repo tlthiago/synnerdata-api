@@ -1,10 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaymentIntent } from './entities/payment.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CreatePaymentIntentDto } from './dto/create-payment-link.dto';
 import { WebhookSubscriptionCreatedDto } from './dto/handle-webhook.dto';
 import { MailService } from '../services/mail/mail.service';
+import { CompaniesService } from '../companies/companies.service';
+import { UsersService } from '../users/users.service';
+import { CreateInitialCompanyDto } from '../companies/dto/create-initial-company.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -13,8 +16,11 @@ export class PaymentsService {
 
   constructor(
     @InjectRepository(PaymentIntent)
-    private readonly paymentRepository: Repository<PaymentIntent>,
+    private readonly paymentIntentRepository: Repository<PaymentIntent>,
+    private readonly companiesService: CompaniesService,
+    private readonly usersService: UsersService,
     private readonly mailService: MailService,
+    private readonly dataSource: DataSource,
   ) {}
 
   private getAuthHeaders() {
@@ -75,11 +81,11 @@ export class PaymentsService {
       );
     }
 
-    const paymentIntent = this.paymentRepository.create({
+    const paymentIntent = this.paymentIntentRepository.create({
       ...createPaymentIntentDto,
       pagarmeId: result.id,
     });
-    await this.paymentRepository.save(paymentIntent);
+    await this.paymentIntentRepository.save(paymentIntent);
 
     return result;
   }
@@ -90,7 +96,7 @@ export class PaymentsService {
     if (type === 'subscription.created') {
       const pagarmeId = data.code;
 
-      const payment = await this.paymentRepository.findOne({
+      const payment = await this.paymentIntentRepository.findOne({
         where: { pagarmeId },
       });
 
@@ -100,13 +106,52 @@ export class PaymentsService {
         );
       }
 
-      if (payment.status !== 'paid') {
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      try {
+        if (payment.status === 'paid') {
+          return;
+        }
+
         payment.status = 'paid';
-        await this.paymentRepository.save(payment);
+        await this.paymentIntentRepository.save(payment);
+
+        const companyData: CreateInitialCompanyDto = {
+          nomeFantasia: payment.nomeFantasia,
+          razaoSocial: payment.razaoSocial,
+          cnpj: payment.cnpj,
+          email: payment.email,
+          celular: payment.celular,
+        };
+
+        const company = await this.companiesService.createInitialCompany(
+          companyData,
+          data.id,
+          queryRunner.manager,
+        );
+
+        await this.usersService.createInitialUser(
+          {
+            nome: payment.razaoSocial,
+            email: payment.email,
+            empresaId: company.id,
+          },
+          queryRunner.manager,
+        );
+
+        await queryRunner.commitTransaction();
 
         await this.mailService.sendActivationAccountEmail({
           email: payment.email,
         });
+      } catch (error) {
+        await queryRunner.rollbackTransaction();
+
+        throw error;
+      } finally {
+        await queryRunner.release();
       }
     }
   }
