@@ -152,10 +152,6 @@ export class EpiDeliveryService {
         newEpis = await this.episService.findByIds(updateEpiDeliveryDto.epis);
       }
 
-      const addedEpis = newEpis.filter(
-        (newEpi) => !epiDelivery.epis.some((epi) => epi.id === newEpi.id),
-      );
-
       const removedEpis = epiDelivery.epis.filter(
         (epi) => !newEpis.some((newEpi) => newEpi.id === epi.id),
       );
@@ -172,7 +168,7 @@ export class EpiDeliveryService {
         epiDelivery.entreguePor = updateEpiDeliveryDto.entreguePor;
       }
 
-      epiDelivery.epis = addedEpis;
+      epiDelivery.epis = newEpis;
       epiDelivery.atualizadoPor = user;
       await queryRunner.manager.save(epiDelivery);
 
