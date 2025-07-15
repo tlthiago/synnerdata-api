@@ -193,6 +193,26 @@ export class CompaniesService {
     });
   }
 
+  async savePbUrl(id: string, pbUrl: string) {
+    const company = await this.companiesRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!company) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+
+    company.pbUrl = pbUrl;
+
+    const updatedCompany = await this.companiesRepository.save(company);
+
+    return plainToInstance(CompanyResponseDto, updatedCompany, {
+      excludeExtraneousValues: true,
+    });
+  }
+
   async findPbUrl(id: string) {
     const company = await this.companiesRepository.findOne({
       where: {
