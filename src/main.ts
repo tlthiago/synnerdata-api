@@ -23,8 +23,8 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('API-SYNERDATA')
-    .setDescription('API Synerdata')
+    .setTitle('API-SYNNERDATA')
+    .setDescription('API Synnerdata')
     .setVersion('0.1')
     .addBearerAuth()
     .build();
