@@ -8,7 +8,6 @@ import helmet from 'helmet';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.setGlobalPrefix('api');
   app.enableVersioning({
     type: VersioningType.URI,
   });
@@ -25,13 +24,13 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('API-SYNNERDATA')
     .setDescription('API Synnerdata')
-    .setVersion('0.1')
+    .setVersion('1.0')
     .addBearerAuth()
     .build();
 
   const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, documentFactory, {
-    jsonDocumentUrl: 'api/json',
+  SwaggerModule.setup('docs', app, documentFactory, {
+    jsonDocumentUrl: 'json',
   });
 
   await app.listen(3001);

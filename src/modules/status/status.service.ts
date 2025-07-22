@@ -37,7 +37,7 @@ export class StatusService {
       version: '1.0',
       uptime: uptime,
       release_date: '2025-01-17',
-      documentation: 'https://web.synnerdata.com/api/docs',
+      documentation: 'https://api.synnerdata.com.br/docs',
       dependencies: {
         database: {
           version: dbVersionValue,
