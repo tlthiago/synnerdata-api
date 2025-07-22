@@ -31,13 +31,13 @@ export class StatusService {
 
     return {
       updated_at: updatedAt,
-      name: 'API-SYNERDATA',
-      description: 'API Synerdata',
+      name: 'API-SYNNERDATA',
+      description: 'API Synnerdata',
       status: 'online',
       version: '1.0',
       uptime: uptime,
       release_date: '2025-01-17',
-      documentation: 'https://web.synerdata.com/api/docs',
+      documentation: 'https://api.synnerdata.com.br/docs',
       dependencies: {
         database: {
           version: dbVersionValue,

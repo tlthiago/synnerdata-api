@@ -9,6 +9,7 @@ import {
 import { AuthService } from './auth.service';
 import {
   ApiBody,
+  ApiExcludeEndpoint,
   ApiOperation,
   ApiParam,
   ApiResponse,
@@ -31,30 +32,7 @@ export class AuthController {
 
   @Post('sign-up/admin')
   @HttpCode(201)
-  @ApiOperation({
-    summary: 'Cadastrar usuário',
-    description: 'Endpoint responsável por cadastrar um usuário.',
-  })
-  @ApiBody({
-    description: 'Dados necessários para cadastrar o usuário',
-    type: CreateUserDto,
-  })
-  @ApiResponse({
-    status: 200,
-    description:
-      'Retorna uma mensagem de sucesso caso o cadastro seja bem sucedido.',
-    schema: {
-      type: 'object',
-      properties: {
-        succeeded: { type: 'boolean' },
-        data: { type: 'string', nullable: true },
-        message: {
-          type: 'string',
-          description: 'Usuário cadastrado com sucesso.',
-        },
-      },
-    },
-  })
+  @ApiExcludeEndpoint()
   async signUp(@Body() createUserDto: CreateUserDto) {
     const user = await this.authService.signUp(createUserDto);
 
@@ -67,35 +45,10 @@ export class AuthController {
 
   @Post('sign-up')
   @HttpCode(201)
-  @ApiOperation({
-    summary: 'Cadastrar usuário',
-    description: 'Endpoint responsável por cadastrar um usuário.',
-  })
-  @ApiBody({
-    description: 'Dados necessários para cadastrar o usuário',
-    type: CreateUserDto,
-  })
-  @ApiResponse({
-    status: 200,
-    description:
-      'Retorna uma mensagem de sucesso caso o cadastro seja bem sucedido.',
-    schema: {
-      type: 'object',
-      properties: {
-        succeeded: { type: 'boolean' },
-        data: { type: 'string', nullable: true },
-        message: {
-          type: 'string',
-          description: 'Usuário cadastrado com sucesso.',
-        },
-      },
-    },
-  })
+  @ApiExcludeEndpoint()
   async subscriptionSignUp(
     @Body() subscriptionSignUpDto: CreateSubscriptionDto,
   ) {
-    console.log(subscriptionSignUpDto);
-
     const createdUser = await this.authService.subscriptionSignUp(
       subscriptionSignUpDto,
     );

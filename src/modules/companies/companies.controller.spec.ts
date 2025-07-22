@@ -338,6 +338,13 @@ describe('CompaniesController (E2E)', () => {
       cnaePrincipal: '6201500',
       segmento: 'Tecnologia',
       ramoAtuacao: 'Desenvolvimento de Software',
+      rua: 'Rua da Tecnologia',
+      numero: '123',
+      complemento: 'Sala 45',
+      bairro: 'Centro',
+      cidade: 'São Paulo',
+      estado: 'SP',
+      cep: '01000-000',
     };
 
     const response = await request(app.getHttpServer())
@@ -365,6 +372,13 @@ describe('CompaniesController (E2E)', () => {
       cnaePrincipal: '6201500',
       segmento: 'Tecnologia',
       ramoAtuacao: 'Desenvolvimento de Software',
+      rua: 'Rua da Tecnologia',
+      numero: '123',
+      complemento: 'Sala 45',
+      bairro: 'Centro',
+      cidade: 'São Paulo',
+      estado: 'SP',
+      cep: '01000-000',
     };
 
     const response = await request(app.getHttpServer())
@@ -388,6 +402,13 @@ describe('CompaniesController (E2E)', () => {
       cnaePrincipal: '6201500',
       segmento: 'Tecnologia',
       ramoAtuacao: 'Desenvolvimento de Software',
+      rua: 'Rua da Tecnologia',
+      numero: '123',
+      complemento: 'Sala 45',
+      bairro: 'Centro',
+      cidade: 'São Paulo',
+      estado: 'SP',
+      cep: '01000-000',
     };
 
     const response = await request(app.getHttpServer())
@@ -465,6 +486,97 @@ describe('CompaniesController (E2E)', () => {
   it('/v1/empresas/:id (DELETE) - Deve retornar erro ao excluir uma empresa inexistente', async () => {
     const response = await request(app.getHttpServer())
       .delete('/v1/empresas/86f226c4-38b0-464c-987e-35293033faf6')
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Empresa não encontrada.',
+      error: 'Not Found',
+    });
+  });
+
+  it('/v1/empresas/:id/pburl (PATCH) - Deve atualizar a URL do Power BI com sucesso', async () => {
+    const companyRepository = dataSource.getRepository(Company);
+    const createdCompany = companyRepository.create(company);
+    await companyRepository.save(createdCompany);
+
+    const updateData = {
+      pbUrl: 'https://app.powerbi.com/view?r=eyJrIjo',
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/empresas/${createdCompany.id}/pburl`)
+      .send(updateData)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      succeeded: true,
+      data: {
+        id: createdCompany.id,
+        pbUrl: updateData.pbUrl,
+      },
+      message: 'URL do Power BI cadastrada com sucesso.',
+    });
+  });
+
+  it('/v1/empresas/:id/pburl (PATCH) - Deve retornar 400 ao tentar atualizar com URL inválida', async () => {
+    const companyRepository = dataSource.getRepository(Company);
+    const createdCompany = companyRepository.create(company);
+    await companyRepository.save(createdCompany);
+
+    const invalidData = { pbUrl: 'url-invalida' };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/empresas/${createdCompany.id}/pburl`)
+      .send(invalidData)
+      .expect(400);
+
+    expect(response.body).toHaveProperty('message');
+    expect(Array.isArray(response.body.message)).toBe(true);
+    expect(response.body.message).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('A URL informada não é válida'),
+      ]),
+    );
+  });
+
+  it('/v1/empresas/:id/pburl (PATCH) - Deve retornar 404 ao tentar atualizar empresa inexistente', async () => {
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/empresas/f6cfa360-1111-2222-3333-123456789abc/pburl`)
+      .send({
+        pbUrl: 'https://app.powerbi.com/view?r=valid',
+      })
+      .expect(404);
+
+    expect(response.body).toEqual({
+      statusCode: 404,
+      message: 'Empresa não encontrada.',
+      error: 'Not Found',
+    });
+  });
+
+  it('/v1/empresas/:id/pburl (GET) - Deve retornar a URL do Power BI para empresa existente', async () => {
+    const companyRepository = dataSource.getRepository(Company);
+    const createdCompany = companyRepository.create({
+      ...company,
+      pbUrl: 'https://app.powerbi.com/view?r=valid',
+    });
+    await companyRepository.save(createdCompany);
+
+    const response = await request(app.getHttpServer())
+      .get(`/v1/empresas/${createdCompany.id}/pburl`)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      succeeded: true,
+      data: createdCompany.pbUrl,
+      message: 'URL do Power BI encontrada com sucesso.',
+    });
+  });
+
+  it('/v1/empresas/:id/pburl (GET) - Deve retornar 404 para empresa inexistente', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/v1/empresas/e3b0c442-0000-0000-0000-000000000000/pburl`)
       .expect(404);
 
     expect(response.body).toEqual({

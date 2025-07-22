@@ -23,6 +23,7 @@ import {
 } from '@nestjs/swagger';
 import { CompanyResponseDto } from './dto/company-response.dto';
 import { CompleteCompanyRegistrationDto } from './dto/complete-company-registration.dto';
+import { UpdateCompanyPbUrlDto } from './dto/update-company-pburl.dto';
 
 @Controller('v1/empresas')
 @ApiTags('Empresas')
@@ -234,7 +235,56 @@ export class CompaniesController {
     };
   }
 
-  @Get('pburl/:id')
+  @Patch(':id/pburl')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Cadastrar URL do Power BI',
+    description: 'Endpoint responsável por cadastrar a URL do Power BI.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID da empresa.',
+    type: 'string',
+    required: true,
+  })
+  @ApiBody({
+    description: 'Dados necessários para cadastrar a URL do Power BI',
+    type: UpdateCompanyPbUrlDto,
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Retorna uma mensagem de sucesso caso o cadastro seja bem sucedido.',
+    schema: {
+      type: 'object',
+      properties: {
+        succeeded: { type: 'boolean' },
+        data: { type: 'string', nullable: true },
+        message: {
+          type: 'string',
+          description: 'URL do Power BI cadastrada com sucesso.',
+        },
+      },
+    },
+  })
+  @UseGuards(JwtAuthGuard)
+  async createPbUrl(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateCompanyPbUrlDto: UpdateCompanyPbUrlDto,
+  ) {
+    const company = await this.companiesService.savePbUrl(
+      id,
+      updateCompanyPbUrlDto.pbUrl,
+    );
+
+    return {
+      succeeded: true,
+      data: company,
+      message: `URL do Power BI cadastrada com sucesso.`,
+    };
+  }
+
+  @Get(':id/pburl')
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Buscar URL do Power BI',

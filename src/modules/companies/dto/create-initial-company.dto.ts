@@ -6,7 +6,7 @@ import {
   Matches,
   IsPhoneNumber,
   IsEmail,
-  IsPostalCode,
+  IsInt,
 } from 'class-validator';
 
 export class CreateInitialCompanyDto {
@@ -40,40 +40,11 @@ export class CreateInitialCompanyDto {
   @IsPhoneNumber('BR')
   celular: string;
 
-  @ApiProperty({ description: 'Rua' })
-  @IsString()
-  @Length(1, 255)
-  rua: string;
+  @ApiProperty({ description: 'Quantidade de Funcionários' })
+  @IsInt()
+  quantidadeFuncionarios?: number;
 
-  @ApiProperty({ description: 'Número.' })
+  @ApiProperty({ description: 'Plano' })
   @IsString()
-  @Length(1, 10)
-  numero: string;
-
-  @ApiProperty({ description: 'Complemento.' })
-  @IsString()
-  @IsOptional()
-  @Length(1, 100)
-  complemento?: string;
-
-  @ApiProperty({ description: 'Bairro.' })
-  @IsString()
-  @Length(1, 100)
-  bairro: string;
-
-  @ApiProperty({ description: 'Cidade.' })
-  @IsString()
-  @Length(1, 100)
-  cidade: string;
-
-  @ApiProperty({ description: 'Estado.' })
-  @IsString()
-  @Length(2, 2)
-  estado: string;
-
-  @ApiProperty({ description: 'CEP.' })
-  @IsPostalCode('BR', {
-    message: 'CEP deve estar no formato 00000-000 ou 00000000',
-  })
-  cep: string;
+  plano?: string;
 }

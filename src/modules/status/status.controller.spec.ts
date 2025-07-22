@@ -49,7 +49,7 @@ describe('StatusController (e2e) - TestContainers', () => {
     const response = await request(app.getHttpServer()).get('/status');
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('name', 'API-SYNERDATA');
+    expect(response.body).toHaveProperty('name', 'API-SYNNERDATA');
     expect(response.body).toHaveProperty('status', 'online');
     expect(response.body.dependencies.database).toHaveProperty('version');
     expect(response.body.dependencies.database).toHaveProperty(

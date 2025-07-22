@@ -482,6 +482,69 @@ describe('FunçãoController (E2E)', () => {
     });
   });
 
+  it('/v1/funcionarios/entregas-de-epis/:id (PATCH) - Deve atualizar os dados de uma entrega de epi adicionando outros dois epis', async () => {
+    const epiDeliveryRepository = dataSource.getRepository(EpiDelivery);
+    const createdEpiDelivery = await epiDeliveryRepository.save({
+      ...epiDelivery,
+      epis: [createdEpi1],
+      funcionario: createdEmployee,
+    });
+
+    const epiRepository = dataSource.getRepository(Epi);
+    const createdEpi2 = await epiRepository.save({
+      nome: 'Luva',
+      descricao: 'Teste',
+      equipamentos: 'Teste',
+    });
+    const createdEpi3 = await epiRepository.save({
+      nome: 'Máscara',
+      descricao: 'Teste',
+      equipamentos: 'Teste',
+    });
+
+    const updateData: UpdateEpiDeliveryDto = {
+      epis: [createdEpi2.id, createdEpi3.id],
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/funcionarios/entregas-de-epis/${createdEpiDelivery.id}`)
+      .send(updateData)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      succeeded: true,
+      data: {
+        id: createdEpiDelivery.id,
+        epis: expect.arrayContaining([
+          expect.objectContaining({
+            id: createdEpi2.id,
+          }),
+          expect.objectContaining({
+            id: createdEpi3.id,
+          }),
+        ]),
+        atualizadoPor: createdUser.nome,
+      },
+      message: `Entrega de epis id: #${createdEpiDelivery.id} atualizada com sucesso.`,
+    });
+
+    const logsRepository = dataSource.getRepository(EpiDeliveryLogs);
+    const logs = await logsRepository.find({
+      where: {
+        entregaDeEpi: {
+          id: createdEpiDelivery.id,
+        },
+      },
+      relations: ['entregaDeEpi', 'epi'],
+    });
+
+    expect(logs[0]).toMatchObject({
+      acao: EpiDeliveryAction.REMOVEU,
+      descricao: `O usuário ${createdUser.id} removeu o Epi ${createdEpi1.id} da entrega ${createdEpiDelivery.id}.`,
+      criadoPor: createdUser.id,
+    });
+  });
+
   it('/v1/funcionarios/entregas-de-epis/:id (PATCH) - Deve retornar um erro ao atualizar uma entrega de epi com tipo de dado inválido', async () => {
     const epiDeliveryRepository = dataSource.getRepository(EpiDelivery);
     const createdEpiDelivery = await epiDeliveryRepository.save({
