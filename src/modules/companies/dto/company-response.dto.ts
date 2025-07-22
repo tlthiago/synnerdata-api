@@ -100,6 +100,14 @@ export class CompanyResponseDto extends BaseResponseDto {
   @Expose()
   quantidadeUsuarios: string;
 
+  @ApiProperty({ description: 'Quantidade de funcionários' })
+  @Expose()
+  quantidadeFuncionarios: string;
+
+  @ApiProperty({ description: 'Plano' })
+  @Expose()
+  plano: string;
+
   @ApiProperty({ description: 'ID assinatura pagar.me' })
   @Expose()
   idAssinatura: string;

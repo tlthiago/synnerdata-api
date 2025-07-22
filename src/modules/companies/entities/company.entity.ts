@@ -116,6 +116,12 @@ export class Company {
   @Column({ name: 'qt_usuarios', type: 'int', default: 4 })
   quantidadeUsuarios?: number;
 
+  @Column({ name: 'qt_funcionarios', type: 'int', default: 10 })
+  quantidadeFuncionarios?: number;
+
+  @Column({ name: 'plano', type: 'varchar', nullable: true })
+  plano?: string;
+
   @Column({ name: 'id_assinatura', type: 'varchar', nullable: true })
   idAssinatura?: string;
 

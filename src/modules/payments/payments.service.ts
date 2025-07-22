@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaymentIntent } from './entities/payment.entity';
 import { DataSource, Repository } from 'typeorm';
@@ -34,6 +38,15 @@ export class PaymentsService {
   }
 
   async createPaymentIntent(createPaymentIntentDto: CreatePaymentIntentDto) {
+    const { cnpj } = createPaymentIntentDto;
+
+    const existingCompany = await this.companiesService.findByCnpj(cnpj);
+    if (existingCompany) {
+      throw new BadRequestException(
+        'Já existe uma empresa cadastrada com este CNPJ.',
+      );
+    }
+
     const pagarmeResponse = await fetch(`${this.baseUrl}/paymentlinks`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
@@ -101,7 +114,7 @@ export class PaymentsService {
       });
 
       if (!payment) {
-        throw new Error(
+        throw new NotFoundException(
           `Pagamento não encontrado para pagarmeId: ${pagarmeId}`,
         );
       }
@@ -124,6 +137,10 @@ export class PaymentsService {
           cnpj: payment.cnpj,
           email: payment.email,
           celular: payment.celular,
+          quantidadeFuncionarios: parseInt(
+            payment.quantidadeFuncionarios.split('-')[1],
+          ),
+          plano: payment.tipoPlano,
         };
 
         const company = await this.companiesService.createInitialCompany(
