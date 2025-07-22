@@ -6,6 +6,7 @@ import {
   Matches,
   IsPhoneNumber,
   IsEmail,
+  IsInt,
 } from 'class-validator';
 
 export class CreateInitialCompanyDto {
@@ -38,4 +39,12 @@ export class CreateInitialCompanyDto {
   @IsString()
   @IsPhoneNumber('BR')
   celular: string;
+
+  @ApiProperty({ description: 'Quantidade de Funcionários' })
+  @IsInt()
+  quantidadeFuncionarios?: number;
+
+  @ApiProperty({ description: 'Plano' })
+  @IsString()
+  plano?: string;
 }

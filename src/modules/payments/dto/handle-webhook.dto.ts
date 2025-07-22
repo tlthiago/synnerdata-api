@@ -1,4 +1,10 @@
-import { IsString, IsObject, ValidateNested, IsEmail } from 'class-validator';
+import {
+  IsString,
+  IsObject,
+  ValidateNested,
+  IsEmail,
+  IsOptional,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class SubscriptionCustomerDto {
@@ -26,6 +32,7 @@ class SubscriptionCustomerDto {
   };
 
   @IsObject()
+  @IsOptional()
   metadata: {
     company?: string;
   };

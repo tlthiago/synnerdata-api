@@ -45,7 +45,7 @@ export class CreatePaymentIntentDto {
   telefone?: string;
 
   @ApiProperty({
-    example: '(31) 99189-7926',
+    example: '(31) 99988-7766',
     description: 'Celular de contato',
   })
   @IsString()
@@ -64,7 +64,7 @@ export class CreatePaymentIntentDto {
   @ApiProperty({
     example: '0-50',
     description: 'Faixa de quantidade de funcionários',
-    enum: ['0-50', '51-100', '101-500', '500+'],
+    enum: ['0-50', '51-100', '101-500'],
   })
   @IsString()
   @IsNotEmpty()
