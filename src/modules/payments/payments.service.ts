@@ -38,12 +38,19 @@ export class PaymentsService {
   }
 
   async createPaymentIntent(createPaymentIntentDto: CreatePaymentIntentDto) {
-    const { cnpj } = createPaymentIntentDto;
+    const { cnpj, email } = createPaymentIntentDto;
 
     const existingCompany = await this.companiesService.findByCnpj(cnpj);
     if (existingCompany) {
       throw new BadRequestException(
         'Já existe uma empresa cadastrada com este CNPJ.',
+      );
+    }
+
+    const existingUser = await this.usersService.findOneByEmail(email);
+    if (existingUser) {
+      throw new BadRequestException(
+        'Já existe um usuário cadastrado com este email.',
       );
     }
 
