@@ -218,7 +218,7 @@ export class UsersService {
     }
 
     const result = await this.usersRepository.update(
-      { id, status: 'A' },
+      { id },
       {
         status: 'E',
         atualizadoPor: user.id,
