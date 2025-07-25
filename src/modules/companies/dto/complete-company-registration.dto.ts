@@ -28,8 +28,7 @@ export class CompleteCompanyRegistrationDto {
 
   @ApiProperty({ description: 'Inscrição Estadual.' })
   @IsString()
-  @IsNotEmpty()
-  @Length(1, 50)
+  @IsOptional()
   inscricaoEstadual: string;
 
   @ApiProperty({ description: 'CNAE Principal.' })

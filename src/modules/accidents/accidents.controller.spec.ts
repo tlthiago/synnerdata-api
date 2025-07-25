@@ -194,6 +194,8 @@ describe('AccidentsController (E2E)', () => {
       quantidadeOnibus: 1,
       cargaHoraria: 60,
       escala: Escala.SEIS_UM,
+      valorAlimentacao: 800,
+      valorTransporte: 500,
       empresa: createdCompany,
     });
     createdEmployee = await employeeRepository.save(employee);
