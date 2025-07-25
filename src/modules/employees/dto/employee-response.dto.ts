@@ -158,6 +158,17 @@ export class EmployeeResponseDto extends BaseResponseDto {
   )
   vencimentoExperiencia2: string;
 
+  @ApiProperty({ description: 'Data do exame admissional' })
+  @Expose()
+  @Transform(({ value }) =>
+    value
+      ? new Intl.DateTimeFormat('pt-BR', {
+          dateStyle: 'short',
+        }).format(new Date(value))
+      : null,
+  )
+  dataExameAdmissional: string;
+
   @ApiProperty({ description: 'Data do exame demissional' })
   @Expose()
   @Transform(({ value }) =>
@@ -193,6 +204,10 @@ export class EmployeeResponseDto extends BaseResponseDto {
   @ApiProperty({ description: 'Quantidade de filhos' })
   @Expose()
   quantidadeFilhos: number;
+
+  @ApiProperty({ description: 'Filhos abaixo de 21 anos?' })
+  @Expose()
+  filhosAbaixoDe21: boolean;
 
   @ApiProperty({ description: 'Telefone' })
   @Expose()
@@ -261,6 +276,16 @@ export class EmployeeResponseDto extends BaseResponseDto {
   @ApiProperty({ description: 'Escala de trabalho', enum: Escala })
   @Expose()
   escala: Escala;
+
+  @ApiProperty({ description: 'Valor alimentação' })
+  @Expose()
+  @Transform(({ value }) => parseFloat(value))
+  valorAlimentacao: number;
+
+  @ApiProperty({ description: 'Valor Transporte' })
+  @Expose()
+  @Transform(({ value }) => parseFloat(value))
+  valorTransporte: number;
 
   @ApiProperty({
     description: 'Status do Funcionário',

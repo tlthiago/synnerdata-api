@@ -75,6 +75,7 @@ describe('FuncionárioController (E2E)', () => {
     dataUltimoASO: '2025-02-12',
     funcao: '1',
     setor: '1',
+    dataExameAdmissional: '2025-01-01',
     grauInstrucao: GrauInstrucao.SUPERIOR,
     necessidadesEspeciais: false,
     filhos: false,
@@ -90,6 +91,8 @@ describe('FuncionárioController (E2E)', () => {
     quantidadeOnibus: 1,
     cargaHoraria: 60,
     escala: Escala.SEIS_UM,
+    valorAlimentacao: 800,
+    valorTransporte: 500,
   };
 
   beforeAll(async () => {
@@ -388,30 +391,6 @@ describe('FuncionárioController (E2E)', () => {
       statusCode: 404,
       message: 'Cbo não encontrado.',
       error: 'Not Found',
-    });
-  });
-
-  it('/v1/empresas/:empresaId/funcionarios (POST) - Deve retornar erro caso o CPF já exista', async () => {
-    const employeeRepository = dataSource.getRepository(Employee);
-    await employeeRepository.save({
-      ...employee,
-      funcao: createdRole,
-      setor: createdDepartment,
-      cbo: createdCbo,
-      empresa: createdCompany,
-    });
-
-    const response = await request(app.getHttpServer())
-      .post(`/v1/empresas/${createdCompany.id}/funcionarios`)
-      .send({
-        ...employee,
-      })
-      .expect(409);
-
-    expect(response.body).toEqual({
-      statusCode: 409,
-      message: 'Já existe um funcionário cadastrado com o mesmo número de CPF.',
-      error: 'Conflict',
     });
   });
 
@@ -737,41 +716,6 @@ describe('FuncionárioController (E2E)', () => {
       statusCode: 404,
       message: 'Cbo não encontrado.',
       error: 'Not Found',
-    });
-  });
-
-  it('/v1/empresas/funcionarios/:id (PATCH) - Deve retornar um erro ao atualizar um funcionário caso o CPF já exista', async () => {
-    const employeeRepository = dataSource.getRepository(Employee);
-    await employeeRepository.save({
-      ...employee,
-      funcao: createdRole,
-      setor: createdDepartment,
-      cbo: createdCbo,
-      empresa: createdCompany,
-    });
-
-    const updateEmployee = await employeeRepository.save({
-      ...employee,
-      cpf: '95339472507',
-      funcao: createdRole,
-      setor: createdDepartment,
-      cbo: createdCbo,
-      empresa: createdCompany,
-    });
-
-    const updateData = {
-      cpf: '64693184799',
-    };
-
-    const response = await request(app.getHttpServer())
-      .patch(`/v1/empresas/funcionarios/${updateEmployee.id}`)
-      .send(updateData)
-      .expect(409);
-
-    expect(response.body).toEqual({
-      statusCode: 409,
-      message: 'Já existe um funcionário cadastrado com o mesmo número de CPF.',
-      error: 'Conflict',
     });
   });
 

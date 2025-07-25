@@ -52,6 +52,7 @@ describe('MedicalCertificateController (E2E)', () => {
     dataInicio: '2025-02-10',
     dataFim: '2025-02-14',
     motivo: 'Motivo Teste',
+    cid: 'F32.1',
   };
 
   beforeAll(async () => {
@@ -193,6 +194,8 @@ describe('MedicalCertificateController (E2E)', () => {
       quantidadeOnibus: 1,
       cargaHoraria: 60,
       escala: Escala.SEIS_UM,
+      valorAlimentacao: 800,
+      valorTransporte: 500,
       empresa: createdCompany,
     });
     createdEmployee = await employeeRepository.save(employee);
@@ -245,6 +248,20 @@ describe('MedicalCertificateController (E2E)', () => {
     expect(response.body.message).toEqual(
       expect.arrayContaining([
         'dataInicio must be a valid ISO 8601 date string',
+      ]),
+    );
+  });
+
+  it('/v1/funcionarios/:funcionarioId/atestados (POST) - Deve retornar erro ao criar um atestado com CID inválido', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/v1/funcionarios/${createdEmployee.id}/atestados`)
+      .send({ ...medicalCertificate, cid: '123ABC' })
+      .expect(400);
+
+    expect(response.body).toHaveProperty('message');
+    expect(response.body.message).toEqual(
+      expect.arrayContaining([
+        'O CID deve seguir o formato válido (ex: J45.0)',
       ]),
     );
   });
@@ -443,6 +460,31 @@ describe('MedicalCertificateController (E2E)', () => {
     expect(response.body.message).toEqual(
       expect.arrayContaining([
         'dataInicio must be a valid ISO 8601 date string',
+      ]),
+    );
+  });
+
+  it('/v1/funcionarios/atestados/:id (PATCH) - Deve retornar erro ao atualizar um atestado com CID inválido', async () => {
+    const medicalCertificateRepository =
+      dataSource.getRepository(MedicalCertificate);
+    const createdMedicalCertificate = await medicalCertificateRepository.save({
+      ...medicalCertificate,
+      funcionario: createdEmployee,
+    });
+
+    const updateData = {
+      cid: 'ZZ9999',
+    };
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/funcionarios/atestados/${createdMedicalCertificate.id}`)
+      .send(updateData)
+      .expect(400);
+
+    expect(response.body).toHaveProperty('message');
+    expect(response.body.message).toEqual(
+      expect.arrayContaining([
+        'O CID deve seguir o formato válido (ex: J45.0)',
       ]),
     );
   });
