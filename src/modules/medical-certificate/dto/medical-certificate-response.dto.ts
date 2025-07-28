@@ -30,4 +30,11 @@ export class MedicalCertificateResponseDto extends BaseResponseDto {
   @ApiProperty({ description: 'Motivo do atestado.' })
   @Expose()
   motivo: string;
+
+  @ApiProperty({
+    description: 'Código CID-10 do atestado, se informado.',
+    example: 'J45.0',
+  })
+  @Expose()
+  cid?: string;
 }

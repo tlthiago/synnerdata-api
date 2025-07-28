@@ -13,6 +13,9 @@ export class MedicalCertificate extends BaseEntity {
   @Column({ name: 'motivo', type: 'varchar', length: 255 })
   motivo: string;
 
+  @Column({ name: 'cid', type: 'varchar', length: 10, nullable: true })
+  cid?: string;
+
   @ManyToOne(() => Employee, (employee) => employee.atestados)
   funcionario: Employee;
 }

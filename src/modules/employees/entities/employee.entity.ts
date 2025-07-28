@@ -33,7 +33,7 @@ export class Employee extends BaseEntity {
   @Column({ name: 'carteira_identidade', type: 'varchar', length: 14 })
   carteiraIdentidade: string;
 
-  @Column({ name: 'cpf', type: 'varchar', length: 11, unique: true })
+  @Column({ name: 'cpf', type: 'varchar', length: 11 })
   cpf: string;
 
   @Column({ name: 'sexo', type: 'enum', enum: Sexo })
@@ -57,7 +57,7 @@ export class Employee extends BaseEntity {
   @Column({ name: 'peso', type: 'decimal', precision: 6, scale: 2 })
   peso: number;
 
-  @Column({ name: 'nome_pai', type: 'varchar', length: 100 })
+  @Column({ name: 'nome_pai', type: 'varchar', length: 100, nullable: true })
   nomePai: string;
 
   @Column({ name: 'nome_mae', type: 'varchar', length: 100 })
@@ -111,6 +111,13 @@ export class Employee extends BaseEntity {
   vencimentoExperiencia2?: Date;
 
   @Column({
+    name: 'data_exame_admissional',
+    type: 'date',
+    nullable: true,
+  })
+  dataExameAdmissional?: Date;
+
+  @Column({
     name: 'data_exame_demissional',
     type: 'date',
     nullable: true,
@@ -139,6 +146,9 @@ export class Employee extends BaseEntity {
 
   @Column({ name: 'quantidade_filhos', type: 'int', nullable: true })
   quantidadeFilhos?: number;
+
+  @Column({ name: 'filhos_abaixo_de_21', type: 'boolean', nullable: true })
+  filhosAbaixoDe21?: boolean;
 
   @Column({ name: 'telefone', type: 'varchar', length: 20, nullable: true })
   telefone?: string;
@@ -208,6 +218,24 @@ export class Employee extends BaseEntity {
     enum: Escala,
   })
   escala: Escala;
+
+  @Column({
+    name: 'valor_alimentacao',
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    default: 0,
+  })
+  valorAlimentacao: number;
+
+  @Column({
+    name: 'valor_transporte',
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    default: 0,
+  })
+  valorTransporte: number;
 
   @Column({
     name: 'status_funcionario',

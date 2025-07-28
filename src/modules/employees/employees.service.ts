@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -58,14 +54,6 @@ export class EmployeesService {
     const cbo = await this.cbosService.findOne(createEmployeeDto.cbo);
 
     const user = await this.usersService.findOne(createdBy);
-
-    const existingEmployee = await this.findByCpf(createEmployeeDto.cpf);
-
-    if (existingEmployee) {
-      throw new ConflictException(
-        'Já existe um funcionário cadastrado com o mesmo número de CPF.',
-      );
-    }
 
     const employee = this.employeesRepository.create({
       ...createEmployeeDto,
@@ -182,16 +170,6 @@ export class EmployeesService {
 
     if (updateEmployeeDto.cbo) {
       cbo = await this.cbosService.findOneInternal(updateEmployeeDto.cbo);
-    }
-
-    if (updateEmployeeDto.cpf) {
-      const existingEmployee = await this.findByCpf(updateEmployeeDto.cpf);
-
-      if (existingEmployee && existingEmployee.id !== id) {
-        throw new ConflictException(
-          'Já existe um funcionário cadastrado com o mesmo número de CPF.',
-        );
-      }
     }
 
     const result = await this.employeesRepository.update(id, {

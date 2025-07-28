@@ -80,8 +80,8 @@ export class CreateEmployeeDto {
 
   @ApiProperty({ description: 'Nome do Pai', type: 'string' })
   @IsString()
-  @IsNotEmpty()
-  nomePai: string;
+  @IsOptional()
+  nomePai?: string;
 
   @ApiProperty({ description: 'Nome da mãe', type: 'string' })
   @IsString()
@@ -170,6 +170,10 @@ export class CreateEmployeeDto {
   @IsOptional()
   vencimentoExperiencia2?: string;
 
+  @ApiProperty({ description: 'Data do exame admissional', type: 'string' })
+  @IsDateString()
+  dataExameAdmissional: string;
+
   @ApiProperty({ description: 'Data do exame demissional', type: 'string' })
   @IsDateString()
   @IsOptional()
@@ -207,6 +211,11 @@ export class CreateEmployeeDto {
   @IsNumber()
   @IsOptional()
   quantidadeFilhos?: number;
+
+  @ApiProperty({ description: 'Filhos abaixo de 21 anos?', type: 'boolean' })
+  @IsBoolean()
+  @IsOptional()
+  filhosAbaixoDe21?: boolean;
 
   @ApiProperty({ description: 'Telefone residencial', type: 'string' })
   @IsOptional()
@@ -301,4 +310,14 @@ export class CreateEmployeeDto {
   @IsEnum(Escala)
   @IsNotEmpty()
   escala: Escala;
+
+  @ApiProperty({ description: 'Valor alimentação', type: 'number' })
+  @IsNumber()
+  @IsNotEmpty()
+  valorAlimentacao: number;
+
+  @ApiProperty({ description: 'Valor transporte', type: 'number' })
+  @IsNumber()
+  @IsNotEmpty()
+  valorTransporte: number;
 }
