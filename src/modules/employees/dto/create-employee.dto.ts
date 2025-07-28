@@ -172,7 +172,8 @@ export class CreateEmployeeDto {
 
   @ApiProperty({ description: 'Data do exame admissional', type: 'string' })
   @IsDateString()
-  dataExameAdmissional: string;
+  @IsOptional()
+  dataExameAdmissional?: string;
 
   @ApiProperty({ description: 'Data do exame demissional', type: 'string' })
   @IsDateString()
