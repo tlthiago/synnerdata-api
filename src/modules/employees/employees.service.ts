@@ -67,6 +67,9 @@ export class EmployeesService {
       dataUltimoASO: createEmployeeDto.dataUltimoASO
         ? new Date(createEmployeeDto.dataUltimoASO)
         : null,
+      dataExameAdmissional: createEmployeeDto.dataExameAdmissional
+        ? new Date(createEmployeeDto.dataExameAdmissional)
+        : null,
       vencimentoExperiencia1: createEmployeeDto.vencimentoExperiencia1
         ? new Date(createEmployeeDto.vencimentoExperiencia1)
         : null,
