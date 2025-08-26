@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { EmployeesService } from './employees.service';
 import { EmployeesController } from './employees.controller';
+import { EmployeeTemplateController } from './employee-template.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Employee } from './entities/employee.entity';
 import { CompaniesModule } from '../companies/companies.module';
@@ -20,7 +21,7 @@ import { UsersModule } from '../users/users.module';
     CbosModule,
     UsersModule,
   ],
-  controllers: [EmployeesController],
+  controllers: [EmployeesController, EmployeeTemplateController],
   providers: [EmployeesService],
   exports: [EmployeesService],
 })

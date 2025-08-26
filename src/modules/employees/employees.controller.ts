@@ -8,7 +8,11 @@ import {
   UseGuards,
   Delete,
   ParseUUIDPipe,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
@@ -78,6 +82,90 @@ export class EmployeesController {
       data: employee,
       message: `Funcionário cadastrado com sucesso, id: #${employee.id}.`,
     };
+  }
+
+  @Post(':empresaId/funcionarios/importar')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Importar funcionários via Excel',
+    description:
+      'Endpoint responsável por importar funcionários através de arquivo Excel (.xlsx).',
+  })
+  @ApiParam({
+    name: 'empresaId',
+    description: 'ID da empresa.',
+    type: 'string',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Retorna um resumo da importação em caso de sucesso.',
+    schema: {
+      type: 'object',
+      properties: {
+        totalRows: { type: 'number' },
+        inserted: { type: 'number' },
+        skipped: { type: 'number' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Retorna erros de validação.',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        errors: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              row: { type: 'number' },
+              field: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  })
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 15 * 1024 * 1024,
+      },
+      fileFilter: (req, file, cb) => {
+        if (
+          file.mimetype ===
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        ) {
+          cb(null, true);
+        } else {
+          cb(
+            new BadRequestException('Apenas arquivos .xlsx são permitidos'),
+            false,
+          );
+        }
+      },
+    }),
+  )
+  async importEmployees(
+    @Param('empresaId', ParseUUIDPipe) companyId: string,
+    @UploadedFile() file: any,
+    @CurrentUser() user: CurrentUserDto,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Arquivo obrigatório');
+    }
+
+    const result = await this.employeesService.importXlsx(
+      companyId,
+      file.buffer,
+      user.id,
+    );
+    return result;
   }
 
   @Get(':empresaId/funcionarios')
