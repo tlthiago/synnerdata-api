@@ -268,7 +268,6 @@ export class EmployeesService {
         );
       }
 
-      // Validar cabeçalhos obrigatórios
       const headerRow = worksheet.getRow(1);
       const headers: string[] = [];
       headerRow.eachCell((cell, colNumber) => {
@@ -327,7 +326,6 @@ export class EmployeesService {
         headerMap.set(header, colIndex);
       });
 
-      // Processar linhas
       const errors: Array<{ row: number; field: string; message: string }> = [];
       const employeesToInsert: any[] = [];
       let totalRows = 0;
@@ -335,12 +333,10 @@ export class EmployeesService {
       for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
         const row = worksheet.getRow(rowNumber);
 
-        // Verificar se a linha não está vazia
         if (row.hasValues) {
           totalRows++;
 
           try {
-            // Extrair dados da linha
             const rowData: any = {};
 
             requiredHeaders.forEach((header) => {
@@ -361,7 +357,6 @@ export class EmployeesService {
               }
             });
 
-            // Converter valores boolean e numéricos
             if (rowData.necessidadesespeciais !== undefined) {
               rowData.necessidadesespeciais = this.parseBoolean(
                 rowData.necessidadesespeciais,
@@ -376,7 +371,6 @@ export class EmployeesService {
               );
             }
 
-            // Converter números
             [
               'altura',
               'peso',
@@ -394,7 +388,6 @@ export class EmployeesService {
               }
             });
 
-            // Validar com class-validator
             const dto = plainToInstance(ImportEmployeeRowDto, rowData);
             const validationErrors = await validate(dto);
 
@@ -411,8 +404,13 @@ export class EmployeesService {
                 }
               });
             } else {
-              // Verificar se CPF já existe
-              const existingEmployee = await this.findByCpf(rowData.cpf);
+              const existingEmployee = await this.employeesRepository.findOne({
+                where: {
+                  cpf: rowData.cpf,
+                  empresa: { id: companyId },
+                },
+              });
+
               if (existingEmployee) {
                 errors.push({
                   row: rowNumber,
@@ -420,7 +418,7 @@ export class EmployeesService {
                   message: 'CPF já cadastrado',
                 });
               } else {
-                employeesToInsert.push({ ...rowData, rowNumber });
+                employeesToInsert.push({ ...dto, rowNumber });
               }
             }
           } catch (error) {
@@ -433,7 +431,6 @@ export class EmployeesService {
         }
       }
 
-      // Se houver erros, retornar sem inserir
       if (errors.length > 0) {
         throw new BadRequestException({
           message: 'Validation failed',
@@ -441,7 +438,6 @@ export class EmployeesService {
         });
       }
 
-      // Inserir funcionários em lotes
       let inserted = 0;
       const batchSize = 1000;
 
@@ -451,7 +447,6 @@ export class EmployeesService {
             const batch = employeesToInsert.slice(i, i + batchSize);
 
             for (const employeeData of batch) {
-              // Buscar entidades relacionadas
               const role = await this.rolesService.findOneInternal(
                 employeeData.funcao,
               );
@@ -469,7 +464,6 @@ export class EmployeesService {
                 );
               }
 
-              // Criar funcionário
               const employee = transactionalEntityManager.create(Employee, {
                 nome: employeeData.nome,
                 carteiraIdentidade: employeeData.carteiraidentidade,
@@ -569,7 +563,6 @@ export class EmployeesService {
   }
 
   private convertToString(fieldName: string, value: any): any {
-    // Campos que devem sempre ser convertidos para string
     const stringFields = [
       'carteiraidentidade',
       'cpf',
@@ -587,7 +580,6 @@ export class EmployeesService {
       return String(value);
     }
 
-    // Para outros campos, retornar o valor original
     return value;
   }
 }

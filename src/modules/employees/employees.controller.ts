@@ -10,9 +10,9 @@ import {
   ParseUUIDPipe,
   UseInterceptors,
   UploadedFile,
-  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { FileUploadInterceptor } from './interceptors/file-upload.interceptor';
 import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
@@ -131,35 +131,12 @@ export class EmployeesController {
     },
   })
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(
-    FileInterceptor('file', {
-      limits: {
-        fileSize: 15 * 1024 * 1024,
-      },
-      fileFilter: (req, file, cb) => {
-        if (
-          file.mimetype ===
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        ) {
-          cb(null, true);
-        } else {
-          cb(
-            new BadRequestException('Apenas arquivos .xlsx são permitidos'),
-            false,
-          );
-        }
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file'), FileUploadInterceptor)
   async importEmployees(
     @Param('empresaId', ParseUUIDPipe) companyId: string,
     @UploadedFile() file: any,
     @CurrentUser() user: CurrentUserDto,
   ) {
-    if (!file) {
-      throw new BadRequestException('Arquivo obrigatório');
-    }
-
     const result = await this.employeesService.importXlsx(
       companyId,
       file.buffer,
