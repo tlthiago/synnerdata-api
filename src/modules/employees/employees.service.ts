@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -19,6 +23,9 @@ import { Department } from '../departments/entities/department.entity';
 import { CostCenter } from '../cost-centers/entities/cost-center.entity';
 import { Cbo } from '../cbos/entities/cbo.entity';
 import { UsersResponseDto } from '../users/dto/user-response.dto';
+import { ImportEmployeeRowDto } from './dto/import-employee-row.dto';
+import { validate } from 'class-validator';
+import { Workbook } from 'exceljs';
 
 @Injectable()
 export class EmployeesService {
@@ -244,5 +251,335 @@ export class EmployeesService {
     }
 
     return this.findOne(id);
+  }
+
+  async importXlsx(companyId: string, fileBuffer: Buffer, createdBy: string) {
+    try {
+      const company = await this.companiesService.findOne(companyId);
+      const user = await this.usersService.findOne(createdBy);
+
+      const workbook = new Workbook();
+      await workbook.xlsx.load(fileBuffer as any);
+      const worksheet = workbook.getWorksheet(1);
+
+      if (!worksheet) {
+        throw new BadRequestException(
+          'Arquivo Excel não contém planilha válida',
+        );
+      }
+
+      const headerRow = worksheet.getRow(1);
+      const headers: string[] = [];
+      headerRow.eachCell((cell, colNumber) => {
+        headers[colNumber] = cell.value?.toString().toLowerCase().trim() || '';
+      });
+
+      const requiredHeaders = [
+        'nome',
+        'carteiraidentidade',
+        'cpf',
+        'sexo',
+        'datanascimento',
+        'estadocivil',
+        'naturalidade',
+        'nacionalidade',
+        'altura',
+        'peso',
+        'nomemae',
+        'email',
+        'pis',
+        'ctpsnumero',
+        'ctpsserie',
+        'certificadoreservista',
+        'regimecontratacao',
+        'dataadmissao',
+        'salario',
+        'funcao',
+        'setor',
+        'grauinstrucao',
+        'necessidadesespeciais',
+        'filhos',
+        'celular',
+        'gestor',
+        'cbo',
+        'rua',
+        'numero',
+        'bairro',
+        'cidade',
+        'estado',
+        'cep',
+        'quantidadeonibus',
+        'cargahoraria',
+        'escala',
+        'valoralimentacao',
+        'valortransporte',
+      ];
+
+      const headerMap = new Map<string, number>();
+      requiredHeaders.forEach((header) => {
+        const colIndex = headers.findIndex((h) => h === header);
+        if (colIndex === -1) {
+          throw new BadRequestException(
+            `Cabeçalho obrigatório '${header}' não encontrado`,
+          );
+        }
+        headerMap.set(header, colIndex);
+      });
+
+      const errors: Array<{ row: number; field: string; message: string }> = [];
+      const employeesToInsert: any[] = [];
+      let totalRows = 0;
+
+      for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
+        const row = worksheet.getRow(rowNumber);
+
+        if (row.hasValues) {
+          totalRows++;
+
+          try {
+            const rowData: any = {};
+
+            requiredHeaders.forEach((header) => {
+              const colIndex = headerMap.get(header);
+              if (colIndex !== undefined) {
+                const cellValue = row.getCell(colIndex).value;
+
+                if (cellValue !== null && cellValue !== undefined) {
+                  if (typeof cellValue === 'string') {
+                    rowData[header] = cellValue.trim();
+                  } else if (cellValue instanceof Date) {
+                    rowData[header] = cellValue.toISOString().split('T')[0];
+                  } else {
+                    // Converter para string campos que devem ser strings
+                    rowData[header] = this.convertToString(header, cellValue);
+                  }
+                }
+              }
+            });
+
+            if (rowData.necessidadesespeciais !== undefined) {
+              rowData.necessidadesespeciais = this.parseBoolean(
+                rowData.necessidadesespeciais,
+              );
+            }
+            if (rowData.filhos !== undefined) {
+              rowData.filhos = this.parseBoolean(rowData.filhos);
+            }
+            if (rowData.filhosabaixode21 !== undefined) {
+              rowData.filhosabaixode21 = this.parseBoolean(
+                rowData.filhosabaixode21,
+              );
+            }
+
+            [
+              'altura',
+              'peso',
+              'salario',
+              'quantidadefilhos',
+              'latitude',
+              'longitude',
+              'quantidadeonibus',
+              'cargahoraria',
+              'valoralimentacao',
+              'valortransporte',
+            ].forEach((field) => {
+              if (rowData[field] !== undefined && rowData[field] !== '') {
+                rowData[field] = parseFloat(rowData[field]);
+              }
+            });
+
+            const dto = plainToInstance(ImportEmployeeRowDto, rowData);
+            const validationErrors = await validate(dto);
+
+            if (validationErrors.length > 0) {
+              validationErrors.forEach((error) => {
+                if (error.constraints) {
+                  Object.values(error.constraints).forEach((message) => {
+                    errors.push({
+                      row: rowNumber,
+                      field: error.property,
+                      message: message as string,
+                    });
+                  });
+                }
+              });
+            } else {
+              const existingEmployee = await this.employeesRepository.findOne({
+                where: {
+                  cpf: rowData.cpf,
+                  empresa: { id: companyId },
+                },
+              });
+
+              if (existingEmployee) {
+                errors.push({
+                  row: rowNumber,
+                  field: 'cpf',
+                  message: 'CPF já cadastrado',
+                });
+              } else {
+                employeesToInsert.push({ ...dto, rowNumber });
+              }
+            }
+          } catch (error) {
+            errors.push({
+              row: rowNumber,
+              field: 'geral',
+              message: `Erro ao processar linha: ${error.message}`,
+            });
+          }
+        }
+      }
+
+      if (errors.length > 0) {
+        throw new BadRequestException({
+          message: 'Validation failed',
+          errors,
+        });
+      }
+
+      let inserted = 0;
+      const batchSize = 1000;
+
+      await this.employeesRepository.manager.transaction(
+        async (transactionalEntityManager) => {
+          for (let i = 0; i < employeesToInsert.length; i += batchSize) {
+            const batch = employeesToInsert.slice(i, i + batchSize);
+
+            for (const employeeData of batch) {
+              const role = await this.rolesService.findOneInternal(
+                employeeData.funcao,
+              );
+              const department = await this.departmentsService.findOneInternal(
+                employeeData.setor,
+              );
+              const cbo = await this.cbosService.findOneInternal(
+                employeeData.cbo,
+              );
+
+              let costCenter = null;
+              if (employeeData.centrocusto) {
+                costCenter = await this.costCentersService.findOneInternal(
+                  employeeData.centrocusto,
+                );
+              }
+
+              const employee = transactionalEntityManager.create(Employee, {
+                nome: employeeData.nome,
+                carteiraIdentidade: employeeData.carteiraidentidade,
+                cpf: employeeData.cpf,
+                sexo: employeeData.sexo,
+                dataNascimento: new Date(employeeData.datanascimento),
+                estadoCivil: employeeData.estadocivil,
+                naturalidade: employeeData.naturalidade,
+                nacionalidade: employeeData.nacionalidade,
+                altura: employeeData.altura,
+                peso: employeeData.peso,
+                nomePai: employeeData.nomepai || null,
+                nomeMae: employeeData.nomemae,
+                email: employeeData.email,
+                pis: employeeData.pis,
+                ctpsNumero: employeeData.ctpsnumero,
+                ctpsSerie: employeeData.ctpsserie,
+                certificadoReservista: employeeData.certificadoreservista,
+                regimeContratacao: employeeData.regimecontratacao,
+                dataAdmissao: new Date(employeeData.dataadmissao),
+                salario: employeeData.salario,
+                dataUltimoASO: employeeData.dataultimoaso
+                  ? new Date(employeeData.dataultimoaso)
+                  : null,
+                vencimentoExperiencia1: employeeData.vencimentoexperiencia1
+                  ? new Date(employeeData.vencimentoexperiencia1)
+                  : null,
+                vencimentoExperiencia2: employeeData.vencimentoexperiencia2
+                  ? new Date(employeeData.vencimentoexperiencia2)
+                  : null,
+                dataExameAdmissional: employeeData.dataexameadmissional
+                  ? new Date(employeeData.dataexameadmissional)
+                  : null,
+                dataExameDemissional: employeeData.dataexamedemissional
+                  ? new Date(employeeData.dataexamedemissional)
+                  : null,
+                grauInstrucao: employeeData.grauinstrucao,
+                necessidadesEspeciais: employeeData.necessidadesespeciais,
+                tipoDeficiencia: employeeData.tipodeficiencia || null,
+                filhos: employeeData.filhos,
+                quantidadeFilhos: employeeData.quantidadefilhos || null,
+                filhosAbaixoDe21: employeeData.filhosabaixode21 || null,
+                telefone: employeeData.telefone || null,
+                celular: employeeData.celular,
+                gestor: employeeData.gestor,
+                rua: employeeData.rua,
+                numero: employeeData.numero,
+                complemento: employeeData.complemento || null,
+                bairro: employeeData.bairro,
+                cidade: employeeData.cidade,
+                estado: employeeData.estado,
+                cep: employeeData.cep,
+                latitude: employeeData.latitude || null,
+                longitude: employeeData.longitude || null,
+                quantidadeOnibus: employeeData.quantidadeonibus,
+                cargaHoraria: employeeData.cargahoraria,
+                escala: employeeData.escala,
+                valorAlimentacao: employeeData.valoralimentacao,
+                valorTransporte: employeeData.valortransporte,
+                empresa: { id: company.id },
+                funcao: { id: role.id },
+                setor: { id: department.id },
+                cbo: { id: cbo.id },
+                centroCusto: costCenter ? { id: costCenter.id } : null,
+                criadoPor: user,
+              });
+
+              await transactionalEntityManager.save(Employee, employee);
+              inserted++;
+            }
+          }
+        },
+      );
+
+      return {
+        totalRows,
+        inserted,
+        skipped: 0,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private parseBoolean(value: any): boolean {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const lower = value.toLowerCase().trim();
+      return (
+        lower === 'true' || lower === 'sim' || lower === 's' || lower === '1'
+      );
+    }
+    if (typeof value === 'number') {
+      return value === 1;
+    }
+    return false;
+  }
+
+  private convertToString(fieldName: string, value: any): any {
+    const stringFields = [
+      'carteiraidentidade',
+      'cpf',
+      'pis',
+      'ctpsnumero',
+      'ctpsserie',
+      'certificadoreservista',
+      'cep',
+      'telefone',
+      'celular',
+      'numero',
+    ];
+
+    if (stringFields.includes(fieldName)) {
+      return String(value);
+    }
+
+    return value;
   }
 }
