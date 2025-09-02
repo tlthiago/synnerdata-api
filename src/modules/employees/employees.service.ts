@@ -315,7 +315,25 @@ export class EmployeesService {
         'valortransporte',
       ];
 
+      const optionalHeaders = [
+        'nomepai',
+        'dataultimoaso',
+        'vencimentoexperiencia1',
+        'vencimentoexperiencia2',
+        'dataexameadmissional',
+        'dataexamedemissional',
+        'centrocusto',
+        'tipodeficiencia',
+        'quantidadefilhos',
+        'filhosabaixode21',
+        'telefone',
+        'complemento',
+        'latitude',
+        'longitude',
+      ];
+
       const headerMap = new Map<string, number>();
+
       requiredHeaders.forEach((header) => {
         const colIndex = headers.findIndex((h) => h === header);
         if (colIndex === -1) {
@@ -324,6 +342,13 @@ export class EmployeesService {
           );
         }
         headerMap.set(header, colIndex);
+      });
+
+      optionalHeaders.forEach((header) => {
+        const colIndex = headers.findIndex((h) => h === header);
+        if (colIndex !== -1) {
+          headerMap.set(header, colIndex);
+        }
       });
 
       const errors: Array<{ row: number; field: string; message: string }> = [];
@@ -350,7 +375,23 @@ export class EmployeesService {
                   } else if (cellValue instanceof Date) {
                     rowData[header] = cellValue.toISOString().split('T')[0];
                   } else {
-                    // Converter para string campos que devem ser strings
+                    rowData[header] = this.convertToString(header, cellValue);
+                  }
+                }
+              }
+            });
+
+            optionalHeaders.forEach((header) => {
+              const colIndex = headerMap.get(header);
+              if (colIndex !== undefined) {
+                const cellValue = row.getCell(colIndex).value;
+
+                if (cellValue !== null && cellValue !== undefined) {
+                  if (typeof cellValue === 'string') {
+                    rowData[header] = cellValue.trim();
+                  } else if (cellValue instanceof Date) {
+                    rowData[header] = cellValue.toISOString().split('T')[0];
+                  } else {
                     rowData[header] = this.convertToString(header, cellValue);
                   }
                 }
@@ -404,22 +445,7 @@ export class EmployeesService {
                 }
               });
             } else {
-              const existingEmployee = await this.employeesRepository.findOne({
-                where: {
-                  cpf: rowData.cpf,
-                  empresa: { id: companyId },
-                },
-              });
-
-              if (existingEmployee) {
-                errors.push({
-                  row: rowNumber,
-                  field: 'cpf',
-                  message: 'CPF já cadastrado',
-                });
-              } else {
-                employeesToInsert.push({ ...dto, rowNumber });
-              }
+              employeesToInsert.push({ ...dto, rowNumber });
             }
           } catch (error) {
             errors.push({

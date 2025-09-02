@@ -10,6 +10,7 @@ import {
   Length,
   Min,
   Max,
+  IsUUID,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import {
@@ -21,7 +22,6 @@ import {
 } from '../enums/employees.enum';
 import { IsFlexibleDate } from '../decorators/flexible-date.decorator';
 
-// Função utilitária para converter datas do formato brasileiro para ISO
 export function toIsoDate(value: string): string | null {
   if (!value || typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -134,7 +134,7 @@ export class ImportEmployeeRowDto {
 
   @IsEnum(RegimeContratacao, {
     message: 'Regime de contratação deve ser CLT ou PJ',
-  }) // O campo regime de contratação deve ser do tipo enum
+  })
   regimecontratacao: RegimeContratacao;
 
   @IsFlexibleDate({
@@ -156,11 +156,11 @@ export class ImportEmployeeRowDto {
   @Transform(({ value }) => toIsoDate(value))
   dataultimoaso?: string;
 
-  @IsString({ message: 'O campo função deve ser do tipo texto' })
+  @IsUUID('4', { message: 'O campo função deve ser um ID válido (UUID v4)' })
   @IsNotEmpty({ message: 'Função é obrigatória (ID da função)' })
   funcao: string;
 
-  @IsString({ message: 'O campo setor deve ser do tipo texto' })
+  @IsUUID('4', { message: 'O campo setor deve ser um ID válido (UUID v4)' })
   @IsNotEmpty({ message: 'Setor é obrigatório (ID do setor)' })
   setor: string;
 
@@ -196,14 +196,16 @@ export class ImportEmployeeRowDto {
   @Transform(({ value }) => toIsoDate(value))
   dataexamedemissional?: string;
 
-  @IsString({ message: 'O campo centro de custo deve ser do tipo texto' })
+  @IsUUID('4', {
+    message: 'O campo centrocusto deve ser um ID válido (UUID v4)',
+  })
   @IsOptional()
   centrocusto?: string;
 
   @IsEnum(GrauInstrucao, {
     message:
       'Grau de instrução deve ser FUNDAMENTAL, MEDIO, SUPERIOR, POS_GRADUACAO, MESTRADO ou DOUTORADO',
-  }) // O campo grau de instrução deve ser do tipo enum
+  })
   grauinstrucao: GrauInstrucao;
 
   @IsBoolean({ message: 'Necessidades especiais deve ser true ou false' }) // O campo necessidades especiais deve ser do tipo booleano
@@ -243,7 +245,7 @@ export class ImportEmployeeRowDto {
   @Length(1, 255, { message: 'Gestor deve ter até 255 caracteres' })
   gestor: string;
 
-  @IsString({ message: 'O campo CBO deve ser do tipo texto' })
+  @IsUUID('4', { message: 'O campo CBO deve ser um ID válido (UUID v4)' })
   @IsNotEmpty({ message: 'CBO é obrigatório (ID do CBO)' })
   cbo: string;
 
