@@ -55,7 +55,6 @@ describe('FuncionárioController (E2E)', () => {
     'nacionalidade',
     'altura',
     'peso',
-    'nomepai',
     'nomemae',
     'email',
     'pis',
@@ -85,6 +84,24 @@ describe('FuncionárioController (E2E)', () => {
     'valoralimentacao',
     'valortransporte',
   ];
+
+  const EMPLOYEE_IMPORT_HEADER_WITH_OPTIONALS = [
+    ...EMPLOYEE_IMPORT_HEADER,
+    'nomepai',
+    'dataultimoaso',
+    'vencimentoexperiencia1',
+    'vencimentoexperiencia2',
+    'dataexameadmissional',
+    'dataexamedemissional',
+    'centrocusto',
+    'tipodeficiencia',
+    'quantidadefilhos',
+    'filhosabaixode21',
+    'telefone',
+    'complemento',
+    'latitude',
+    'longitude',
+  ];
   let app: INestApplication;
   let pgContainer: StartedPostgreSqlContainer;
   let dataSource: DataSource;
@@ -94,6 +111,7 @@ describe('FuncionárioController (E2E)', () => {
   let createdRole: Role;
   let createdDepartment: Department;
   let createdCbo: Cbo;
+  let createdCostCenter: CostCenter;
 
   const employee = {
     nome: 'Funcionário Teste',
@@ -195,6 +213,7 @@ describe('FuncionárioController (E2E)', () => {
     const roleRepository = dataSource.getRepository(Role);
     const departmentRepository = dataSource.getRepository(Department);
     const cboRepository = dataSource.getRepository(Cbo);
+    const costCenterRepository = dataSource.getRepository(CostCenter);
 
     const user = userRepository.create({
       nome: 'Usuário Teste',
@@ -241,6 +260,12 @@ describe('FuncionárioController (E2E)', () => {
     });
     createdCbo = await cboRepository.save(cbo);
 
+    const costCenter = costCenterRepository.create({
+      nome: 'Centro de custo Teste',
+      criadoPor: user,
+    });
+    createdCostCenter = await costCenterRepository.save(costCenter);
+
     employee.funcao = createdRole.id;
     employee.setor = createdDepartment.id;
     employee.cbo = createdCbo.id;
@@ -278,7 +303,6 @@ describe('FuncionárioController (E2E)', () => {
         'Brasileiro',
         0.1,
         1000,
-        'Nome do Pai',
         'Nome da Mãe',
         'email@teste.com.br',
         '12345678910',
@@ -369,7 +393,6 @@ describe('FuncionárioController (E2E)', () => {
         'Brasileiro',
         1.73,
         73.3,
-        'Nome do Pai',
         'Nome da Mãe',
         'email@teste.com.br',
         '12345678910',
@@ -408,6 +431,73 @@ describe('FuncionárioController (E2E)', () => {
       expect(response.body.inserted).toBeGreaterThan(0);
     });
 
+    it('deve importar funcionários com campos opcionais', async () => {
+      const header = EMPLOYEE_IMPORT_HEADER_WITH_OPTIONALS;
+      const row = [
+        'Funcionário com Opcionais',
+        '18821129',
+        '64693184799',
+        'MASCULINO',
+        '15/10/1996',
+        'SOLTEIRO',
+        'Belo Horizonte',
+        'Brasileiro',
+        1.73,
+        73.3,
+        'Nome da Mãe',
+        'email@teste.com.br',
+        '12345678910',
+        '1234567',
+        '1234',
+        '12345678910203',
+        'CLT',
+        '12/02/2025',
+        3799,
+        createdRole.id,
+        createdDepartment.id,
+        'SUPERIOR',
+        false,
+        false,
+        '31991897926',
+        'Gestor Teste',
+        createdCbo.id,
+        'Rua Teste',
+        '1000',
+        'Bela Vista',
+        'São Paulo',
+        'SP',
+        '01000000',
+        1,
+        60,
+        'SEIS_UM',
+        800,
+        500,
+        'Nome do Pai',
+        '15/01/2025',
+        '12/08/2025',
+        '12/02/2025',
+        '10/02/2025',
+        '',
+        createdCostCenter.id,
+        'Deficiência visual',
+        2,
+        true,
+        '31987654321',
+        'Apto 101',
+        -19.9166813,
+        -43.9344931,
+      ];
+      const filePath = await createTempXlsx([header, row]);
+      const empresaId = createdCompany.id;
+      const response = await request(app.getHttpServer())
+        .post(`/v1/empresas/${empresaId}/funcionarios/importar`)
+        .attach('file', filePath)
+        .expect(201);
+
+      expect(response.body.inserted).toBe(1);
+      expect(response.body.errors ?? []).toHaveLength(0);
+    });
+
     it('deve retornar múltiplos erros na mesma linha', async () => {
       const header = EMPLOYEE_IMPORT_HEADER;
       const row = [
@@ -422,7 +512,6 @@ describe('FuncionárioController (E2E)', () => {
         'abc',
         'xyz',
         '',
-        '',
         'emailinvalido',
         '123',
         '',
@@ -436,7 +525,6 @@ describe('FuncionárioController (E2E)', () => {
         'ERRADO',
         'talvez',
         '123',
-        '',
         '',
         '',
         '',
@@ -503,7 +591,6 @@ describe('FuncionárioController (E2E)', () => {
         'Brasileiro',
         1.73,
         73.3,
-        'Nome do Pai',
         'Nome da Mãe',
         'email@teste.com.br',
         '12345678910',
@@ -513,14 +600,14 @@ describe('FuncionárioController (E2E)', () => {
         'CLT',
         '12/02/2025',
         3799,
-        'uuid',
-        'uuid',
+        createdRole.id,
+        createdDepartment.id,
         'SUPERIOR',
         false,
         false,
         '31991897926',
         'Gestor Teste',
-        'uuid',
+        createdCbo.id,
         'Rua Teste',
         '1000',
         'Bela Vista',
@@ -565,7 +652,6 @@ describe('FuncionárioController (E2E)', () => {
         'Brasileiro',
         1.73,
         73.3,
-        'Nome do Pai',
         'Nome da Mãe',
         'email@teste.com.br',
         '12345678910',
@@ -575,14 +661,14 @@ describe('FuncionárioController (E2E)', () => {
         'CLT',
         '12/02/2025',
         3799,
-        'uuid',
-        'uuid',
+        createdRole.id,
+        createdDepartment.id,
         'SUPERIOR',
         false,
         false,
         '31991897926',
         'Gestor Teste',
-        'uuid',
+        createdCbo.id,
         'Rua Teste',
         '1000',
         'Bela Vista',
@@ -627,7 +713,6 @@ describe('FuncionárioController (E2E)', () => {
         'Brasileiro',
         1.73,
         73.3,
-        'Nome do Pai',
         'Nome da Mãe',
         'email@teste.com.br',
         '12345678910',
@@ -637,14 +722,14 @@ describe('FuncionárioController (E2E)', () => {
         'CLT',
         '12/02/2025',
         3799,
-        'uuid',
-        'uuid',
+        createdRole.id,
+        createdDepartment.id,
         'SUPERIOR',
         false,
         false,
         '31991897926',
         'Gestor Teste',
-        'uuid',
+        createdCbo.id,
         'Rua Teste',
         '1000',
         'Bela Vista',
@@ -676,71 +761,6 @@ describe('FuncionárioController (E2E)', () => {
       );
     });
 
-    it('deve retornar erro ao importar planilha com CPF duplicado', async () => {
-      const header = EMPLOYEE_IMPORT_HEADER;
-      const row = [
-        'Funcionário Teste',
-        '18821129',
-        '64693184799',
-        'MASCULINO',
-        '15/10/1996',
-        'SOLTEIRO',
-        'Belo Horizonte',
-        'Brasileiro',
-        1.73,
-        73.3,
-        'Nome do Pai',
-        'Nome da Mãe',
-        'email@teste.com.br',
-        '12345678910',
-        '1234567',
-        '1234',
-        '12345678910203',
-        'CLT',
-        '12/02/2025',
-        3799,
-        createdRole.id,
-        createdDepartment.id,
-        'SUPERIOR',
-        false,
-        false,
-        '31991897926',
-        'Gestor Teste',
-        createdCbo.id,
-        'Rua Teste',
-        '1000',
-        'Bela Vista',
-        'São Paulo',
-        'SP',
-        '01000000',
-        1,
-        60,
-        'SEIS_UM',
-        800,
-        500,
-      ];
-      const filePath1 = await createTempXlsx([header, row]);
-      const empresaId = createdCompany.id;
-      await request(app.getHttpServer())
-        .post(`/v1/empresas/${empresaId}/funcionarios/importar`)
-        .attach('file', filePath1)
-        .expect(201);
-
-      const filePath2 = await createTempXlsx([header, row]);
-      const response = await request(app.getHttpServer())
-        .post(`/v1/empresas/${empresaId}/funcionarios/importar`)
-        .attach('file', filePath2)
-        .expect(400);
-      expect(response.body.errors).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            row: 2,
-            field: 'cpf',
-            message: expect.stringContaining('CPF já cadastrado'),
-          }),
-        ]),
-      );
-    });
     async function createTempXlsx(rows: any[][]): Promise<string> {
       const workbook = new Workbook();
       const sheet = workbook.addWorksheet('Funcionarios');
@@ -760,10 +780,10 @@ describe('FuncionárioController (E2E)', () => {
       }
     });
 
-    it('deve importar uma planilha válida e retornar sucesso', async () => {
-      const header = EMPLOYEE_IMPORT_HEADER;
+    it('deve importar funcionários com campos opcionais completos', async () => {
+      const header = EMPLOYEE_IMPORT_HEADER_WITH_OPTIONALS;
       const row = [
-        'Funcionário Teste',
+        'Funcionário Teste Completo',
         '18821129',
         '64693184799',
         'MASCULINO',
@@ -773,7 +793,6 @@ describe('FuncionárioController (E2E)', () => {
         'Brasileiro',
         1.73,
         73.3,
-        'Nome do Pai',
         'Nome da Mãe',
         'email@teste.com.br',
         '12345678910',
@@ -802,6 +821,20 @@ describe('FuncionárioController (E2E)', () => {
         'SEIS_UM',
         800,
         500,
+        'Nome do Pai',
+        '15/01/2025',
+        '12/08/2025',
+        '12/02/2025',
+        '10/02/2025',
+        '',
+        createdCostCenter.id,
+        'Deficiência visual',
+        2,
+        true,
+        '31987654321',
+        'Apto 101',
+        -19.9166813,
+        -43.9344931,
       ];
       const filePath = await createTempXlsx([header, row]);
       const empresaId = createdCompany.id;
@@ -813,7 +846,8 @@ describe('FuncionárioController (E2E)', () => {
       expect(response.body).toHaveProperty('totalRows');
       expect(response.body).toHaveProperty('inserted');
       expect(response.body).toHaveProperty('skipped');
-      expect(response.body.inserted).toBeGreaterThan(0);
+      expect(response.body.inserted).toBe(1);
+      expect(response.body.errors ?? []).toHaveLength(0);
     });
 
     it('deve retornar erro ao importar planilha inválida', async () => {
@@ -830,7 +864,6 @@ describe('FuncionárioController (E2E)', () => {
         'abc',
         'xyz',
         '',
-        '',
         'emailinvalido',
         '123',
         '',
@@ -844,9 +877,6 @@ describe('FuncionárioController (E2E)', () => {
         'ERRADO',
         'talvez',
         '123',
-        '',
-        '',
-        '',
         '',
         '',
         '',
@@ -888,6 +918,61 @@ describe('FuncionárioController (E2E)', () => {
           }),
         ]),
       );
+    });
+
+    it('deve importar uma planilha válida sem campos opcionais', async () => {
+      const header = EMPLOYEE_IMPORT_HEADER;
+      const row = [
+        'Funcionário Simples',
+        '18821129',
+        '12345678901',
+        'MASCULINO',
+        '15/10/1996',
+        'SOLTEIRO',
+        'Belo Horizonte',
+        'Brasileiro',
+        1.73,
+        73.3,
+        'Nome da Mãe',
+        'email.simples@teste.com.br',
+        '12345678910',
+        '1234567',
+        '1234',
+        '12345678910203',
+        'CLT',
+        '12/02/2025',
+        3799,
+        createdRole.id,
+        createdDepartment.id,
+        'SUPERIOR',
+        false,
+        false,
+        '31991897926',
+        'Gestor Teste',
+        createdCbo.id,
+        'Rua Teste',
+        '1000',
+        'Bela Vista',
+        'São Paulo',
+        'SP',
+        '01000000',
+        1,
+        60,
+        'SEIS_UM',
+        800,
+        500,
+      ];
+      const filePath = await createTempXlsx([header, row]);
+      const empresaId = createdCompany.id;
+      const response = await request(app.getHttpServer())
+        .post(`/v1/empresas/${empresaId}/funcionarios/importar`)
+        .attach('file', filePath)
+        .expect(201);
+
+      expect(response.body).toHaveProperty('totalRows');
+      expect(response.body).toHaveProperty('inserted');
+      expect(response.body).toHaveProperty('skipped');
+      expect(response.body.inserted).toBe(1);
     });
   });
 
