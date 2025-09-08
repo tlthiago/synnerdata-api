@@ -22,6 +22,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CompanyResponseDto } from './dto/company-response.dto';
+import { CompanyWithStatsResponseDto } from './dto/company-with-stats-response.dto';
 import { CompleteCompanyRegistrationDto } from './dto/complete-company-registration.dto';
 import { UpdateCompanyPbUrlDto } from './dto/update-company-pburl.dto';
 
@@ -109,6 +110,24 @@ export class CompaniesController {
       data: company,
       message: `Cadastro da empresa, id: #${company.id} completado com sucesso.`,
     };
+  }
+
+  @Get('estatisticas')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Buscar todas as empresas com estatísticas',
+    description:
+      'Endpoint responsável por listar todas as empresas cadastradas com quantidade de usuários, funcionários e status da assinatura.',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Retorna uma lista de empresas com estatísticas em casos de sucesso.',
+    type: [CompanyWithStatsResponseDto],
+  })
+  @UseGuards(JwtAuthGuard)
+  findAllWithStats() {
+    return this.companiesService.findAllWithStats();
   }
 
   @Get()
