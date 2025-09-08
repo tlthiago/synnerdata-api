@@ -29,7 +29,7 @@ import { Warning } from '../warnings/entities/warning.entity';
 import { LaborAction } from '../labor-actions/entities/labor-action.entity';
 import { EpiDelivery } from '../epi-delivery/entities/epi-delivery.entity';
 import { Vacation } from '../vacations/entities/vacation.entity';
-import { User } from '../users/entities/user.entity';
+import { User, Funcao } from '../users/entities/user.entity';
 
 describe('CompaniesController (E2E)', () => {
   let app: INestApplication;
@@ -202,6 +202,41 @@ describe('CompaniesController (E2E)', () => {
 
     expect(response.body).toBeInstanceOf(Array);
     expect(response.body.length).toBeGreaterThan(0);
+  });
+
+  it('/v1/empresas/estatisticas (GET) - Deve listar todas as empresas com estatísticas', async () => {
+    const companyRepository = dataSource.getRepository(Company);
+    const userRepository = dataSource.getRepository(User);
+
+    const createdCompany = companyRepository.create(company);
+    await companyRepository.save(createdCompany);
+
+    const user1 = userRepository.create({
+      nome: 'Usuário 1',
+      email: 'usuario1@empresa.com',
+      funcao: Funcao.ADMIN,
+      empresa: createdCompany.id,
+    });
+    const user2 = userRepository.create({
+      nome: 'Usuário 2',
+      email: 'usuario2@empresa.com',
+      funcao: Funcao.VISUALIZADOR,
+      empresa: createdCompany.id,
+    });
+    await userRepository.save([user1, user2]);
+
+    const response = await request(app.getHttpServer())
+      .get('/v1/empresas/estatisticas')
+      .expect(200);
+
+    expect(response.body).toBeInstanceOf(Array);
+    expect(response.body.length).toBeGreaterThan(0);
+    expect(response.body[0]).toHaveProperty('quantidadeUsuarios');
+    expect(response.body[0]).toHaveProperty('quantidadeFuncionarios');
+    expect(response.body[0]).toHaveProperty('statusAssinatura');
+    expect(response.body[0].quantidadeUsuarios).toBe(2);
+    expect(response.body[0].quantidadeFuncionarios).toBe(0);
+    expect(response.body[0].statusAssinatura).toBe('Inativo');
   });
 
   it('/v1/empresas/:id (GET) - Deve retonar uma empresa específica', async () => {

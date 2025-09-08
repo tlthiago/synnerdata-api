@@ -2,6 +2,8 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -9,15 +11,21 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Company } from './entities/company.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { CompanyResponseDto } from './dto/company-response.dto';
+import { CompanyWithStatsResponseDto } from './dto/company-with-stats-response.dto';
 import { plainToInstance } from 'class-transformer';
 import { CreateInitialCompanyDto } from './dto/create-initial-company.dto';
 import { CompleteCompanyRegistrationDto } from './dto/complete-company-registration.dto';
+import { SubscriptionsService } from '../payments/subscriptions/subscriptions.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class CompaniesService {
   constructor(
     @InjectRepository(Company)
     private readonly companiesRepository: Repository<Company>,
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
+    private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
   async create(createCompanyDto: CreateCompanyDto) {
@@ -100,6 +108,41 @@ export class CompaniesService {
     const companies = await this.companiesRepository.find();
 
     return plainToInstance(CompanyResponseDto, companies, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async findAllWithStats() {
+    const companies = await this.companiesRepository.find({
+      relations: ['funcionarios'],
+    });
+
+    const companiesWithStats = await Promise.all(
+      companies.map(async (company) => {
+        const users = await this.usersService.findAllByCompany(company.id);
+        let statusAssinatura = 'inactive';
+
+        if (company.idAssinatura) {
+          try {
+            const subscription = await this.subscriptionsService.findOne(
+              company.idAssinatura,
+            );
+            statusAssinatura = subscription.status;
+          } catch (error) {
+            statusAssinatura = 'inactive';
+          }
+        }
+
+        return {
+          ...company,
+          quantidadeUsuarios: users.length || 0,
+          quantidadeFuncionarios: company.funcionarios.length || 0,
+          statusAssinatura: statusAssinatura === 'active' ? 'Ativo' : 'Inativo',
+        };
+      }),
+    );
+
+    return plainToInstance(CompanyWithStatsResponseDto, companiesWithStats, {
       excludeExtraneousValues: true,
     });
   }

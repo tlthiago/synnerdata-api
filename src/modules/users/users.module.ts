@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -16,7 +16,7 @@ import { RecoveryPasswordToken } from './entities/recovery-password-token.entity
       UserActivationToken,
       RecoveryPasswordToken,
     ]),
-    CompaniesModule,
+    forwardRef(() => CompaniesModule),
   ],
   controllers: [UsersController],
   providers: [
