@@ -269,6 +269,22 @@ describe('PromotionController (E2E)', () => {
     );
   });
 
+  it('/v1/funcionarios/:funcionarioId/promocoes (POST) - Deve retornar erro ao criar com data futura', async () => {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 1);
+    const futureDateString = futureDate.toISOString().split('T')[0];
+
+    const response = await request(app.getHttpServer())
+      .post(`/v1/funcionarios/${createdEmployee.id}/promocoes`)
+      .send({ ...promotion, data: futureDateString })
+      .expect(400);
+
+    expect(response.body).toHaveProperty('message');
+    expect(response.body.message).toEqual(
+      expect.arrayContaining(['A data não pode ser superior à data de hoje.']),
+    );
+  });
+
   it('/v1/funcionarios/:funcionarioId/promocoes (POST) - Deve retornar erro ao criar uma promoção com ID de uma função inválido', async () => {
     const response = await request(app.getHttpServer())
       .post(`/v1/funcionarios/${createdEmployee.id}/promocoes`)

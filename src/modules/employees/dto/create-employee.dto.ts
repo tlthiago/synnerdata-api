@@ -16,6 +16,7 @@ import {
   IsUUID,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNotFutureDate } from '../../../common/validators/is-not-future-date.validator';
 import {
   RegimeContratacao,
   GrauInstrucao,
@@ -51,6 +52,7 @@ export class CreateEmployeeDto {
   @ApiProperty({ description: 'Data de nascimento', type: 'string' })
   @IsDateString()
   @IsNotEmpty()
+  @IsNotFutureDate()
   dataNascimento: string;
 
   @ApiProperty({ description: 'Estado civil', enum: EstadoCivil })
@@ -132,6 +134,7 @@ export class CreateEmployeeDto {
   @ApiProperty({ description: 'Data de admissão', type: 'string' })
   @IsDateString()
   @IsNotEmpty()
+  @IsNotFutureDate()
   dataAdmissao: string;
 
   @ApiProperty({ description: 'Salário do funcionário', type: 'number' })
@@ -142,6 +145,7 @@ export class CreateEmployeeDto {
   @ApiProperty({ description: 'Data do último ASO', type: 'string' })
   @IsDateString()
   @IsOptional()
+  @IsNotFutureDate()
   dataUltimoASO?: string;
 
   @ApiProperty({ description: 'Função', type: 'string' })
@@ -173,11 +177,13 @@ export class CreateEmployeeDto {
   @ApiProperty({ description: 'Data do exame admissional', type: 'string' })
   @IsDateString()
   @IsOptional()
+  @IsNotFutureDate()
   dataExameAdmissional?: string;
 
   @ApiProperty({ description: 'Data do exame demissional', type: 'string' })
   @IsDateString()
   @IsOptional()
+  @IsNotFutureDate()
   dataExameDemissional?: string;
 
   @ApiProperty({ description: 'Centro de custo', type: 'string' })

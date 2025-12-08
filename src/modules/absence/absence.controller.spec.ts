@@ -1,36 +1,24 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import * as request from 'supertest';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import {
   PostgreSqlContainer,
   StartedPostgreSqlContainer,
 } from '@testcontainers/postgresql';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import * as request from 'supertest';
 import { DataSource } from 'typeorm';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { MockAuthGuard } from '../../common/guards/mock-auth.guard';
-import { Company } from './../companies/entities/company.entity';
-import { Branch } from '../branches/entities/branch.entity';
-import { Department } from '../departments/entities/department.entity';
-import { CostCenter } from '../cost-centers/entities/cost-center.entity';
+import { MockUserInterceptor } from '../../common/interceptors/mock-user.interceptor';
 import { Cbo } from '../../modules/cbos/entities/cbo.entity';
 import { Epi } from '../../modules/epis/entities/epi.entity';
-import { Role } from '../roles/entities/role.entity';
-import { Project } from '../projects/entities/project.entity';
-import { Employee } from '../employees/entities/employee.entity';
 import { Absence } from '../absence/entities/absence.entity';
-import { MedicalCertificate } from '../medical-certificate/entities/medical-certificate.entity';
-import { Promotion } from '../promotion/entities/promotion.entity';
-import { Termination } from '../terminations/entities/termination.entity';
-import { CpfAnalysis } from '../cpf-analysis/entities/cpf-analysis.entity';
 import { Accident } from '../accidents/entities/accident.entity';
-import { Warning } from '../warnings/entities/warning.entity';
-import { LaborAction } from '../labor-actions/entities/labor-action.entity';
-import { EpiDelivery } from '../epi-delivery/entities/epi-delivery.entity';
-import { Vacation } from '../vacations/entities/vacation.entity';
-import { Funcao, User } from '../users/entities/user.entity';
-import { AbsenceModule } from './absence.module';
-import { UpdateAbsenceDto } from './dto/update-absence.dto';
+import { Branch } from '../branches/entities/branch.entity';
+import { CostCenter } from '../cost-centers/entities/cost-center.entity';
+import { CpfAnalysis } from '../cpf-analysis/entities/cpf-analysis.entity';
+import { Department } from '../departments/entities/department.entity';
+import { Employee } from '../employees/entities/employee.entity';
 import {
   Escala,
   EstadoCivil,
@@ -38,7 +26,19 @@ import {
   RegimeContratacao,
   Sexo,
 } from '../employees/enums/employees.enum';
-import { MockUserInterceptor } from '../../common/interceptors/mock-user.interceptor';
+import { EpiDelivery } from '../epi-delivery/entities/epi-delivery.entity';
+import { LaborAction } from '../labor-actions/entities/labor-action.entity';
+import { MedicalCertificate } from '../medical-certificate/entities/medical-certificate.entity';
+import { Project } from '../projects/entities/project.entity';
+import { Promotion } from '../promotion/entities/promotion.entity';
+import { Role } from '../roles/entities/role.entity';
+import { Termination } from '../terminations/entities/termination.entity';
+import { Funcao, User } from '../users/entities/user.entity';
+import { Vacation } from '../vacations/entities/vacation.entity';
+import { Warning } from '../warnings/entities/warning.entity';
+import { Company } from './../companies/entities/company.entity';
+import { AbsenceModule } from './absence.module';
+import { UpdateAbsenceDto } from './dto/update-absence.dto';
 
 describe('AbsenceController (E2E)', () => {
   let app: INestApplication;
@@ -268,6 +268,22 @@ describe('AbsenceController (E2E)', () => {
     );
   });
 
+  it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve retornar erro ao criar uma falta com data futura', async () => {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 1);
+    const futureDateString = futureDate.toISOString().split('T')[0];
+
+    const response = await request(app.getHttpServer())
+      .post(`/v1/funcionarios/${createdEmployee.id}/faltas`)
+      .send({ ...absence, data: futureDateString })
+      .expect(400);
+
+    expect(response.body).toHaveProperty('message');
+    expect(response.body.message).toEqual(
+      expect.arrayContaining(['A data não pode ser superior à data de hoje.']),
+    );
+  });
+
   it('/v1/funcionarios/:funcionarioId/faltas (POST) - Deve retornar erro caso o ID do funcionário não exista', async () => {
     const response = await request(app.getHttpServer())
       .post(`/v1/funcionarios/86f226c4-38b0-464c-987e-35293033faf6/faltas`)
@@ -457,6 +473,28 @@ describe('AbsenceController (E2E)', () => {
     expect(response.body).toHaveProperty('message');
     expect(response.body.message).toEqual(
       expect.arrayContaining(['data must be a valid ISO 8601 date string']),
+    );
+  });
+
+  it('/v1/funcionarios/faltas/:id (PATCH) - Deve retornar erro ao atualizar uma falta com data futura', async () => {
+    const absenceRepository = dataSource.getRepository(Absence);
+    const createdAbsence = await absenceRepository.save({
+      ...absence,
+      funcionario: createdEmployee,
+    });
+
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 1);
+    const futureDateString = futureDate.toISOString().split('T')[0];
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/funcionarios/faltas/${createdAbsence.id}`)
+      .send({ data: futureDateString })
+      .expect(400);
+
+    expect(response.body).toHaveProperty('message');
+    expect(response.body.message).toEqual(
+      expect.arrayContaining(['A data não pode ser superior à data de hoje.']),
     );
   });
 

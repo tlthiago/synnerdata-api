@@ -10,7 +10,9 @@ import {
   IsEmail,
   IsPhoneNumber,
   IsPostalCode,
+  IsDateString,
 } from 'class-validator';
+import { IsNotFutureDate } from '../../../common/validators/is-not-future-date.validator';
 
 export class CreateCompanyDto {
   @ApiProperty({ description: 'Razão social.' })
@@ -75,8 +77,9 @@ export class CreateCompanyDto {
   cep: string;
 
   @ApiProperty({ description: 'Data da Fundação.' })
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
+  @IsNotFutureDate()
   dataFundacao: Date;
 
   @ApiProperty({ description: 'Email' })
