@@ -1,10 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, Length, IsDateString } from 'class-validator';
+import { IsNotFutureDate } from '../../../common/validators/is-not-future-date.validator';
 
 export class CreateTerminationDto {
   @ApiProperty({ description: 'Data da demissão.' })
   @IsDateString()
   @IsNotEmpty()
+  @IsNotFutureDate()
   data: string;
 
   @ApiProperty({ description: 'Motivo interno da demissão.' })

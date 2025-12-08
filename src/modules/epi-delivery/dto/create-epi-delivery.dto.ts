@@ -8,11 +8,13 @@ import {
   IsDateString,
   IsUUID,
 } from 'class-validator';
+import { IsNotFutureDate } from '../../../common/validators/is-not-future-date.validator';
 
 export class CreateEpiDeliveryDto {
   @ApiProperty({ description: 'Data da entrega do(s) epi(s).' })
   @IsDateString()
   @IsNotEmpty()
+  @IsNotFutureDate()
   data: string;
 
   @ApiProperty({ description: 'Epi(s) entregues.', type: [String] })

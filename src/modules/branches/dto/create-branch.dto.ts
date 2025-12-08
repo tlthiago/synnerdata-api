@@ -10,6 +10,7 @@ import {
   IsPhoneNumber,
   IsPostalCode,
 } from 'class-validator';
+import { IsNotFutureDate } from '../../../common/validators/is-not-future-date.validator';
 
 export class CreateBranchDto {
   @ApiProperty({ description: 'Nome.' })
@@ -70,6 +71,7 @@ export class CreateBranchDto {
   @ApiProperty({ description: 'Data da Fundação.' })
   @IsDateString()
   @IsNotEmpty()
+  @IsNotFutureDate()
   dataFundacao: string;
 
   @ApiProperty({ description: 'Telefone.' })

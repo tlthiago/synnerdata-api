@@ -7,16 +7,19 @@ import {
   Matches,
   ValidateIf,
 } from 'class-validator';
+import { IsNotFutureDate } from '../../../common/validators/is-not-future-date.validator';
 
 export class CreateMedicalCertificateDto {
   @ApiProperty({ description: 'Data início do atestado.' })
   @IsDateString()
   @IsNotEmpty()
+  @IsNotFutureDate()
   dataInicio: string;
 
   @ApiProperty({ description: 'Data final do atestado.' })
   @IsDateString()
   @IsNotEmpty()
+  @IsNotFutureDate()
   dataFim: string;
 
   @ApiProperty({ description: 'Motivo do atestado.' })

@@ -8,11 +8,13 @@ import {
   IsOptional,
   IsPostalCode,
 } from 'class-validator';
+import { IsNotFutureDate } from '../../../common/validators/is-not-future-date.validator';
 
 export class CompleteCompanyRegistrationDto {
   @ApiProperty({ description: 'Data da Fundação.' })
   @IsDateString()
   @IsNotEmpty()
+  @IsNotFutureDate()
   dataFundacao: Date;
 
   @ApiProperty({ description: 'Faturamento.' })
