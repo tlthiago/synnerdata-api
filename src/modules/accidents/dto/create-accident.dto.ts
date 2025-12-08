@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsDateString,
 } from 'class-validator';
+import { IsNotFutureDate } from '../../../common/validators/is-not-future-date.validator';
 
 export class CreateAccidentDto {
   @ApiProperty({ description: 'Descrição do acidente.' })
@@ -17,6 +18,7 @@ export class CreateAccidentDto {
   @ApiProperty({ description: 'Data do acidente.' })
   @IsDateString()
   @IsNotEmpty()
+  @IsNotFutureDate()
   data: string;
 
   @ApiProperty({ description: 'Natureza do acidente.' })

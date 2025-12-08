@@ -174,6 +174,22 @@ describe('CompaniesController (E2E)', () => {
     );
   });
 
+  it('/v1/empresas (POST) - Deve retornar erro ao criar com data futura', async () => {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 1);
+    const futureDateString = futureDate.toISOString().split('T')[0];
+
+    const response = await request(app.getHttpServer())
+      .post('/v1/empresas')
+      .send({ ...company, dataFundacao: futureDateString })
+      .expect(400);
+
+    expect(response.body).toHaveProperty('message');
+    expect(response.body.message).toEqual(
+      expect.arrayContaining(['A data não pode ser superior à data de hoje.']),
+    );
+  });
+
   it('/v1/empresas (POST) - Deve retornar erro ao criar uma empresa com CNPJ já cadastrado', async () => {
     const companyRepository = dataSource.getRepository(Company);
 

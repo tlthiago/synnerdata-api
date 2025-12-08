@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsDateString,
 } from 'class-validator';
+import { IsNotFutureDate } from '../../../common/validators/is-not-future-date.validator';
 
 export class CreateLaborActionDto {
   @ApiProperty({ description: 'Número do processo.' })
@@ -24,6 +25,7 @@ export class CreateLaborActionDto {
   @ApiProperty({ description: 'Data do ajuizamento.' })
   @IsDateString()
   @IsNotEmpty()
+  @IsNotFutureDate()
   dataAjuizamento: string;
 
   @ApiProperty({ description: 'Nome do reclamante.' })
@@ -71,6 +73,7 @@ export class CreateLaborActionDto {
   @ApiProperty({ description: 'Data de conclusão.' })
   @IsDateString()
   @IsOptional()
+  @IsNotFutureDate()
   dataConclusao?: string;
 
   @ApiProperty({ description: 'Recursos interpostos.' })
@@ -86,5 +89,6 @@ export class CreateLaborActionDto {
   @ApiProperty({ description: 'Data do conhecimento.' })
   @IsDateString()
   @IsNotEmpty()
+  @IsNotFutureDate()
   dataConhecimento: string;
 }

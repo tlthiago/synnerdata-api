@@ -251,6 +251,22 @@ describe('FuncionárioController (E2E)', () => {
     );
   });
 
+  it('/v1/empresas/:empresaId/funcionarios (POST) - Deve retornar erro ao criar com dataNascimento futura', async () => {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 1);
+    const futureDateString = futureDate.toISOString().split('T')[0];
+
+    const response = await request(app.getHttpServer())
+      .post(`/v1/empresas/${createdCompany.id}/funcionarios`)
+      .send({ ...employee, dataNascimento: futureDateString })
+      .expect(400);
+
+    expect(response.body).toHaveProperty('message');
+    expect(response.body.message).toEqual(
+      expect.arrayContaining(['A data não pode ser superior à data de hoje.']),
+    );
+  });
+
   it('/v1/empresas/:empresaId/funcionarios (POST) - Deve retornar erro caso o ID da empresa não exista', async () => {
     const response = await request(app.getHttpServer())
       .post(`/v1/empresas/86f226c4-38b0-464c-987e-35293033faf6/funcionarios`)
