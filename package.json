@@ -33,10 +33,13 @@
     "migration:revert": "docker exec -it app npm run typeorm migration:revert -- -d ./src/config/database/typeorm.config.ts",
     "migration:show": "docker exec -it app npm run typeorm -- migration:show -d ./src/config/database/typeorm.config.ts",
     "db:reset": "npm run migration:revert && npm run migration:run",
+    "db:seed": "docker exec -it app node_modules/.bin/ts-node -r tsconfig-paths/register ./src/config/database/run-seed.ts",
+    "db:seed:local": "ts-node -r tsconfig-paths/register ./src/config/database/run-seed.ts",
     "prepare": "husky",
     "commit": "cz"
   },
   "dependencies": {
+    "@faker-js/faker": "^10.1.0",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.3.0",
@@ -61,7 +64,8 @@
     "pg": "^8.13.1",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.20",
+    "typeorm-extension": "^3.7.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.1",

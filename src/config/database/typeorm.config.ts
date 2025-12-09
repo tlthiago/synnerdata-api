@@ -9,7 +9,7 @@ const envFile =
 
 config({ path: envFile });
 
-const DataSourceOptions = new DataSource({
+const AppDataSource = new DataSource({
   type: 'postgres',
   host: process.env.DB_HOST,
   port: +process.env.DB_PORT!,
@@ -33,4 +33,4 @@ const DataSourceOptions = new DataSource({
   logging: false,
 });
 
-export default DataSourceOptions;
+export default AppDataSource;
