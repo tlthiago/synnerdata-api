@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,6 +16,7 @@ import { CreateInitialCompanyDto } from '../companies/dto/create-initial-company
 
 @Injectable()
 export class PaymentsService {
+  private readonly logger = new Logger(PaymentsService.name);
   private readonly secretKey = process.env.PAGARME_SECRET_KEY;
   private readonly baseUrl = process.env.PAGARME_LINK_BASE_URL;
 
@@ -126,17 +128,17 @@ export class PaymentsService {
         );
       }
 
+      if (payment.status === 'paid') {
+        return;
+      }
+
       const queryRunner = this.dataSource.createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
 
       try {
-        if (payment.status === 'paid') {
-          return;
-        }
-
         payment.status = 'paid';
-        await this.paymentIntentRepository.save(payment);
+        await queryRunner.manager.save(payment);
 
         const companyData: CreateInitialCompanyDto = {
           nomeFantasia: payment.nomeFantasia,
@@ -166,16 +168,37 @@ export class PaymentsService {
         );
 
         await queryRunner.commitTransaction();
-
-        await this.mailService.sendActivationAccountEmail({
-          email: payment.email,
-        });
       } catch (error) {
         await queryRunner.rollbackTransaction();
 
         throw error;
       } finally {
         await queryRunner.release();
+      }
+
+      const maxRetries = 3;
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          await this.mailService.sendActivationAccountEmail({
+            email: payment.email,
+          });
+          break;
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          this.logger.error(
+            `Falha ao enviar email de ativação (tentativa ${attempt}/${maxRetries}): ${message}`,
+          );
+
+          if (attempt === maxRetries) {
+            this.logger.error(
+              `Todas as ${maxRetries} tentativas de envio de email falharam para: ${payment.email}`,
+            );
+            break;
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+        }
       }
     }
   }

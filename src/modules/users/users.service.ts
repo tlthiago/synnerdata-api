@@ -58,11 +58,17 @@ export class UsersService {
       throw new ConflictException('Já existe um usuário com o mesmo email.');
     }
 
-    const companyRepository = await manager.getRepository(Company);
+    const company = manager
+      ? await manager
+          .getRepository(Company)
+          .findOne({ where: { id: createInitialUserDto.empresaId } })
+      : await this.companiesService.findById(createInitialUserDto.empresaId);
 
-    const company = await companyRepository.findOne({
-      where: { id: createInitialUserDto.empresaId },
-    });
+    if (!company) {
+      throw new NotFoundException(
+        `Empresa não encontrada com id: ${createInitialUserDto.empresaId}`,
+      );
+    }
 
     createInitialUserDto.email = createInitialUserDto.email
       .trim()
